@@ -3,35 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 14:25:43 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/04 15:59:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpResponse.hpp"
-
-
-static std::string trim(const std::string& str) {
-    size_t start = 0;
-    while (start < str.length() && std::isspace(str[start])) {
-        ++start;
-    }
-
-    size_t end = str.length();
-    while (end > start && std::isspace(str[end - 1])) {
-        --end;
-    }
-
-    return str.substr(start, end - start);
-}
-
-static std::string intToString(int value) {
-    std::stringstream ss;
-    ss << value;
-    return ss.str();
-}
 
 
 HttpResponse::HttpResponse():status(200)
@@ -91,15 +70,6 @@ std::map<std::string, std::string> 	&HttpResponse::getHeaders(void)
 	return headers;
 }
 
-bool HttpResponse::setStatus(int statusCode)
-{
-	if (statusCode > 0)
-	{
-		status = statusCode;
-		return true;
-	}
-	return false;
-}
 
 int	HttpResponse::getStatus()
 {
@@ -111,15 +81,6 @@ std::string	HttpResponse::getBody() const
 	return body;
 }
 
-bool HttpResponse::setBody(std::string body)
-{
-	if (body != "")
-	{
-		this->body = body;
-		return true;
-	}
-	return false;
-}
 
 std::string HttpResponse::getStatusText(int statusCode)
 {
@@ -168,13 +129,14 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 	
 	std::ifstream file("errorPages/errorPage.html");
 	if (!file.is_open())
-        return "<html><body><h1>Error " + intToString(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
+
+        return "<html><body><h1>Error " + Util::toString(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	std::string errorPage = buffer.str();
 
 	std::map<std::string, std::string> replacements;
-	replacements["{{statusCode}}"] = intToString(statusCode);
+	replacements["{{statusCode}}"] = Util::toString(statusCode);
     replacements["{{errorText}}"] = errorText;
 
 	std::map<std::string, std::string>::iterator it;
@@ -191,13 +153,11 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 std::string HttpResponse::serialize()
 {
 	std::ostringstream  	oss;
-	std::stringstream 		ss;
 	oss << "HTTP/1.1 " << status << " " << getStatusText(status) << "\r\n";
-	ss << body.size();
-	setHeader("Content-Length", ss.str(), true);
+	setHeader("Content-Length", Util::toString(body.size()) , true);
 
 	for (std::map<std::string,std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
-		oss << trim(it->first) << ": " << it->second << "\r\n";
+		oss << Util::trim(it->first) << ": " << it->second << "\r\n";
 	// single set of \r\n since the header already sent the first set
 	oss << "\r\n" << body;
 
@@ -225,22 +185,3 @@ bool HttpResponse::response(int socket_id)
 	}
 	return (true);
 }
-
-// bool HttpResponse::setStatus(int statusCode)
-// {
-// 	status = statusCode; 
-// 	return (true);
-// }
-// bool HttpResponse::setBody(std::string bodyString)
-// {
-// 	body = bodyString;
-// 	return (true);
-// }
-
-
-// bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
-// {
-// 	(void)overwriteExisting;
-// 	headers[name] = value;
-// 	return (true);
-// }

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 13:50:44 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 14:54:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -221,7 +221,7 @@ int Webserv::run(void)
 			if(nfds == -1)
 				throw std::runtime_error("epoll_wait error");
 
-
+			Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
 				bool 		isListeningFd = false;
@@ -321,20 +321,14 @@ int Webserv::run(void)
 							close(events[i].data.fd);
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 							Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							continue ;
 						}
-						
-
-						
-						    
+						continue ;
 
 					}
 				}
 
-				
-				
+				Logger::log(LC_RED, " *** END of the nfds loop");
 
-				
 			}
 			
 		
