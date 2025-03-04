@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/03 19:19:10 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 11:34:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define	HTTP_RESPONSE_HPP
 # include 	<map>
 # include 	<sys/socket.h>
+# include	<fstream>
 # include 	<iostream>
 # include 	<vector>
 # include 	<sstream>
@@ -34,7 +35,7 @@ class HttpResponse
 		
 		std::string 						getHeader(std::string name) const;
 		bool 								setHeader(std::string name, std::string value , bool overwriteExisting=false);
-		std::map<std::string, std::string> 	&getHeaders(void) const;
+		std::map<std::string, std::string> 	&getHeaders(void);
 
 		bool								setStatus(int statusCode);
 		int									getStatus();
@@ -42,7 +43,7 @@ class HttpResponse
 		std::string							getBody() const;
 		bool								setBody(std::string body);
 
-		std::string 						serialize() const;
+		std::string 						serialize();
 		void								clear();
 		
 		static std::string					getStatusText(int statusCode);
