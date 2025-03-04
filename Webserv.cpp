@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/03 18:49:58 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 14:54:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,9 +187,12 @@ int Webserv::run(void)
 	int epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1) 
 		throw std::runtime_error("Error creating epoll instance");
-	struct epoll_event		events[ WEBS_MAX_EVENTS ];
+	struct epoll_event		events[WEBS_MAX_EVENTS];
 	// reset the epoll_events array
 	memset( events, 0 , sizeof(events));
+
+
+	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
 	for ( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
@@ -208,7 +211,6 @@ int Webserv::run(void)
 
 
 	
-	
 	while (true) 
 	{
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
@@ -219,7 +221,7 @@ int Webserv::run(void)
 			if(nfds == -1)
 				throw std::runtime_error("epoll_wait error");
 
-
+			Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
 				bool 		isListeningFd = false;
@@ -241,6 +243,7 @@ int Webserv::run(void)
 				{
 					if(events[i].events & EPOLLIN)
 					{
+
 						struct sockaddr_in client_address;	
 						socklen_t len = sizeof(client_address);
 						Logger::log(LC_NOTE, "trying to accept new socket ");
@@ -278,6 +281,7 @@ int Webserv::run(void)
 				else
 				{
 
+					HttpResponse httpResponse;
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
 					{
 						Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
@@ -310,27 +314,21 @@ int Webserv::run(void)
 						// check if the connection belong to which server?
 						
 						// handleRequest(client_socket , &webserv obj , )
-
-						{	// DELME , debug block
-							std::stringstream 	ss;
-							ss << time(0);
-							std::string  response = ss.str();
-							ss.str("");
-							ss.clear();
-							ss << "HTTP/1.1 200 OK\r\n" << "Content-Length: " << response.length() << "\r\n\r\n" << response;
-							std::string			responseString = ss.str(); 
-							send( active_fd ,   responseString.c_str(), responseString.length(), 0);
-							// close(active_fd);
+						httpResponse.setStatus(200);
+						httpResponse.setBody("CoolTTT");
+						if (httpResponse.response(active_fd))
+						{
+							close(events[i].data.fd);
+							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
 						}
-						    
+						continue ;
 
 					}
 				}
 
-				
-				
+				Logger::log(LC_RED, " *** END of the nfds loop");
 
-				
 			}
 			
 		

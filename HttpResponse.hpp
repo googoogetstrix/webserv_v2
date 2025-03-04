@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 11:59:57 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/04 15:58:07 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,9 @@
 # include 	<iostream>
 # include 	<vector>
 # include 	<sstream>
+# include	<string>
 # include 	<unistd.h>
+# include 	"Util.hpp"
 
 class HttpResponse
 {
@@ -43,7 +45,7 @@ class HttpResponse
 		std::string							getBody() const;
 		bool								setBody(std::string body);
 
-		std::string 						serialize() const;
+		std::string 						serialize();
 		void								clear();
 		
 		static std::string					getStatusText(int statusCode);
