@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 12:03:07 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/04 12:34:06 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,7 @@ std::string HttpResponse::getStatusText(int statusCode)
 		case 500:
 			return "Internal Server Error";
 		default:
-			return "TO BE IMPLEMENTED";
+			return "Unknown Status";
 	}
 }
 
@@ -161,6 +161,8 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 	std::string errorText = getStatusText(statusCode);
 	
 	std::ifstream file("errorPages/errorPage.html");
+	if (!file.is_open())
+        return "<html><body><h1>Error " + std::to_string(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	std::string errorPage = buffer.str();
