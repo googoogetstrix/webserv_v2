@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 10:51:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 18:08:24 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ class Webserv
 
 		bool	findServerFromRequest(HttpRequest &req, ServerConfig &sc);
 
-
+		bool	isServerFd(int fd);
 		
 
 		

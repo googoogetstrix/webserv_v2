@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 14:54:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 18:13:35 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,17 @@ std::set<int>  Webserv::getListeningPorts()
 		ret.insert( it->getPort());
 	return (ret);
 }
+
+bool	Webserv::isServerFd(int fd)
+{
+	for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
+		{
+			if (*it == fd)
+				return (true);
+		}
+	return (false);
+}
+
 
 bool Webserv::setupSockets()
 {
@@ -224,22 +235,10 @@ int Webserv::run(void)
 			Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
-				bool 		isListeningFd = false;
 				int			active_fd = events[i].data.fd;
-
-				// check if is one of the listening fds (server_fds)
-				for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
-				{
-					if (*it == active_fd)
-					{
-						isListeningFd = true;
-						break;
-					}
-				}
-
 				Logger::log(LC_RED, "epoll event on fd#%d!" , active_fd);
-
-				if (isListeningFd)
+				
+				if (isServerFd(active_fd))
 				{
 					if(events[i].events & EPOLLIN)
 					{
@@ -276,6 +275,7 @@ int Webserv::run(void)
 						Logger::log(LC_ERROR, "ERROR: %s" , len);
 						close(events[i].data.fd);
 						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+						continue;
 					}
 				}
 				else
