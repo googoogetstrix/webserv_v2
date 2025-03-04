@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 14:46:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 16:09:14 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,11 +76,23 @@ int	HttpResponse::getStatus()
 	return status;
 }
 
+bool	HttpResponse::setStatus(int newStatusCode)
+{
+	status = newStatusCode;
+	return true;
+}
+
 std::string	HttpResponse::getBody() const
 {
 	return body;
 }
 
+
+bool	HttpResponse::setBody(std::string newBody)
+{
+	body = newBody; 
+	return true;
+}
 
 std::string HttpResponse::getStatusText(int statusCode)
 {
@@ -129,6 +141,7 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 	
 	std::ifstream file("errorPages/errorPage.html");
 	if (!file.is_open())
+
         return "<html><body><h1>Error " + Util::toString(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
 	std::stringstream buffer;
 	buffer << file.rdbuf();
@@ -184,15 +197,3 @@ bool HttpResponse::response(int socket_id)
 	}
 	return (true);
 }
-
-bool HttpResponse::setStatus(int statusCode)
-{
-	status = statusCode; 
-	return (true);
-}
-bool HttpResponse::setBody(std::string bodyString)
-{
-	body = bodyString;
-	return (true);
-}
-

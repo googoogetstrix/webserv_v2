@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 16:24:47 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/04 16:30:45 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 # include	<map>
 # include	<string>
 # include   "ServerConfig.hpp"
-# include	"HttpResponse.hpp"
+# include   "HttpResponse.hpp"
+
 
 class ServerConfig;
 
