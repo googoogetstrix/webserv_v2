@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 15:36:29 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 15:47:44 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,11 +34,6 @@ class HttpRequest
 
 		std::string								body;
 
-		
-
-
-		
-
 
 	public:
 		HttpRequest();
@@ -50,7 +45,6 @@ class HttpRequest
 		// ServerConfig
 		// requestString = "HTTP1.1 GET /index.php \n\nn\"
 		bool parseRequest(HttpResponse &response, ServerConfig &server, std::string requestString);
-		
 
 		
 };
