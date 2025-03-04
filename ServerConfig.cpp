@@ -46,7 +46,7 @@ void ServerConfig::dummy(void)
 {
 	port = 4343;
 	server_name = "localhost"; /// www.example.com
-	root = "./webroot/www1/";
+	root = "./wwwroot/www1/";
 	index = "index.html";
 	allowed_methods.push_back("GET");
 	allowed_methods.push_back("POST");
@@ -59,7 +59,7 @@ void ServerConfig::dummy2(void)
 {
 	port = 4444;
 	server_name = "localhost2";
-	root = "./webroot/www2/";
+	root = "./wwwroot/www2/";
 	index = "index.html";
 	allowed_methods.push_back("GET");
 	allowed_methods.push_back("POST");

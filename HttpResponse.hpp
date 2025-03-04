@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/03 19:19:10 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 11:34:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ class HttpResponse
 		std::string							getBody() const;
 		bool								setBody(std::string body);
 
-		std::string 						serialize() const;
+		std::string 						serialize();
 		void								clear();
 		
 		static std::string					getStatusText(int statusCode);

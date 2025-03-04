@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/03 16:36:41 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 10:51:43 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@
 # include 	<cerrno>
 # include 	"ServerConfig.hpp"
 # include 	"HttpRequest.hpp"
+# include 	"HttpResponse.hpp"
 
 # define 	WEBS_MAX_FDS		10240
 # define 	WEBS_MAX_CONNS		100
