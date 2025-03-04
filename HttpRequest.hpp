@@ -6,13 +6,16 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 15:47:44 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 16:06:06 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef 	HTTP_REQUEST_HPP
 # define	HTTP_REQUEST_HPP
 # include   "ServerConfig.hpp"
+# include   "HttpResponse.hpp"
+# include 	<map>
+
 
 class ServerConfig;
 

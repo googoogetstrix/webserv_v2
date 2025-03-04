@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 15:59:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 16:09:14 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,11 +76,23 @@ int	HttpResponse::getStatus()
 	return status;
 }
 
+bool	HttpResponse::setStatus(int newStatusCode)
+{
+	status = newStatusCode;
+	return true;
+}
+
 std::string	HttpResponse::getBody() const
 {
 	return body;
 }
 
+
+bool	HttpResponse::setBody(std::string newBody)
+{
+	body = newBody; 
+	return true;
+}
 
 std::string HttpResponse::getStatusText(int statusCode)
 {
