@@ -55,9 +55,8 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    /* justify-content: flex-start;
-    padding-top: 33vh; */
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 33vh;
 }
 
 .title {
@@ -79,11 +78,6 @@ body {
     text-transform: uppercase;
     color: #a0a0a0;
 }
-
-.menu {
-    margin-top: 2rem;
-}
-
 /* Footer Styles */
 .footer {
     position: absolute;
