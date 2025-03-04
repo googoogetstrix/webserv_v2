@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 12:34:06 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/04 13:51:33 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,9 +28,9 @@ static std::string trim(const std::string& str) {
 }
 
 
-HttpResponse::HttpResponse()
+HttpResponse::HttpResponse():status(200)
 {
-
+	setHeader("Content-Type", "text/html");
 }
 HttpResponse::HttpResponse(HttpResponse const &other)
 {
@@ -182,14 +182,25 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
     return errorPage;
 }
 
-std::string HttpResponse::serialize() const
+std::string HttpResponse::serialize()
 {
-	std::ostringstream  	ss;
-	ss << "HTTP/1.1 " << status << " " << getStatusText(status) << "\r\n";
+	std::ostringstream  	oss;
+	std::stringstream 		ss;
+	oss << "HTTP/1.1 " << status << " " << getStatusText(status) << "\r\n";
+	ss << body.size();
+	setHeader("Content-Length", ss.str(), true);
+
 	for (std::map<std::string,std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
-		ss << trim(it->first) << ": " << it->second << "\r\n";
-	ss << "\r\n\r\n" << body;
-	return ss.str();
+		oss << trim(it->first) << ": " << it->second << "\r\n";
+	// single set of \r\n since the header already sent the first set
+	oss << "\r\n" << body;
+
+	std::cout << "===================================" << std::endl;
+	std::cout << "response" << std::endl;
+	std::cout << "===================================" << std::endl;
+	std::cout << oss.str() << std::endl;
+	std::cout << "===================================" << std::endl;
+	return oss.str();
 	
 }
 
@@ -206,5 +217,24 @@ bool HttpResponse::response(int socket_id)
 			return false;
 		bytesSent += sent;
 	}
+	return (true);
+}
+
+bool HttpResponse::setStatus(int statusCode)
+{
+	status = statusCode; 
+	return (true);
+}
+bool HttpResponse::setBody(std::string bodyString)
+{
+	body = bodyString;
+	return (true);
+}
+
+
+bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
+{
+	(void)overwriteExisting;
+	headers[name] = value;
 	return (true);
 }
