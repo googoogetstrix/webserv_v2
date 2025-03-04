@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 13:51:33 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 14:25:43 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,12 @@ static std::string trim(const std::string& str) {
     }
 
     return str.substr(start, end - start);
+}
+
+static std::string intToString(int value) {
+    std::stringstream ss;
+    ss << value;
+    return ss.str();
 }
 
 
@@ -57,7 +63,7 @@ std::string HttpResponse::getHeader(std::string name) const
 		return "";
 }
 
-bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting=false)
+bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
 {
 	std::map<std::string, std::string>::const_iterator pos = headers.find(name);
 	if (pos != headers.end() && !overwriteExisting)
@@ -162,13 +168,13 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 	
 	std::ifstream file("errorPages/errorPage.html");
 	if (!file.is_open())
-        return "<html><body><h1>Error " + std::to_string(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
+        return "<html><body><h1>Error " + intToString(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	std::string errorPage = buffer.str();
 
 	std::map<std::string, std::string> replacements;
-	replacements["{{statusCode}}"] = std::to_string(statusCode);
+	replacements["{{statusCode}}"] = intToString(statusCode);
     replacements["{{errorText}}"] = errorText;
 
 	std::map<std::string, std::string>::iterator it;
@@ -220,21 +226,21 @@ bool HttpResponse::response(int socket_id)
 	return (true);
 }
 
-bool HttpResponse::setStatus(int statusCode)
-{
-	status = statusCode; 
-	return (true);
-}
-bool HttpResponse::setBody(std::string bodyString)
-{
-	body = bodyString;
-	return (true);
-}
+// bool HttpResponse::setStatus(int statusCode)
+// {
+// 	status = statusCode; 
+// 	return (true);
+// }
+// bool HttpResponse::setBody(std::string bodyString)
+// {
+// 	body = bodyString;
+// 	return (true);
+// }
 
 
-bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
-{
-	(void)overwriteExisting;
-	headers[name] = value;
-	return (true);
-}
+// bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
+// {
+// 	(void)overwriteExisting;
+// 	headers[name] = value;
+// 	return (true);
+// }

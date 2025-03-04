@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 11:34:57 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 14:21:04 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include 	<iostream>
 # include 	<vector>
 # include 	<sstream>
+# include	<string>
 # include 	<unistd.h>
 
 class HttpResponse
