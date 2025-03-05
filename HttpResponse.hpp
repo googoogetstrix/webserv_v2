@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 15:58:07 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 19:22:38 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define	HTTP_RESPONSE_HPP
 # include 	<map>
 # include 	<sys/socket.h>
+# include	<sys/stat.h>
 # include	<fstream>
 # include 	<iostream>
 # include 	<vector>
@@ -21,6 +22,11 @@
 # include	<string>
 # include 	<unistd.h>
 # include 	"Util.hpp"
+# include	"HttpRequest.hpp"
+# include	"ServerConfig.hpp"
+# include	"RouteConfig.hpp"
+
+class HttpRequest;
 
 class HttpResponse
 {
@@ -49,7 +55,10 @@ class HttpResponse
 		void								clear();
 		
 		static std::string					getStatusText(int statusCode);
+		static std::string					getErrorPage(int statusCode, ServerConfig server);
 		static std::string					getDefaultErrorPage(int statusCode);
+		static std::string					getMimeType(const std::string & extension);
+		void								getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig *route);
 
 		bool 								response(int clientSocket);
 };
