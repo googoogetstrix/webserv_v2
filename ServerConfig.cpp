@@ -1,86 +1,31 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ServerConfig.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/02/13 10:27:55 by bworrawa         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "ServerConfig.hpp"
 
-ServerConfig::ServerConfig()
-{
+ServerConfig::ServerConfig() : port(0), host("0.0.0.0"), clientMaxBodySize(1024 * 1024 * 8) {}
 
-}
-ServerConfig::ServerConfig(ServerConfig const &other)
-{
-	if(this != &other)
-		*this = other;
+int ServerConfig::getPort() const { return port; }
+const std::vector<std::string>& ServerConfig::getServerNames() const { return serverNames; }
+const std::string& ServerConfig::getHost() const { return host; }
+const std::string& ServerConfig::getRoot() const { return root; }
+const std::string& ServerConfig::getIndex() const { return index; }
+size_t ServerConfig::getClientMaxBodySize() const { return clientMaxBodySize; }
+const std::map<int, std::string>& ServerConfig::getErrorPages() const { return errorPages; }
+const std::vector<RouteConfig>& ServerConfig::getRoutes() const { return routes; }
 
-}
-ServerConfig &ServerConfig::operator=(ServerConfig const &other)
-{
-	if(this != &other)
-	{
-		port = other.port;
-		server_name = other.server_name;
-		root = other.root;
-		index = other.index;
-		allowed_methods = other.allowed_methods;
-		paths  = other.paths;
-	}	
-		
-	return (*this);
-}
+void ServerConfig::setPort(int port) { this->port = port; }
+void ServerConfig::setServerNames(const std::vector<std::string>& serverNames) { this->serverNames = serverNames; }
+void ServerConfig::setHost(const std::string& host) { this->host = host; }
+void ServerConfig::setRoot(const std::string& root) { this->root = root; }
+void ServerConfig::setIndex(const std::string& index) { this->index = index; }
+void ServerConfig::setClientMaxBodySize(size_t clientMaxBodySize) { this->clientMaxBodySize = clientMaxBodySize; }
+void ServerConfig::setErrorPages(const std::map<int, std::string>& errorPages) { this->errorPages = errorPages; }
+void ServerConfig::setRoutes(const std::vector<RouteConfig>& routes) { this->routes = routes; }
 
-ServerConfig::~ServerConfig()
+void ServerConfig::addRoute(const RouteConfig& routeConfig)
 {
-
+    routes.push_back(routeConfig);
 }
 
-void ServerConfig::dummy(void)
+void ServerConfig::addErrorPage(int errorCode, const std::string& path)
 {
-	port = 4343;
-	server_name = "localhost"; /// www.example.com
-	root = "./wwwroot/www1/";
-	index = "index.html";
-	allowed_methods.push_back("GET");
-	allowed_methods.push_back("POST");
-	allowed_methods.push_back("DELETE");
-	// paths = '' // nah
-
-}
-
-void ServerConfig::dummy2(void)
-{
-	port = 4444;
-	server_name = "localhost2";
-	root = "./wwwroot/www2/";
-	index = "index.html";
-	allowed_methods.push_back("GET");
-	allowed_methods.push_back("POST");
-	allowed_methods.push_back("DELETE");
-	// paths = '' // nah
-
-}
-
-int	ServerConfig::getPort(void)
-{
-	return port;
-}
-
-std::string ServerConfig::getNick()
-{
-	std::stringstream ss;
-
-	if (!server_name.empty())
-		ss << server_name;
-	else
-		ss << "server";
-	
-	return (ss.str());
+    errorPages[errorCode] = path;
 }

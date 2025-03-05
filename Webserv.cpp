@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 10:11:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 11:19:24 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,13 +65,10 @@ size_t	Webserv::parseConfig(std::string config_file)
 	Logger::log(LC_SYSTEM, "[NOT YET DONE] Skipping parsing file, using hardcode for now!");
 
 	// DELME 
-	ServerConfig sc1;
-	sc1.dummy();
-	ServerConfig sc2;
-	sc2.dummy2();
-	servers.push_back(sc1);
-	servers.push_back(sc2);
+	servers = ConfigParser::parseAllConfigs(config_file);
+
 	// DELME 
+	
 
 	(void) config_file;
 	Logger::log(LC_SYSTEM, "[NOT YET DONE] Done parsing file with %d servers", servers.size()) ;
@@ -123,7 +120,7 @@ bool Webserv::setupSockets()
 
 		if (used_ports.find(current_port) != used_ports.end())
 		{
-			Logger::log(LC_YELLOW, "%s port#%d is already bound", it->getNick().c_str(), current_port);
+			Logger::log(LC_YELLOW, " port#%d is already bound",  current_port);
 			continue;
 		} 
 		
@@ -140,7 +137,7 @@ bool Webserv::setupSockets()
 			if (fcntl(fd, F_SETFL , O_NONBLOCK) == -1)
 			{
 				close(fd);
-				throw std::runtime_error("Failed to set " + it->getNick() +  " to non-blocking");
+				throw std::runtime_error("Failed to set server to non-blocking");
 			}
 			// reusable socket if the server was restart before port allocation timeout
 		    int opt = 1;
@@ -159,11 +156,11 @@ bool Webserv::setupSockets()
 			sv_addr.sin_port = htons(it->getPort());
 
 			if (bind(fd, (struct sockaddr*)&sv_addr , sizeof(sv_addr) ) < 0)
-				throw std::runtime_error("Failed to bind on " + it->getNick());
+				throw std::runtime_error("Failed to bind on server");
 
 			// no blocking here just yet, just to change the status of the socket
 			if (listen(fd, WEBS_MAX_CONNS) < 0)
-				throw std::runtime_error("Failed to listen on " + it->getNick());
+				throw std::runtime_error("Failed to listen on server");
 
 			Logger::log(LC_YELLOW, "Listening to port %d, with fd %d" , it->getPort(), fd);
 			server_fds.push_back(fd);

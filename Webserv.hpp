@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 09:25:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 11:16:42 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 # include 	"HttpRequest.hpp"
 # include 	"HttpResponse.hpp"
 # include 	"ConnectionController.hpp"
+# include 	"ConfigParser.hpp"
 
 # define 	WEBS_MAX_FDS		10240
 # define 	WEBS_MAX_CONNS		100

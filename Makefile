@@ -5,10 +5,12 @@ CXX 					= c++
 CXXFLAGS 				= -Wall -Wextra -Werror -std=c++98 -pedantic -g3 -O0
 
 HEAD					= HttpRequest.hpp HttpResponse.hpp ServerConfig.hpp Webserv.hpp Logger.hpp Util.hpp \
-						Connection.hpp ConnectionController.hpp 
+						RouteConfig.hpp \
+						Connection.hpp ConnectionController.hpp ConfigParser.hpp
 
 SRC 					= HttpRequest.cpp HttpResponse.cpp ServerConfig.cpp Webserv.cpp Logger.cpp Util.cpp \
-						Connection.cpp ConnectionController.cpp \
+						RouteConfig.cpp \
+						Connection.cpp ConnectionController.cpp ConfigParser.cpp \
 						main.cpp
 
 OBJ 					= $(SRC:.cpp=.o)
