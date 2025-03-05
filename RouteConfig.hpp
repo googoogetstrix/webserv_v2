@@ -13,8 +13,6 @@ class RouteConfig
 		std::string root;
 		std::string index;
 		std::vector<std::string> allow_methods;
-		// std::string cgi_path;
-		// std::vector<std::string> cgi_ext ;
 		std::map<std::string, std::string> CGIs;
 		bool autoindex;
 		size_t clientMaxBodySize;
@@ -26,8 +24,6 @@ class RouteConfig
 		const std::string& getRoot() const;
 		const std::string& getIndex() const;
 		const std::vector<std::string>& getMethods() const;
-		// const std::string& getCgi_path() const;
-		// const std::vector<std::string>& getCgi_ext() const;
 		const std::map<std::string, std::string>& getCGIs() const;
 		bool getAutoindex() const;
 		size_t getClientMaxBodySize() const;
@@ -36,9 +32,6 @@ class RouteConfig
 		void setRoot(const std::string& root);
 		void setIndex(const std::string& index);
 		void setMethods(const std::vector<std::string>& methods);
-		// void setCgi_path(const std::string& cgi_path);
-		// void setCgi_ext(const std::vector<std::string>& cgi_ext);
-		// void setCGIs(const std::map<std::string, std::string>& CGIs);
 		void setCGIs(const std::string& ext, const std::string& path);
 		void setAutoindex(bool autoIndex);
 		void setClientMaxBodySize(size_t clientMaxBodySize);

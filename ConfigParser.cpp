@@ -47,22 +47,6 @@ RouteConfig ConfigParser::parseRouteConfig(std::ifstream& file, const std::strin
             routeConfig.setIndex(line.substr(6));
         else if (line.find("allow_methods") == 0 && line.length() > 14)
             routeConfig.setMethods(split(line.substr(14), ' '));
-        // else if (line.find("cgi_path") == 0)
-        //     routeConfig.setCgi_path(line.substr(9));
-        // else if (line.find("cgi_ext") == 0)
-        //     routeConfig.setCgi_ext(split(line.substr(8), ' '));
-        // else if (line.find("cgi_path") == 0 && line.length() > 9)
-        //     cgi_paths = split(line.substr(9), ' ');
-        // else if (line.find("cgi_ext") == 0 && line.length() > 8)
-        // {
-        //     std::vector<std::string> exts = split(line.substr(8), ' ');
-        //     std::map<std::string, std::string> cgis;
-        //     for (size_t i = 0; i < exts.size() && i < cgi_paths.size(); ++i)
-        //     {
-        //         cgis[exts[i]] = cgi_paths[i];
-        //     }
-        //     routeConfig.setCGIs(cgis);
-        // }
         else if (line.find("cgi_pass") == 0 && line.length() > 9)
         {
             size_t spacePos = line.find(' ', 9);
@@ -99,7 +83,7 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
         else if (line.find("listen") == 0 && line.length() > 7)
             currentServerConfig.setPort(stringToInt(line.substr(7)));
         else if (line.find("server_name") == 0 && line.length() > 12)
-            currentServerConfig.setServerNames(split(line.substr(12), ' '));
+            currentServerConfig.setServerName(line.substr(12));
         else if (line.find("host") == 0 && line.length() > 5)
             currentServerConfig.setHost(line.substr(5));
         else if (line.find("root") == 0 && line.length() > 5)
