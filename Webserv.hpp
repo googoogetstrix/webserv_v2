@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 10:51:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 11:16:42 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@
 # include 	"ServerConfig.hpp"
 # include 	"HttpRequest.hpp"
 # include 	"HttpResponse.hpp"
+# include 	"ConnectionController.hpp"
+# include 	"ConfigParser.hpp"
 
 # define 	WEBS_MAX_FDS		10240
 # define 	WEBS_MAX_CONNS		100
@@ -54,7 +56,7 @@ class Webserv
 
 		bool	findServerFromRequest(HttpRequest &req, ServerConfig &sc);
 
-
+		bool	isServerFd(int fd);
 		
 
 		
