@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 16:06:06 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 10:44:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ class HttpRequest
 		std::map<std::string, std::string> 		queryStrings;
 
 		std::string								body;
+		std::vector<char>						postBody;
 
 
 	public:

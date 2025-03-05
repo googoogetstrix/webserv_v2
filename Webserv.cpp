@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 18:13:35 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 10:11:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -221,7 +221,9 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-	
+	ConnectionController cc;
+	Connection 			 *conn = NULL;
+
 	while (true) 
 	{
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
@@ -240,32 +242,7 @@ int Webserv::run(void)
 				
 				if (isServerFd(active_fd))
 				{
-					if(events[i].events & EPOLLIN)
-					{
-
-						struct sockaddr_in client_address;	
-						socklen_t len = sizeof(client_address);
-						Logger::log(LC_NOTE, "trying to accept new socket ");
-						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
-						if(client_socket < 0)
-							throw std::runtime_error("Unable to accept()");
-
-						// get whatever flag from the clinet socket, and make sure it's set to non-block
-						int flag = fcntl( events[i].data.fd, F_GETFL , 0);
-						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
-							throw std::runtime_error("Unable to set client socket into non-blocking mode");
-						
-						epoll_event  event; 
-						event.events = EPOLLIN;	
-						event.data.fd = client_socket;
-
-						Logger::log(LC_NOTE, "new incoming socket created as fd#%d" , client_socket);
-						epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket , &event);
-						Logger::log(LC_NOTE, "register fd#%d into epoll" , client_socket);
-
-						continue;
-					}
-					// error 
+					// error handling
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 					{
 						Logger::log(LC_ERROR, "Listening Socket %d error, abort listening ", events[i].data.fd);
@@ -277,11 +254,52 @@ int Webserv::run(void)
 						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 						continue;
 					}
-				}
-				else
-				{
 
-					HttpResponse httpResponse;
+					// upcoming new request
+					if(events[i].events & EPOLLIN)
+					{
+						struct sockaddr_in client_address;	
+						socklen_t len = sizeof(client_address);
+						Logger::log(LC_NOTE, "trying to accept new socket ");
+						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
+						if(client_socket < 0)
+							throw std::runtime_error("Unable to accept()");
+						// get whatever flag from the clinet socket, and make sure it's set to non-block
+						int flag = fcntl( events[i].data.fd, F_GETFL , 0);
+						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
+							throw std::runtime_error("Unable to set client socket into non-blocking mode");
+
+						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
+						int da_size = cc.addConnection(client_socket, servers[ 0 ] );
+						std::cout << "da_size " << da_size << std::endl;
+						
+						epoll_event  event; 
+						event.events = EPOLLIN;	
+						event.data.fd = client_socket;
+
+						Logger::log(LC_NOTE, "new incoming socket created as fd#%d" , client_socket);
+						epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket , &event);
+						Logger::log(LC_NOTE, "register fd#%d into epoll" , client_socket);
+
+						continue;
+					}
+					// end server fds
+					continue;
+					
+				}
+
+
+				// client sockets
+				{
+					conn = cc.findConnection(active_fd);
+					if (conn == NULL)
+					{
+						Logger::log(LC_ERROR, " SERIOUS ERROR, cannot find connection #%d from the ConnectionController", active_fd);
+						continue;
+					}
+					HttpResponse 		 httpResponse;
+					
+					// error handling
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
 					{
 						Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
@@ -312,8 +330,8 @@ int Webserv::run(void)
 					{
 						
 						// check if the connection belong to which server?
-						
 						// handleRequest(client_socket , &webserv obj , )
+						std::cout << "*** MOCKUP RESPONSE" << std::endl;
 						httpResponse.setStatus(200);
 						httpResponse.setBody("CoolTTT");
 						if (httpResponse.response(active_fd))
@@ -323,7 +341,11 @@ int Webserv::run(void)
 							Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
 						}
 						continue ;
+					}
 
+					if(events[i].events & EPOLLOUT)
+					{
+						
 					}
 				}
 

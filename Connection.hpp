@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 18:52:50 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 10:44:38 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,12 @@ class Connection
 {
 	private:
 
-		int				fd;	
-		time_t			lastActive; 
-		ServerConfig	config;
+		int					fd;	
+		time_t				lastActive; 
+		ServerConfig		config;
+
+		std::string			requestBuffer;
+		std::string 		responseBuffer;
 
 		void 			setNonBlock();
 	
@@ -37,11 +40,15 @@ class Connection
 
 		time_t			getLastActive() const ;
 		int 			getFd() const;
+		std::string		getRequestBuffer() const;
+		std::string 	getResponseBuffer() const;
 
 		bool 			setLastActive(time_t);
 		bool 			setFd(int fd);
 
 		void			punchIn(void);
+
+
 
 }; 
 
