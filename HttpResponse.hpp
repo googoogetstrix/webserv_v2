@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 15:58:07 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 10:38:23 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,9 @@
 # include	<string>
 # include 	<unistd.h>
 # include 	"Util.hpp"
+# include	"HttpRequest.hpp"
+# include	"ServerConfig.hpp"
+# include	"RouteConfig.hpp"
 
 class HttpResponse
 {
@@ -50,6 +53,7 @@ class HttpResponse
 		
 		static std::string					getStatusText(int statusCode);
 		static std::string					getDefaultErrorPage(int statusCode);
+		static std::string					getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig &route);
 
 		bool 								response(int clientSocket);
 };

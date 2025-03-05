@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 16:09:14 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 10:46:12 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,8 @@ int	HttpResponse::getStatus()
 
 bool	HttpResponse::setStatus(int newStatusCode)
 {
+	if (newStatusCode < 100 || newStatusCode > 599)
+		return false;
 	status = newStatusCode;
 	return true;
 }
@@ -196,4 +198,18 @@ bool HttpResponse::response(int socket_id)
 		bytesSent += sent;
 	}
 	return (true);
+}
+
+std::string	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig &route)
+{
+	std::string filePath = server.getRoot() + request.getPath();
+	std::ifstream file(filePath.c_str(), std::ios::binary);
+	if (!file.is_open())
+	{
+		return getDefaultErrorPage(404);
+	}
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+
 }
