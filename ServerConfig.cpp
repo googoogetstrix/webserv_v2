@@ -29,3 +29,7 @@ void ServerConfig::addErrorPage(int errorCode, const std::string& path)
 {
     errorPages[errorCode] = path;
 }
+std::string ServerConfig::getNick()
+{
+    return ( host + std::string(":") + Util::toString(port));
+}

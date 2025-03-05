@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 19:25:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 17:17:32 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ class ConnectionController
 		std::map<int, Connection> 	connections; 
 		size_t						timeoutInSecs;
 
+		std::map<int, ServerConfig> servers;
+
 		ConnectionController(ConnectionController const &other);
 		ConnectionController &operator=(ConnectionController const &other);
 
@@ -41,6 +43,12 @@ class ConnectionController
 		Connection *findConnection(int fd);
 		bool		removeConnection(int fd);
 		int			addConnection(int fd, ServerConfig config);
+
+
+		int							addServer(int fd, ServerConfig server);
+		ServerConfig				*getServer(int fd);
+		std::map<int, ServerConfig> getServers(); 
+
 
 };
 

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 11:16:42 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 17:25:31 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ class Webserv
 		size_t	parseConfig(std::string config_file);
 
 
-		bool	setupSockets();
+		bool	setupSockets(ConnectionController &cc);
 
 		bool	findServerFromRequest(HttpRequest &req, ServerConfig &sc);
 
