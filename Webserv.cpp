@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 19:50:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 20:03:14 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -339,20 +339,24 @@ int Webserv::run(void)
 						if(events[i].events & EPOLLOUT)
 						{
 							std::cout << "*** MOCKUP RESPONSE" << std::endl;
-							// httpResponse.setStatus(200);
-							// httpResponse.setBody("Hello42");
-						HttpRequest req;
-						std::string testReq = "GET /index.html HTTP/1.1\r\n";
-						testReq += "Host: www.example.com\r\n"; 
-						testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
-						testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
-						testReq += "Accept-Language: en-US,en;q=0.5\r\n";
-						testReq += "Accept-Encoding: gzip, deflate, br\r\n";
-						testReq += "Connection: keep-alive\r\n";
-						testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
-						req.parseRequest(httpResponse, servers[0], testReq);
-						const std::vector<RouteConfig>& routers = servers[0].getRoutes();
-						httpResponse.getStaticFile(req, servers[0], NULL);
+
+							ServerConfig *server = cc.getServer( events[i].data.fd);
+							if(!server)
+								throw std::runtime_error("Unable to load client connection server config");
+
+
+							HttpRequest req;
+							std::string testReq = "GET /index.html HTTP/1.1\r\n";
+							testReq += "Host: www.example.com\r\n"; 
+							testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
+							testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
+							testReq += "Accept-Language: en-US,en;q=0.5\r\n";
+							testReq += "Accept-Encoding: gzip, deflate, br\r\n";
+							testReq += "Connection: keep-alive\r\n";
+							testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
+							req.parseRequest(httpResponse, *server , testReq);
+							// const std::vector<RouteConfig>& routers = server.getRoutes();??
+							httpResponse.getStaticFile(req, *server, NULL);
 							if (httpResponse.response(active_fd))
 							{
 								close(events[i].data.fd);

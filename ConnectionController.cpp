@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 18:20:24 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 19:58:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,7 @@ int		ConnectionController::addConnection(int fd, ServerConfig config)
 	{
 		std::cout << " KEY = " << it->first << std::endl;
 	}
-//	 throw std::runtime_error("GODDAMNNNNNN");
+
 	return connections.size();
 
 }
