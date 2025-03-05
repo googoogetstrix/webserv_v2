@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 18:54:14 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 16:06:53 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,4 +74,43 @@ bool 	Connection::setFd(int newFd)
 void	Connection::punchIn(void)
 {
 	lastActive = time(NULL);
+}
+
+
+void	Connection::setHeaderIsComplete(bool newValue){
+	headerIsCompleted = newValue;
+	
+}
+bool	Connection::isHeaderComplete()
+{
+	return (headerIsCompleted);
+}
+
+bool	Connection::appendRawPostBody(char *offset, size_t bytesRead)
+{
+	for(size_t i = 0; i < bytesRead; ++i)
+	{
+		rawPostBody.push_back( *(offset + i));
+	}
+	return (true);
+}
+bool	Connection::appendRequestBuffer(std::string str)
+{
+	requestBuffer += str;
+	return (true);
+}
+
+
+bool	Connection::processRequestHeader()
+{
+	std::istringstream  headersStream(requestBuffer);
+	std::string 		line;
+
+	while(  std::getline(headersStream , line))
+	{
+
+		std::cout << "HEADER!!!" << line << std::endl;
+	}
+
+	return (true);
 }

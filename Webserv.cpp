@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 11:19:24 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 16:08:42 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,56 +294,73 @@ int Webserv::run(void)
 						Logger::log(LC_ERROR, " SERIOUS ERROR, cannot find connection #%d from the ConnectionController", active_fd);
 						continue;
 					}
-					HttpResponse 		 httpResponse;
-					
-					// error handling
-					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
+					else 
 					{
-						Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
-						close(events[i].data.fd);
-						Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-						continue ;
-					}
-
-					if ((events[i].events & EPOLLERR))
-					{
-
-						int error_code ;
-						socklen_t len = sizeof(error_code);
-						getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
+						HttpResponse 		 httpResponse;
 						
-						Logger::log(LC_ERROR, "ERR Client Socket %d error, closing socket ", events[i].data.fd);
-						std::cout << error_code << std::endl;
-						Logger::log(LC_ERROR, "ERROR: %s" , len);
-
-						close(events[i].data.fd);
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-						continue ;
-					}
-
-
-					if(events[i].events & EPOLLIN)
-					{
-						
-						// check if the connection belong to which server?
-						// handleRequest(client_socket , &webserv obj , )
-						std::cout << "*** MOCKUP RESPONSE" << std::endl;
-						httpResponse.setStatus(200);
-						httpResponse.setBody("CoolTTT");
-						if (httpResponse.response(active_fd))
+						// error handling
+						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
 						{
+							Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
+							close(events[i].data.fd);
+							Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
+							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							continue ;
+						}
+
+						if ((events[i].events & EPOLLERR))
+						{
+
+							int error_code ;
+							socklen_t len = sizeof(error_code);
+							getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
+							
+							Logger::log(LC_ERROR, "ERR Client Socket %d error, closing socket ", events[i].data.fd);
+							std::cout << error_code << std::endl;
+							Logger::log(LC_ERROR, "ERROR: %s" , len);
+
 							close(events[i].data.fd);
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							continue ;
 						}
-						continue ;
-					}
 
-					if(events[i].events & EPOLLOUT)
-					{
-						
+
+						if(events[i].events & EPOLLIN)
+						{
+
+							
+							// check if the connection belong to which server?
+							// handleRequest(client_socket , &webserv obj , )
+							cc.handleRead(*conn);
+							std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
+							httpResponse.setStatus(200);
+							httpResponse.setBody("CoolTTT");
+							if (httpResponse.response(active_fd))
+							{
+								close(events[i].data.fd);
+								epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+								Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							}
+							continue ;
+							
+						}
+
+						if(events[i].events & EPOLLOUT)
+						{
+							std::cout << "*** MOCKUP RESPONSE" << std::endl;
+							httpResponse.setStatus(200);
+							httpResponse.setBody("CoolTTT");
+							if (httpResponse.response(active_fd))
+							{
+								close(events[i].data.fd);
+								epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+								Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							}
+							continue ;
+							
+						}
 					}
+					
 				}
 
 				Logger::log(LC_RED, " *** END of the nfds loop");

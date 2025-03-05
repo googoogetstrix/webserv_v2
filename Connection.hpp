@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 10:44:38 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 16:23:30 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,16 @@
 # include	<ctime>
 # include	<fcntl.h>
 # include	<stdexcept>
+# include	<string>
+# include 	<errno.h>
+# include 	<sys/epoll.h>
+# include 	<sstream>
+
+
 # include	"ServerConfig.hpp"
+# include	"HttpRequest.hpp"
+# include	"HttpResponse.hpp"
+# define 	CON_RECV_BUFFER_SIZE 	4001
 
 class Connection 
 {
@@ -28,8 +37,13 @@ class Connection
 
 		std::string			requestBuffer;
 		std::string 		responseBuffer;
+		std::vector<char>	rawPostBody;
+		bool				headerIsCompleted;
 
-		void 			setNonBlock();
+		void 				setNonBlock();
+
+		HttpRequest			httpRequest;		
+		HttpResponse		httpResponse;		
 	
 	public:
 		Connection();
@@ -38,15 +52,25 @@ class Connection
 		Connection &operator=(Connection const other);
 		~Connection();
 
-		time_t			getLastActive() const ;
-		int 			getFd() const;
-		std::string		getRequestBuffer() const;
-		std::string 	getResponseBuffer() const;
+		time_t				getLastActive() const ;
+		int 				getFd() const;
+		std::string			getRequestBuffer() const;
+		std::string 		getResponseBuffer() const;
 
-		bool 			setLastActive(time_t);
-		bool 			setFd(int fd);
+		bool 				setLastActive(time_t);
+		bool 				setFd(int fd);
 
-		void			punchIn(void);
+		void				punchIn(void);
+
+		void				setHeaderIsComplete(bool newValue);
+		bool				isHeaderComplete(); 
+
+		bool				appendRawPostBody(char *, size_t bytesRead);
+		bool				appendRequestBuffer(std::string str);
+
+		bool				processRequestHeader();
+		bool				processRequest();
+
 
 
 
