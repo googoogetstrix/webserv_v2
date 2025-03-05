@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 16:06:53 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 18:32:42 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,10 +104,26 @@ bool	Connection::appendRequestBuffer(std::string str)
 bool	Connection::processRequestHeader()
 {
 	std::istringstream  headersStream(requestBuffer);
+	
 	std::string 		line;
+
+	size_t				lineNo = 0;
 
 	while(  std::getline(headersStream , line))
 	{
+		lineNo++;
+		if (lineNo == 1)
+		{	
+			std::istringstream  lineStream; 
+			std::string  method , target , version;
+
+
+			if(!(lineStream >> method >> target >> version))
+			{
+				httpResponse.setStatus(400);
+			}
+			
+		}
 
 		std::cout << "HEADER!!!" << line << std::endl;
 	}
