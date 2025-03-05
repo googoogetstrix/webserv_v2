@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 10:46:12 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/05 16:54:06 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,7 +186,6 @@ std::string HttpResponse::serialize()
 
 bool HttpResponse::response(int socket_id)
 {
-	
 	std::string 			wholeResponse = serialize();
 	size_t					bytesSent = 0;
 
@@ -197,19 +196,80 @@ bool HttpResponse::response(int socket_id)
 			return false;
 		bytesSent += sent;
 	}
+	
+	// std::string testErrorPage = getDefaultErrorPage(status);
 	return (true);
 }
 
-std::string	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig &route)
+std::string HttpResponse::getMimeType(const std::string & extension)
 {
+	std::map<std::string, std::string> mimeTypes;
+	mimeTypes[".html"] = "text/html";
+    mimeTypes[".htm"] = "text/html";
+    mimeTypes[".css"] = "text/css";
+    mimeTypes[".js"] = "application/javascript";
+    mimeTypes[".json"] = "application/json";
+    mimeTypes[".png"] = "image/png";
+    mimeTypes[".jpg"] = "image/jpeg";
+    mimeTypes[".jpeg"] = "image/jpeg";
+    mimeTypes[".gif"] = "image/gif";
+    mimeTypes[".svg"] = "image/svg+xml";
+    mimeTypes[".ico"] = "image/x-icon";
+    mimeTypes[".xml"] = "application/xml";
+    mimeTypes[".pdf"] = "application/pdf";
+    mimeTypes[".txt"] = "text/plain";
+	std::map<std::string, std::string>::const_iterator it = mimeTypes.find(extension);
+	if (it != mimeTypes.end())
+		return it->second;
+	return "application/octet-stream";
+}
+
+void	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig *route)
+{
+	(void)route;
 	std::string filePath = server.getRoot() + request.getPath();
+	// find route
+	// for route in routes
+	// 		if route.path == request.getPath 
+				// openfile
+		// cut /
+	if (route != NULL)
+	{}
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
-		return getDefaultErrorPage(404);
+		struct stat fileStat;
+		if (stat(filePath.c_str(), &fileStat) != 0)
+		{
+			if (errno == ENOENT)
+			{
+				setStatus(404);
+				setBody(getDefaultErrorPage(404));
+			}
+			else if (errno == EACCES)
+			{
+				setStatus(403);
+				setBody(getDefaultErrorPage(403));
+			}
+			else
+			{
+				setStatus(405);
+				setBody(getDefaultErrorPage(405));
+			}
+		}
+		return ;
 	}
+	setStatus(200);
+
+	size_t dotPos = filePath.find_last_of(".");
+	std::string extension;
+	if (dotPos != std::string::npos)
+		extension = filePath.substr(dotPos);
+	else
+		extension = "";
+	setHeader("Content-Type", getMimeType(extension));
+	
 	std::stringstream buffer;
 	buffer << file.rdbuf();
-	return buffer.str();
-
+	setBody(buffer.str());
 }
