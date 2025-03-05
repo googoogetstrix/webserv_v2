@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 11:19:24 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 17:44:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,16 +62,8 @@ Webserv::~Webserv()
 
 size_t	Webserv::parseConfig(std::string config_file)
 {
-	Logger::log(LC_SYSTEM, "[NOT YET DONE] Skipping parsing file, using hardcode for now!");
-
-	// DELME 
 	servers = ConfigParser::parseAllConfigs(config_file);
-
-	// DELME 
-	
-
-	(void) config_file;
-	Logger::log(LC_SYSTEM, "[NOT YET DONE] Done parsing file with %d servers", servers.size()) ;
+	Logger::log(LC_NOTE, "Done parsing file with %d servers", servers.size()) ;
 
 
 	return (servers.size());
@@ -105,7 +97,7 @@ bool	Webserv::isServerFd(int fd)
 }
 
 
-bool Webserv::setupSockets()
+bool Webserv::setupSockets(ConnectionController& cc)
 {
 
 	Logger::log(LC_GREEN, " [1/3] Setting up sockets...");
@@ -162,10 +154,10 @@ bool Webserv::setupSockets()
 			if (listen(fd, WEBS_MAX_CONNS) < 0)
 				throw std::runtime_error("Failed to listen on server");
 
-			Logger::log(LC_YELLOW, "Listening to port %d, with fd %d" , it->getPort(), fd);
 			server_fds.push_back(fd);
 			used_ports.insert(current_port);
-			
+
+			cc.addServer(fd, *it);
 
 		}
 		catch(std::exception &e)
@@ -175,6 +167,10 @@ bool Webserv::setupSockets()
 		success++;
 	}
 
+	std::map<int, ServerConfig> temp = cc.getServers();
+	for( std::map<int, ServerConfig>::iterator it = temp.begin(); it != temp.end(); ++it)
+		Logger::log(LC_NOTE, "Server Socket #%d, listening as http://%s" , it->first,  (it->second).getNick().c_str());
+
 	return (success > 0);
 }
 
@@ -182,11 +178,15 @@ bool Webserv::setupSockets()
 
 int Webserv::run(void)
 {
+
+	ConnectionController cc;
+	Connection 			 *conn = NULL;
+
 	Logger::log(LC_GREEN, "Booting up webserv...");
 	// create listening sockets
 	// binds
 	// listen
-	setupSockets();
+	setupSockets(cc);
 
 	
 
@@ -218,8 +218,6 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-	ConnectionController cc;
-	Connection 			 *conn = NULL;
 
 	while (true) 
 	{
@@ -265,6 +263,7 @@ int Webserv::run(void)
 						int flag = fcntl( events[i].data.fd, F_GETFL , 0);
 						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
 							throw std::runtime_error("Unable to set client socket into non-blocking mode");
+
 
 						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
 						int da_size = cc.addConnection(client_socket, servers[ 0 ] );

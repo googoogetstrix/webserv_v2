@@ -6,6 +6,7 @@
 # include <vector>
 # include <map>
 # include "RouteConfig.hpp"
+# include "Util.hpp"
 
 class ServerConfig
 {
@@ -44,6 +45,8 @@ class ServerConfig
 		void addRoute(const RouteConfig& routeConfig);
 		void addErrorPage(int errorCode, const std::string& path);
 
+		std::string getNick();
+
 		void print() const {
         std::cout << "Server Configuration: " << std::endl;
         std::cout << "  Port: " << port << std::endl;
@@ -62,6 +65,9 @@ class ServerConfig
         for (size_t i = 0; i < routes.size(); ++i) {
             routes[i].print();
         }
+
+		
+		
     }
 };
 

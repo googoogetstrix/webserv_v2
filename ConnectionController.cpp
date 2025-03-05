@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 09:46:29 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 17:20:52 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,3 +85,21 @@ int		ConnectionController::addConnection(int fd, ServerConfig config)
 	return connections.size();
 
 }
+int	ConnectionController::addServer(int fd, ServerConfig server)
+{
+	if(servers.find(fd) != servers.end())
+		throw std::runtime_error("ERROR, try overwrites the existing sockets");
+	servers[ fd] = server;
+	return servers.size();
+}
+ServerConfig	*ConnectionController::getServer(int fd)
+{
+	if(servers.find(fd) != servers.end())
+		return (NULL);
+	return (&servers[fd]);
+}
+std::map<int, ServerConfig> ConnectionController::getServers()
+{
+	return servers;
+}
+
