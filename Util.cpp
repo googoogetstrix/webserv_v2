@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Util.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 14:47:19 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/04 23:11:15 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,4 +56,12 @@ std::string	Util::toString(size_t i)
 	ss << i;
 	return (ss.str());
 
+}
+
+int Util::toInt(std::string s)
+{
+    std::stringstream       ss(s);
+    int i;
+    ss >> i;
+    return i;
 }
