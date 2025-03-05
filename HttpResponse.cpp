@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 16:54:06 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/05 19:24:30 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,6 +135,23 @@ std::string HttpResponse::getStatusText(int statusCode)
 		default:
 			return "Unknown Status";
 	}
+}
+
+std::string HttpResponse::getErrorPage(int statusCode, ServerConfig server)
+{
+	std::map<int, std::string> errorPages = server.getErrorPages();
+	std::map<int, std::string>::iterator it = errorPages.find(statusCode);
+	if (it != errorPages.end())
+	{
+		std::ifstream file(it->second.c_str());
+		if (!file.is_open())
+			return getDefaultErrorPage(statusCode);
+		std::stringstream buffer;
+		buffer << file.rdbuf();
+		std::string errorPage = buffer.str();
+		return errorPage;
+	}
+	return getDefaultErrorPage(statusCode);
 }
 
 std::string	HttpResponse::getDefaultErrorPage(int statusCode)
