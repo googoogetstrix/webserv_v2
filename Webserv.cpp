@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 14:54:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 11:19:24 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,13 +65,10 @@ size_t	Webserv::parseConfig(std::string config_file)
 	Logger::log(LC_SYSTEM, "[NOT YET DONE] Skipping parsing file, using hardcode for now!");
 
 	// DELME 
-	ServerConfig sc1;
-	sc1.dummy();
-	ServerConfig sc2;
-	sc2.dummy2();
-	servers.push_back(sc1);
-	servers.push_back(sc2);
+	servers = ConfigParser::parseAllConfigs(config_file);
+
 	// DELME 
+	
 
 	(void) config_file;
 	Logger::log(LC_SYSTEM, "[NOT YET DONE] Done parsing file with %d servers", servers.size()) ;
@@ -97,6 +94,17 @@ std::set<int>  Webserv::getListeningPorts()
 	return (ret);
 }
 
+bool	Webserv::isServerFd(int fd)
+{
+	for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
+		{
+			if (*it == fd)
+				return (true);
+		}
+	return (false);
+}
+
+
 bool Webserv::setupSockets()
 {
 
@@ -112,7 +120,7 @@ bool Webserv::setupSockets()
 
 		if (used_ports.find(current_port) != used_ports.end())
 		{
-			Logger::log(LC_YELLOW, "%s port#%d is already bound", it->getNick().c_str(), current_port);
+			Logger::log(LC_YELLOW, " port#%d is already bound",  current_port);
 			continue;
 		} 
 		
@@ -129,7 +137,7 @@ bool Webserv::setupSockets()
 			if (fcntl(fd, F_SETFL , O_NONBLOCK) == -1)
 			{
 				close(fd);
-				throw std::runtime_error("Failed to set " + it->getNick() +  " to non-blocking");
+				throw std::runtime_error("Failed to set server to non-blocking");
 			}
 			// reusable socket if the server was restart before port allocation timeout
 		    int opt = 1;
@@ -148,11 +156,11 @@ bool Webserv::setupSockets()
 			sv_addr.sin_port = htons(it->getPort());
 
 			if (bind(fd, (struct sockaddr*)&sv_addr , sizeof(sv_addr) ) < 0)
-				throw std::runtime_error("Failed to bind on " + it->getNick());
+				throw std::runtime_error("Failed to bind on server");
 
 			// no blocking here just yet, just to change the status of the socket
 			if (listen(fd, WEBS_MAX_CONNS) < 0)
-				throw std::runtime_error("Failed to listen on " + it->getNick());
+				throw std::runtime_error("Failed to listen on server");
 
 			Logger::log(LC_YELLOW, "Listening to port %d, with fd %d" , it->getPort(), fd);
 			server_fds.push_back(fd);
@@ -210,7 +218,9 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-	
+	ConnectionController cc;
+	Connection 			 *conn = NULL;
+
 	while (true) 
 	{
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
@@ -224,37 +234,41 @@ int Webserv::run(void)
 			Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
-				bool 		isListeningFd = false;
 				int			active_fd = events[i].data.fd;
-
-				// check if is one of the listening fds (server_fds)
-				for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
-				{
-					if (*it == active_fd)
-					{
-						isListeningFd = true;
-						break;
-					}
-				}
-
 				Logger::log(LC_RED, "epoll event on fd#%d!" , active_fd);
-
-				if (isListeningFd)
+				
+				if (isServerFd(active_fd))
 				{
+					// error handling
+					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
+					{
+						Logger::log(LC_ERROR, "Listening Socket %d error, abort listening ", events[i].data.fd);
+						int error_code ;
+						socklen_t len = sizeof(error_code);
+						getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
+						Logger::log(LC_ERROR, "ERROR: %s" , len);
+						close(events[i].data.fd);
+						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+						continue;
+					}
+
+					// upcoming new request
 					if(events[i].events & EPOLLIN)
 					{
-
 						struct sockaddr_in client_address;	
 						socklen_t len = sizeof(client_address);
 						Logger::log(LC_NOTE, "trying to accept new socket ");
 						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
 						if(client_socket < 0)
 							throw std::runtime_error("Unable to accept()");
-
 						// get whatever flag from the clinet socket, and make sure it's set to non-block
 						int flag = fcntl( events[i].data.fd, F_GETFL , 0);
 						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
 							throw std::runtime_error("Unable to set client socket into non-blocking mode");
+
+						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
+						int da_size = cc.addConnection(client_socket, servers[ 0 ] );
+						std::cout << "da_size " << da_size << std::endl;
 						
 						epoll_event  event; 
 						event.events = EPOLLIN;	
@@ -266,22 +280,23 @@ int Webserv::run(void)
 
 						continue;
 					}
-					// error 
-					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
-					{
-						Logger::log(LC_ERROR, "Listening Socket %d error, abort listening ", events[i].data.fd);
-						int error_code ;
-						socklen_t len = sizeof(error_code);
-						getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
-						Logger::log(LC_ERROR, "ERROR: %s" , len);
-						close(events[i].data.fd);
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-					}
+					// end server fds
+					continue;
+					
 				}
-				else
-				{
 
-					HttpResponse httpResponse;
+
+				// client sockets
+				{
+					conn = cc.findConnection(active_fd);
+					if (conn == NULL)
+					{
+						Logger::log(LC_ERROR, " SERIOUS ERROR, cannot find connection #%d from the ConnectionController", active_fd);
+						continue;
+					}
+					HttpResponse 		 httpResponse;
+					
+					// error handling
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
 					{
 						Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
@@ -312,8 +327,8 @@ int Webserv::run(void)
 					{
 						
 						// check if the connection belong to which server?
-						
 						// handleRequest(client_socket , &webserv obj , )
+						std::cout << "*** MOCKUP RESPONSE" << std::endl;
 						httpResponse.setStatus(200);
 						httpResponse.setBody("CoolTTT");
 						if (httpResponse.response(active_fd))
@@ -323,7 +338,11 @@ int Webserv::run(void)
 							Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
 						}
 						continue ;
+					}
 
+					if(events[i].events & EPOLLOUT)
+					{
+						
 					}
 				}
 

@@ -1,61 +1,68 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ServerConfig.hpp                                   :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/13 10:12:40 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 11:22:48 by bworrawa         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+#ifndef SERVERCONFIG_HPP
+# define SERVERCONFIG_HPP
 
-#ifndef		SERVERCONFIG_HPP
-# define	SERVERCONFIG_HPP
-# include 	<iostream>
-# include 	<vector>
-# include 	<sstream>
-
-typedef struct s_path
-{
-	bool						autoindex;  // on/off
-	std::string 				index;  	// tours1.html;
-	std::vector<std::string> 	allow_methods; // GET POST PUT HEAD;
-	std::string					root; // ./;
-	std::string					cgi_path ; // /usr/bin/python3 /bin/bash;
-	std::vector<std::string>	cgi_ext ; // .py .sh;	
-} t_path;
-
+# include <iostream>
+# include <string>
+# include <vector>
+# include <map>
+# include "RouteConfig.hpp"
 
 class ServerConfig
 {
 	private:
-		int							port;
-		std::string					server_name;
-		std::string					root;
-		std::string					index;
-		std::vector<std::string>	allowed_methods;
-		std::vector<s_path>			paths; // aka locations /red
-
-
-
+		int port;
+		std::vector<std::string> serverNames;
+		std::string host;
+		std::string root;
+		std::string index;
+		size_t clientMaxBodySize;
+		std::map<int, std::string> errorPages;
+		std::vector<RouteConfig> routes;
 
 	public:
 		ServerConfig();
-		ServerConfig(ServerConfig const &other);
-		ServerConfig &operator=(ServerConfig const &other);
-		~ServerConfig();
 
+		int getPort() const;
+		const std::vector<std::string>& getServerNames() const;
+		const std::string& getHost() const;
+		const std::string& getRoot() const;
+		const std::string& getIndex() const;
+		size_t getClientMaxBodySize() const;
+		const std::map<int, std::string>& getErrorPages() const;
+		const std::vector<RouteConfig>& getRoutes() const;
 
-		void dummy(void);
-		void dummy2(void);
-
-
-		int			getPort(void);
-		std::string	getNick();
-
-
+		void setPort(int port);
+		void setServerNames(const std::vector<std::string>& serverNames);
+		void setHost(const std::string& host);
+		void setRoot(const std::string& root);
+		void setIndex(const std::string& index);
+		void setClientMaxBodySize(size_t clientMaxBodySize);
+		void setErrorPages(const std::map<int, std::string>& errorPages);
+		void setRoutes(const std::vector<RouteConfig>& routes);
 		
+		
+		void addRoute(const RouteConfig& routeConfig);
+		void addErrorPage(int errorCode, const std::string& path);
+
+		void print() const {
+        std::cout << "Server Configuration: " << std::endl;
+        std::cout << "  Port: " << port << std::endl;
+        std::cout << "  Host: " << host << std::endl;
+        // std::cout << "  Server Name: " << serverNames << std::endl;
+        std::cout << "  Root: " << root << std::endl;
+        std::cout << "  Index: " << index << std::endl;
+
+        std::cout << "  Error Pages:" << std::endl;
+        std::map<int, std::string>::const_iterator it;
+        for (it = errorPages.begin(); it != errorPages.end(); ++it) {
+            std::cout << "    " << it->first << " -> " << it->second << std::endl;
+        }
+
+        std::cout << "  Locations:" << std::endl;
+        for (size_t i = 0; i < routes.size(); ++i) {
+            routes[i].print();
+        }
+    }
 };
 
 #endif
