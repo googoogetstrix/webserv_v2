@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 17:20:52 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/05 18:07:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,9 +94,14 @@ int	ConnectionController::addServer(int fd, ServerConfig server)
 }
 ServerConfig	*ConnectionController::getServer(int fd)
 {
-	if(servers.find(fd) != servers.end())
-		return (NULL);
-	return (&servers[fd]);
+	// if(servers.find(fd) != servers.end())
+	// 	return (NULL);
+	for( std::map<int, ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
+	{
+		if(fd == it->first)
+		return &(it->second);
+	}
+	return NULL;
 }
 std::map<int, ServerConfig> ConnectionController::getServers()
 {
