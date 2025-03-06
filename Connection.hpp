@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 16:23:30 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:45:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,14 +25,16 @@
 # include	"ServerConfig.hpp"
 # include	"HttpRequest.hpp"
 # include	"HttpResponse.hpp"
+# include	"Logger.hpp"
 # define 	CON_RECV_BUFFER_SIZE 	4001
+# define 	CON_SOC_TIMEOUT_SECS 	1
 
 class Connection 
 {
 	private:
 
 		int					fd;	
-		time_t				lastActive; 
+		time_t				expiresOn; 
 		ServerConfig		config;
 
 		std::string			requestBuffer;
@@ -42,8 +44,6 @@ class Connection
 
 		void 				setNonBlock();
 
-		HttpRequest			httpRequest;		
-		HttpResponse		httpResponse;		
 	
 	public:
 		Connection();
@@ -52,12 +52,12 @@ class Connection
 		Connection &operator=(Connection const other);
 		~Connection();
 
-		time_t				getLastActive() const ;
+		time_t				getExpiresOn() const ;
 		int 				getFd() const;
 		std::string			getRequestBuffer() const;
 		std::string 		getResponseBuffer() const;
 
-		bool 				setLastActive(time_t);
+		bool 				setExpiresOn(time_t);
 		bool 				setFd(int fd);
 
 		void				punchIn(void);
@@ -71,9 +71,16 @@ class Connection
 		bool				processRequestHeader();
 		bool				processRequest();
 
+		bool				ready(struct epoll_event &event, bool startResponseNow);
+		bool				needsToWrite();
+		bool				handleWrite(struct epoll_event &event);
+		
+		HttpRequest			httpRequest;		
+		HttpResponse		httpResponse;		
 
 
-
+		HttpRequest 		&getHttpRequest();
+		HttpResponse 		&getHttpResponse();
 }; 
 
 #endif

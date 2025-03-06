@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 19:24:30 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:34:32 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,8 @@ std::string	HttpResponse::getBody() const
 
 bool	HttpResponse::setBody(std::string newBody)
 {
-	body = newBody; 
+	std::cout << "newBody = " << newBody << "\n\n" << std::endl;
+ 	body = newBody; 
 	return true;
 }
 
@@ -183,6 +184,9 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 
 std::string HttpResponse::serialize()
 {
+
+
+	std::cout << "MFMF\n\n" << body << "\n===========\n\n"; 
 	std::ostringstream  	oss;
 	oss << "HTTP/1.1 " << status << " " << getStatusText(status) << "\r\n";
 	setHeader("Content-Length", Util::toString(body.size()) , true);
@@ -290,3 +294,13 @@ void	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &serve
 	buffer << file.rdbuf();
 	setBody(buffer.str());
 }
+
+const char *HttpResponse::CompleteFail::what() const throw()
+{
+	return ("FAIL");
+}
+const char *HttpResponse::CompleteSuccess::what() const throw()
+{
+	return ("SUCCESS");
+}
+

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 19:58:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:13:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,13 +42,14 @@ ConnectionController::~ConnectionController()
 
 Connection *ConnectionController::findConnection(int fd)
 {
-	std::cout << "*** FINDING " << fd << std::endl;
-	{
-		for( std::map<int,Connection>::iterator it = connections.begin(); it != connections.end(); ++it)
-		{
-			std::cout << " KEY " << it->first << std::endl;
-		}
-	}
+	// DEBUG section
+	// std::cout << "*** FINDING " << fd << std::endl;
+	// {
+	// 	for( std::map<int,Connection>::iterator it = connections.begin(); it != connections.end(); ++it)
+	// 	{
+	// 		std::cout << " KEY " << it->first << std::endl;
+	// 	}
+	// }
 	std::map<int,Connection>::iterator it = connections.find(fd);
 	if(it != connections.end())
 		return &(it->second);	
@@ -85,65 +86,81 @@ int		ConnectionController::addConnection(int fd, ServerConfig config)
 }
 
 
-bool	ConnectionController::handleRead(Connection& conn)
+bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &event)
 {
+
+	(void) event;
 	std::cout << " *** handleRead() - Not Yet Done" << std::endl;
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
-	while(true)
-	{
-		int  bytesRead = read(conn.getFd(), &buffer, bufferSize);
-		if(bytesRead == 0)
-			return true;
-		if (bytesRead == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                break;
-            }
-			Logger::log(LC_ERROR, "CLIENT ERROR: error recv()");
-            removeConnection(conn.getFd());
-            return false;
-        }
-		// make sure it's null terminated
-		buffer[bytesRead] = '\0';
-		if(!conn.isHeaderComplete())
-		{
-			char *crlfPos = strstr(buffer, "\r\n\r\n");
-			if (crlfPos)
+
+
+	try {
+
+		while(true)
 			{
+				int  bytesRead = read(conn.getFd(), &buffer, bufferSize);
+				if(bytesRead == 0)
+					return true;
+				if (bytesRead == -1) {
+		            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+		                break;
+		            }
+					Logger::log(LC_ERROR, "CLIENT ERROR: error recv()");
+		            removeConnection(conn.getFd());
+		            return false;
+		        }
+				// make sure it's null terminated
+				buffer[bytesRead] = '\0';
+				if(!conn.isHeaderComplete())
+				{
+					char *crlfPos = strstr(buffer, "\r\n\r\n");
+					if (crlfPos)
+					{
 
-				conn.setHeaderIsComplete(true);
-				
-				// parse Header (to get content length)
-				// rawPostBody.reserve(content length + 2), memset()
+						conn.setHeaderIsComplete(true);
+						
+						// parse Header (to get content length)
+						// rawPostBody.reserve(content length + 2), memset()
 
-				size_t remainingHeaderLength = (crlfPos - buffer);
-				conn.appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
-				conn.processRequestHeader( );
+						size_t remainingHeaderLength = (crlfPos - buffer);
+						conn.appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
+						if(!conn.processRequestHeader( ))
+							throw HttpResponse::CompleteFail();
+			
+						conn.appendRawPostBody(crlfPos , remainingHeaderLength + 4);
+						
+						
+					}	
+				}
+				else 
+				{
+					conn.appendRawPostBody(buffer , bytesRead);
+				}
 
+				
 
-				
-				
-				conn.appendRawPostBody(crlfPos , remainingHeaderLength + 4);
-				
-				
-			}	
-		}
-		else 
-		{
-			conn.appendRawPostBody(buffer , bytesRead);
-		}
-
+			}
+	} catch (HttpResponse::CompleteFail)
+	{
 		
 
+	} catch (HttpResponse::CompleteSuccess)
+	{
+		
 	}
+	
 
 
 	return (true);
 }
-bool	ConnectionController::handleWrite(Connection& conn)
+bool	ConnectionController::handleWrite(Connection& conn, struct epoll_event& event)
 {
 
 	(void)conn;
+	(void) event;
+
+	
 	std::cout << " *** handleWrite() - Not Yet Done" << std::endl;
 
 	return (true);

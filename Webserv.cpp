@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 20:03:14 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:46:31 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,7 +287,9 @@ int Webserv::run(void)
 					}
 					else 
 					{
-						HttpResponse 		 httpResponse;
+						std::cout << "IS IT ME????" << std::endl;
+						HttpResponse httpResponse = conn->getHttpResponse(); ;
+						std::cout << "IT's REALLY ME!!!" << std::endl;
 						
 						// error handling
 						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
@@ -322,7 +324,18 @@ int Webserv::run(void)
 							
 							// check if the connection belong to which server?
 							// handleRequest(client_socket , &webserv obj , )
-							cc.handleRead(*conn);
+							// DEL ME DEBUG ONLY!
+							httpResponse.setStatus(200);
+							httpResponse.setBody("Hello World");
+
+							std::cout << "\n\n\n" << httpResponse.getBody() << "\n\n" << std::endl;
+
+							conn->ready(events[i], true);
+							std::cout << " DEBUG ENDS HERE " << std::endl;
+
+							return (1);
+							//httpResponse.getStaticFile(req, *server, NULL);
+
 							std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
 							httpResponse.setStatus(200);
 							httpResponse.setBody("CoolTTT");
@@ -332,37 +345,35 @@ int Webserv::run(void)
 								epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 								Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
 							}
-							continue ;
-							
+							continue ;							
 						}
-
 						if(events[i].events & EPOLLOUT)
 						{
-							std::cout << "*** MOCKUP RESPONSE" << std::endl;
 
-							ServerConfig *server = cc.getServer( events[i].data.fd);
-							if(!server)
-								throw std::runtime_error("Unable to load client connection server config");
+							conn->handleWrite(events[i]);
 
-
-							HttpRequest req;
-							std::string testReq = "GET /index.html HTTP/1.1\r\n";
-							testReq += "Host: www.example.com\r\n"; 
-							testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
-							testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
-							testReq += "Accept-Language: en-US,en;q=0.5\r\n";
-							testReq += "Accept-Encoding: gzip, deflate, br\r\n";
-							testReq += "Connection: keep-alive\r\n";
-							testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
-							req.parseRequest(httpResponse, *server , testReq);
-							// const std::vector<RouteConfig>& routers = server.getRoutes();??
-							httpResponse.getStaticFile(req, *server, NULL);
-							if (httpResponse.response(active_fd))
-							{
-								close(events[i].data.fd);
-								epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-								Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							}
+							// std::cout << "*** MOCKUP RESPONSE" << std::endl;
+							// ServerConfig *server = cc.getServer( events[i].data.fd);
+							// if(!server)
+							// 	throw std::runtime_error("Unable to load client connection server config");
+							// HttpRequest req;
+							// std::string testReq = "GET /index.html HTTP/1.1\r\n";
+							// testReq += "Host: www.example.com\r\n"; 
+							// testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
+							// testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
+							// testReq += "Accept-Language: en-US,en;q=0.5\r\n";
+							// testReq += "Accept-Encoding: gzip, deflate, br\r\n";
+							// testReq += "Connection: keep-alive\r\n";
+							// testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
+							// req.parseRequest(httpResponse, *server , testReq);
+							// // const std::vector<RouteConfig>& routers = server.getRoutes();??
+							// httpResponse.getStaticFile(req, *server, NULL);
+							// if (httpResponse.response(active_fd))
+							// {
+							// 	close(events[i].data.fd);
+							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							// }
 							continue ;
 							
 						}

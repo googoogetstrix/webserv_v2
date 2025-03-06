@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 18:21:10 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 10:50:55 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,8 @@ class ConnectionController
 		bool		removeConnection(int fd);
 		int			addConnection(int fd, ServerConfig config);
 
-		bool		handleRead(Connection& conn);
-		bool		handleWrite(Connection& conn);
+		bool		handleRead(Connection& conn, struct epoll_event& event);
+		bool		handleWrite(Connection& conn, struct epoll_event& event);
 
 		int							addServer(int fd, ServerConfig server);
 		ServerConfig				*getServer(int fd);

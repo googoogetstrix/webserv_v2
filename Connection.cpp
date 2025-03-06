@@ -6,18 +6,19 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 18:32:42 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:46:08 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 
-Connection::Connection():fd(0),lastActive(time(0))
+Connection::Connection():fd(0)
 {
-
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 }
-Connection::Connection(int fd, ServerConfig config):fd(fd),lastActive(time(0)), config(config)
+Connection::Connection(int fd, ServerConfig config):fd(fd), config(config)
 {
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 	setNonBlock();
 }
 Connection::~Connection()
@@ -27,14 +28,14 @@ Connection::~Connection()
 Connection::Connection(Connection const &other)
 {
 	fd = other.fd;
-	lastActive = other.lastActive;
+	expiresOn = other.expiresOn;
 	config = other.config;
 
 }
 Connection &Connection::operator=(Connection const other)
 {
 	fd = other.fd;
-	lastActive = other.lastActive;
+	expiresOn = other.expiresOn;
 	config = other.config;
 	return (*this);
 }
@@ -49,9 +50,9 @@ void Connection::setNonBlock()
 }
 
 
-time_t	Connection::getLastActive() const 
+time_t	Connection::getExpiresOn() const 
 {
-	return (lastActive);
+	return (expiresOn);
 }
 
 int 	Connection::getFd() const
@@ -59,9 +60,9 @@ int 	Connection::getFd() const
 	return (fd);
 }
 
-bool 	Connection::setLastActive(time_t t)
+bool 	Connection::setExpiresOn(time_t t)
 {
-	lastActive = t;
+	expiresOn = t + (CON_SOC_TIMEOUT_SECS * 100000);
 	return true; 
 }
 
@@ -73,7 +74,8 @@ bool 	Connection::setFd(int newFd)
 
 void	Connection::punchIn(void)
 {
-	lastActive = time(NULL);
+	Logger::log(LC_NOTE, "Punch in!");
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 1000000);
 }
 
 
@@ -121,6 +123,8 @@ bool	Connection::processRequestHeader()
 			if(!(lineStream >> method >> target >> version))
 			{
 				httpResponse.setStatus(400);
+				httpResponse.setBody(httpResponse.getDefaultErrorPage(400));
+				return false; 
 			}
 			
 		}
@@ -130,3 +134,67 @@ bool	Connection::processRequestHeader()
 
 	return (true);
 }
+bool 	Connection::ready(struct epoll_event &event, bool startResponseNow=true)
+{
+	responseBuffer = httpResponse.serialize();
+	std::cout << "\n\n\nRESPONSE BUFFER\n" << responseBuffer << "\n\n" << std::endl;
+ 	if(startResponseNow)
+		handleWrite(event);
+	return (true);
+
+}
+
+bool	Connection::needsToWrite()
+{
+	return (responseBuffer.empty());
+}
+
+
+bool 	Connection::handleWrite(struct epoll_event &event)
+{
+	if(!needsToWrite())
+		return (false);
+
+	
+	size_t sendSize = responseBuffer.length();
+	sendSize = 20;
+	while( responseBuffer.length() > 0 )
+	{
+		punchIn();
+ 		int bytesSent = write(fd , responseBuffer.c_str() ,sendSize );
+		if (bytesSent <= 0)
+		{
+			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
+			{	
+				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
+				return (false);
+			}
+			if (bytesSent == 0)
+				Logger::log(LC_NOTE , "DONE SENDING, YAHOO!");
+			else 
+				Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
+
+			epoll_ctl(fd, EPOLL_CTL_DEL , fd , NULL);
+			close(fd);
+		}
+
+		responseBuffer = responseBuffer.substr(bytesSent); 
+		std::cout << " afterCut responseBuffer = " << std::endl;
+		
+	}
+	
+	// std::string testErrorPage = getDefaultErrorPage(status);
+	return (true);
+	
+}
+
+HttpRequest 		&Connection::getHttpRequest()
+{
+	return  (httpRequest);
+}
+
+HttpResponse 		&Connection::getHttpResponse()
+{
+	return  (httpResponse);
+}
+
