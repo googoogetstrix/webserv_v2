@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 10:05:48 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 13:20:59 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,16 +63,7 @@ class HttpResponse
 		bool 								response(int clientSocket);
 
 
-		class CompleteSuccess: public std::exception
-		{
-			public:
-				virtual const char *what() const throw();
-		};
-		class CompleteFail: public std::exception
-		{
-			public:
-				virtual const char *what() const throw();
-		};
+		
 
 };
 #endif 

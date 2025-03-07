@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 11:46:31 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 15:57:23 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,6 +181,7 @@ int Webserv::run(void)
 
 	// setting up epoll
 	int epoll_fd = epoll_create1(0);
+	cc.setEpollSocket(epoll_fd);
 	if (epoll_fd == -1) 
 		throw std::runtime_error("Error creating epoll instance");
 	struct epoll_event		events[WEBS_MAX_EVENTS];
@@ -258,7 +259,7 @@ int Webserv::run(void)
 
 
 						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
-						int da_size = cc.addConnection(client_socket, *server );
+						int da_size = cc.openConnection(client_socket, *server );
 						std::cout << "da_size " << da_size << std::endl;
 						
 						epoll_event  event; 
@@ -287,10 +288,7 @@ int Webserv::run(void)
 					}
 					else 
 					{
-						std::cout << "IS IT ME????" << std::endl;
-						HttpResponse httpResponse = conn->getHttpResponse(); ;
-						std::cout << "IT's REALLY ME!!!" << std::endl;
-						
+						HttpResponse httpResponse; 
 						// error handling
 						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
 						{
@@ -328,29 +326,25 @@ int Webserv::run(void)
 							httpResponse.setStatus(200);
 							httpResponse.setBody("Hello World");
 
-							std::cout << "\n\n\n" << httpResponse.getBody() << "\n\n" << std::endl;
-
-							conn->ready(events[i], true);
-							std::cout << " DEBUG ENDS HERE " << std::endl;
-
-							return (1);
+							conn->ready(events[i], httpResponse);
+							
 							//httpResponse.getStaticFile(req, *server, NULL);
 
-							std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
-							httpResponse.setStatus(200);
-							httpResponse.setBody("CoolTTT");
-							if (httpResponse.response(active_fd))
-							{
-								close(events[i].data.fd);
-								epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-								Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							}
+							// std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
+							// httpResponse.setStatus(200);
+							// httpResponse.setBody("CoolTTT");
+							// if (httpResponse.response(active_fd))
+							// {
+							// 	close(events[i].data.fd);
+							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							// }
 							continue ;							
 						}
 						if(events[i].events & EPOLLOUT)
 						{
 
-							conn->handleWrite(events[i]);
+							conn->handleWrite(cc.getEpollSocket(), events[i]);
 
 							// std::cout << "*** MOCKUP RESPONSE" << std::endl;
 							// ServerConfig *server = cc.getServer( events[i].data.fd);

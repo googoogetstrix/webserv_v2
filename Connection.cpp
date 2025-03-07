@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 11:46:08 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 15:57:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,47 +111,62 @@ bool	Connection::processRequestHeader()
 
 	size_t				lineNo = 0;
 
-	while(  std::getline(headersStream , line))
+
+	try 
 	{
-		lineNo++;
-		if (lineNo == 1)
-		{	
-			std::istringstream  lineStream; 
-			std::string  method , target , version;
+	while(  std::getline(headersStream , line))
+		{
+			lineNo++;
+			if (lineNo == 1)
+			{	
+				std::istringstream  lineStream; 
+				std::string  method , target , version;
 
 
-			if(!(lineStream >> method >> target >> version))
-			{
-				httpResponse.setStatus(400);
-				httpResponse.setBody(httpResponse.getDefaultErrorPage(400));
-				return false; 
+				if(!(lineStream >> method >> target >> version))
+				{
+
+					throw std::runtime_error("dddd");
+					
+					// httpResponse.setStatus(400);
+					// httpResponse.setBody(httpResponse.getDefaultErrorPage(400));
+					// return false; 
+				}
+				
 			}
-			
+
+			std::cout << "HEADER!!!" << line << std::endl;
 		}
 
-		std::cout << "HEADER!!!" << line << std::endl;
+		
+	}
+	catch (std::exception &exception)
+	{
+
 	}
 
 	return (true);
+	
 }
-bool 	Connection::ready(struct epoll_event &event, bool startResponseNow=true)
+bool 	Connection::ready(struct epoll_event &event, HttpResponse &httpResponse)
 {
 	responseBuffer = httpResponse.serialize();
-	std::cout << "\n\n\nRESPONSE BUFFER\n" << responseBuffer << "\n\n" << std::endl;
- 	if(startResponseNow)
-		handleWrite(event);
-	return (true);
+	bool   res = handleWrite(epollSocket , event);
+	// if(!res)
+	// 	std::cout << " RES = " << res << std::endl;
+	return (res);
 
 }
 
 bool	Connection::needsToWrite()
 {
-	return (responseBuffer.empty());
+	return (!responseBuffer.empty());
 }
 
 
-bool 	Connection::handleWrite(struct epoll_event &event)
+bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
 {
+	std::cout << "\t\t\t*** handleWrite()" << std::endl;
 	if(!needsToWrite())
 		return (false);
 
@@ -164,22 +179,34 @@ bool 	Connection::handleWrite(struct epoll_event &event)
  		int bytesSent = write(fd , responseBuffer.c_str() ,sendSize );
 		if (bytesSent <= 0)
 		{
+			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
 			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
 			{	
 				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
 				return (false);
 			}
 			if (bytesSent == 0)
+			{
 				Logger::log(LC_NOTE , "DONE SENDING, YAHOO!");
+
+				close(event.data.fd);
+				epoll_ctl(epoll_fd , EPOLL_CTL_DEL , event.data.fd , NULL);
+				Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", event.data.fd);
+
+				return (true);
+			}
+				
 			else 
 				Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
 
-			epoll_ctl(fd, EPOLL_CTL_DEL , fd , NULL);
-			close(fd);
+			ConnectionController::closeConnection(fd);
 		}
+		size_t compareSize = static_cast<size_t>(bytesSent);
 
-		responseBuffer = responseBuffer.substr(bytesSent); 
-		std::cout << " afterCut responseBuffer = " << std::endl;
+		compareSize = compareSize < responseBuffer.length() ? bytesSent = responseBuffer.length() : compareSize;
+
+		responseBuffer = responseBuffer.substr(compareSize); 
+		
 		
 	}
 	
@@ -188,13 +215,4 @@ bool 	Connection::handleWrite(struct epoll_event &event)
 	
 }
 
-HttpRequest 		&Connection::getHttpRequest()
-{
-	return  (httpRequest);
-}
-
-HttpResponse 		&Connection::getHttpResponse()
-{
-	return  (httpResponse);
-}
 

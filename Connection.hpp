@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 11:45:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/06 15:59:22 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,17 +14,19 @@
 # define	CONNECTION_HPP
 # define 	CONN_FD_FLAG_NONBLOCK 	1
 # include	<ctime>
+# include 	<cstdio>
 # include	<fcntl.h>
 # include	<stdexcept>
 # include	<string>
 # include 	<errno.h>
 # include 	<sys/epoll.h>
 # include 	<sstream>
-
+# include 	<unistd.h>
 
 # include	"ServerConfig.hpp"
 # include	"HttpRequest.hpp"
 # include	"HttpResponse.hpp"
+# include	"ConnectionController.hpp"
 # include	"Logger.hpp"
 # define 	CON_RECV_BUFFER_SIZE 	4001
 # define 	CON_SOC_TIMEOUT_SECS 	1
@@ -43,6 +45,7 @@ class Connection
 		bool				headerIsCompleted;
 
 		void 				setNonBlock();
+		int					epollSocket;
 
 	
 	public:
@@ -71,16 +74,19 @@ class Connection
 		bool				processRequestHeader();
 		bool				processRequest();
 
-		bool				ready(struct epoll_event &event, bool startResponseNow);
+		bool				ready(struct epoll_event &event, HttpResponse &);
 		bool				needsToWrite();
-		bool				handleWrite(struct epoll_event &event);
+		bool				handleWrite(int epoll_fd, struct epoll_event &event);
 		
-		HttpRequest			httpRequest;		
-		HttpResponse		httpResponse;		
+
+		class ParseRequestException: public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
 
 
-		HttpRequest 		&getHttpRequest();
-		HttpResponse 		&getHttpResponse();
+		
 }; 
 
 #endif
