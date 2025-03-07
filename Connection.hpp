@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 11:36:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 15:44:21 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ class Connection
 		int					fd;	
 		time_t				expiresOn; 
 		ServerConfig		config;
+		bool				isReady;
 
 		std::string			requestBuffer;
 		std::string 		responseBuffer;
@@ -60,6 +61,8 @@ class Connection
 		std::string			getRequestBuffer() const;
 		std::string 		getResponseBuffer() const;
 
+		std::vector<char>	&getRawPostBody() const;
+
 		bool 				setExpiresOn(time_t);
 		bool 				setFd(int fd);
 
@@ -75,6 +78,8 @@ class Connection
 		bool				processRequest();
 
 		bool				ready(HttpResponse &);
+		bool				getIsReady() const;
+		void				setIsReady(bool newValue) ;
 		bool				needsToWrite();
 		bool				handleWrite(int epoll_fd, struct epoll_event &event);
 

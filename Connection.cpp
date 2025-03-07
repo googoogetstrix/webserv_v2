@@ -6,17 +6,17 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 11:36:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 17:41:41 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 
-Connection::Connection():fd(0)
+Connection::Connection():fd(0),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 }
-Connection::Connection(int fd, ServerConfig config):fd(fd), config(config)
+Connection::Connection(int fd, ServerConfig config):fd(fd), config(config),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 	setNonBlock();
@@ -30,6 +30,7 @@ Connection::Connection(Connection const &other)
 	fd = other.fd;
 	expiresOn = other.expiresOn;
 	config = other.config;
+	isReady = other.isReady; 
 
 }
 Connection &Connection::operator=(Connection const other)
@@ -150,10 +151,21 @@ bool	Connection::processRequestHeader()
 }
 bool 	Connection::ready(HttpResponse &httpResponse)
 {
+	isReady = true; 
 	responseBuffer = httpResponse.serialize();
 	return true;
 	
 
+}
+
+bool	Connection::getIsReady() const 
+{
+	return (isReady); 
+}
+
+void 	Connection::setIsReady(bool newValue)
+{
+	isReady  = newValue;
 }
 
 bool	Connection::needsToWrite()
@@ -220,3 +232,11 @@ std::string 		Connection::getResponseBuffer() const
 {
 	return (responseBuffer);
 }
+
+std::string 		Connection::getRequestBuffer() const
+{
+	return (requestBuffer);
+}
+
+
+

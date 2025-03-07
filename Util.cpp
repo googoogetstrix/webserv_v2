@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 11:19:35 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 17:15:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,3 +65,13 @@ int Util::toInt(std::string s)
     ss >> i;
     return i;
 }
+
+int	Util::substrPos(const std::string haystack,const  std::string needle)
+{
+	size_t cit = haystack.find(needle);
+	if (cit == std::string::npos)
+		return (-1);		
+	return (cit);
+
+}
+

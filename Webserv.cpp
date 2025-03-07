@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 11:33:52 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 18:04:06 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,7 +204,8 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-
+	HttpResponse 	httpResposne; 
+	HttpRequest 	httpRequest;
 	while (true) 
 	{
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
@@ -302,16 +303,31 @@ int Webserv::run(void)
 						if(events[i].events & EPOLLIN)
 						{
 
-							Logger::log(LC_RED , "MANUAL - Handle Write - NEEDS TO BE REMOVED LATER");
-							httpResponse.setStatus(404);
+							Logger::log(LC_RED , "WE ARE WORKING HERE");
+
+							// httpResponse.setStatus(404);
 							// httpResponse.setBody("Hello Worm!");
+							// cc.handleWrite(*conn, events[i], httpResponse);
 
 
-							cc.handleWrite(*conn, events[i], httpResponse);
-							continue; 
+							cc.handleRead(*conn, events[i], httpRequest, httpResponse);
 
-
-							cc.handleRead(*conn, events[i]);
+							if(conn->getIsReady())
+							{
+								cc.handleWrite(*conn, events[i], httpResponse);
+								continue; 		
+							}
+							else 
+							{
+								httpResponse.setStatus(201);
+								httpResponse.setBody("Created");
+								
+								cc.handleWrite(*conn, events[i], httpResponse);
+								continue;
+							}
+							
+							
+							
 
 							
 							// check if the connection belong to which server?
@@ -351,7 +367,7 @@ int Webserv::run(void)
 							// testReq += "Accept-Encoding: gzip, deflate, br\r\n";
 							// testReq += "Connection: keep-alive\r\n";
 							// testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
-							// req.parseRequest(httpResponse, *server , testReq);
+							// req.parseRequestHeaders(httpResponse, *server , testReq);
 							// // const std::vector<RouteConfig>& routers = server.getRoutes();??
 							// httpResponse.getStaticFile(req, *server, NULL);
 							// if (httpResponse.response(active_fd))
