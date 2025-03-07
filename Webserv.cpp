@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 15:57:23 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 10:36:20 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -319,16 +319,16 @@ int Webserv::run(void)
 						if(events[i].events & EPOLLIN)
 						{
 
+							cc.handleRead(*conn, events[i]);
+
 							
 							// check if the connection belong to which server?
 							// handleRequest(client_socket , &webserv obj , )
 							// DEL ME DEBUG ONLY!
-							httpResponse.setStatus(200);
-							httpResponse.setBody("Hello World");
-
-							conn->ready(events[i], httpResponse);
 							
-							//httpResponse.getStaticFile(req, *server, NULL);
+							
+							// httpResponse.getStaticFile(req, *server, NULL);
+
 
 							// std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
 							// httpResponse.setStatus(200);

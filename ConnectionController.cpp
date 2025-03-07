@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 19:10:13 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 10:42:21 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,6 +143,9 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 
 	return (true);
 }
+
+// bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &event)
+// bool Connection::handleWrite( int epoll_fd, struct epoll_event &event)
 bool	ConnectionController::handleWrite(Connection& conn, struct epoll_event& event)
 {
 

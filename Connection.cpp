@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 15:57:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 10:38:52 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ bool 	Connection::setFd(int newFd)
 
 void	Connection::punchIn(void)
 {
-	Logger::log(LC_NOTE, "Punch in!");
+	// Logger::log(LC_NOTE, "Punch in!");
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 1000000);
 }
 
@@ -166,17 +166,18 @@ bool	Connection::needsToWrite()
 
 bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
 {
-	std::cout << "\t\t\t*** handleWrite()" << std::endl;
+
+	(void) epoll_fd;
 	if(!needsToWrite())
 		return (false);
 
-	
-	size_t sendSize = responseBuffer.length();
-	sendSize = 20;
+	size_t sendSize = responseBuffer.length();	
 	while( responseBuffer.length() > 0 )
 	{
 		punchIn();
- 		int bytesSent = write(fd , responseBuffer.c_str() ,sendSize );
+		// if(sendSize < responseBuffer.length())
+		// 	sendSize = responseBuffer.length();
+ 		int bytesSent = send( event.data.fd , responseBuffer.c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
 			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
@@ -187,30 +188,21 @@ bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
 			}
 			if (bytesSent == 0)
 			{
-				Logger::log(LC_NOTE , "DONE SENDING, YAHOO!");
-
-				close(event.data.fd);
-				epoll_ctl(epoll_fd , EPOLL_CTL_DEL , event.data.fd , NULL);
-				Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", event.data.fd);
-
+				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
+				ConnectionController::closeConnection(event.data.fd);
 				return (true);
 			}
-				
-			else 
-				Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
-
+			
+			// catch all other errors
+			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
 			ConnectionController::closeConnection(fd);
 		}
 		size_t compareSize = static_cast<size_t>(bytesSent);
-
-		compareSize = compareSize < responseBuffer.length() ? bytesSent = responseBuffer.length() : compareSize;
-
-		responseBuffer = responseBuffer.substr(compareSize); 
-		
+		compareSize = compareSize < responseBuffer.length() ? compareSize : responseBuffer.length();
+		responseBuffer =  responseBuffer.substr(compareSize); 
 		
 	}
-	
-	// std::string testErrorPage = getDefaultErrorPage(status);
+	ConnectionController::closeConnection(event.data.fd);
 	return (true);
 	
 }

@@ -35,4 +35,8 @@ fclean: 				clean
 
 re: 					fclean all
 
+
+redo: 					fclean all
+						clear && ./webserv
+
 .PHONY: 				all clean fclean re
