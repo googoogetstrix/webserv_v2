@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 10:38:52 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 11:36:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,13 +148,11 @@ bool	Connection::processRequestHeader()
 	return (true);
 	
 }
-bool 	Connection::ready(struct epoll_event &event, HttpResponse &httpResponse)
+bool 	Connection::ready(HttpResponse &httpResponse)
 {
 	responseBuffer = httpResponse.serialize();
-	bool   res = handleWrite(epollSocket , event);
-	// if(!res)
-	// 	std::cout << " RES = " << res << std::endl;
-	return (res);
+	return true;
+	
 
 }
 
@@ -166,6 +164,8 @@ bool	Connection::needsToWrite()
 
 bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
 {
+	Logger::log(LC_RED, "Moved to COnnectionController->handleRead");
+	return false;
 
 	(void) epoll_fd;
 	if(!needsToWrite())
@@ -208,3 +208,15 @@ bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
 }
 
 
+size_t	Connection::truncateResponseBuffer(size_t bytesSent)
+{
+
+		bytesSent = bytesSent < responseBuffer.length() ? bytesSent : responseBuffer.length();
+		responseBuffer =  responseBuffer.substr(bytesSent); 	
+		return responseBuffer.size();
+}
+
+std::string 		Connection::getResponseBuffer() const
+{
+	return (responseBuffer);
+}

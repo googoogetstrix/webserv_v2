@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 15:59:22 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 11:36:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,9 +74,11 @@ class Connection
 		bool				processRequestHeader();
 		bool				processRequest();
 
-		bool				ready(struct epoll_event &event, HttpResponse &);
+		bool				ready(HttpResponse &);
 		bool				needsToWrite();
 		bool				handleWrite(int epoll_fd, struct epoll_event &event);
+
+		size_t				truncateResponseBuffer(size_t bytes);
 		
 
 		class ParseRequestException: public std::exception

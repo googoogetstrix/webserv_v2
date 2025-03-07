@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 10:42:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 11:36:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,8 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 
 		while(true)
 			{
-				int  bytesRead = read(conn.getFd(), &buffer, bufferSize);
+				int  bytesRead = recv(conn.getFd(), &buffer, bufferSize, 0 );
+				std::cout << " bytesRead = " << bytesRead << std::endl;
 				if(bytesRead == 0)
 					return true;
 				if (bytesRead == -1) {
@@ -127,6 +128,7 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 				}
 				else 
 				{
+					std::cout << " GETTING some thing , appending to buffer" << std::endl;
 					conn.appendRawPostBody(buffer , bytesRead);
 				}
 
@@ -146,16 +148,46 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 
 // bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &event)
 // bool Connection::handleWrite( int epoll_fd, struct epoll_event &event)
-bool	ConnectionController::handleWrite(Connection& conn, struct epoll_event& event)
+bool	ConnectionController::handleWrite(Connection& conn, struct epoll_event& event ,HttpResponse &httpResponse)
 {
+	conn.ready(httpResponse);
+	if(!conn.needsToWrite())
+		return (false);
 
-	(void)conn;
-	(void) event;
+	size_t sendSize = conn.getResponseBuffer().length();	
 
-	
-	std::cout << " *** handleWrite() - Not Yet Done" << std::endl;
-
+	while( conn.getResponseBuffer().length() > 0 )
+	{
+		conn.punchIn();
+ 		int bytesSent = send( event.data.fd , conn.getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
+		if (bytesSent <= 0)
+		{
+			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
+			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
+			{	
+				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
+				return (false);
+			}
+			if (bytesSent == 0)
+			{
+				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
+				ConnectionController::closeConnection(event.data.fd);
+				return (true);
+			}
+			
+			// catch all other errors
+			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
+			ConnectionController::closeConnection(conn.getFd());
+		}
+		// size_t compareSize = static_cast<size_t>(bytesSent);
+		// compareSize = compareSize < conn.getResponseBuffer().length() ? compareSize : conn.getResponseBuffer().length();
+		// responseBuffer =  responseBuffer.substr(compareSize); 
+		conn.truncateResponseBuffer(static_cast<size_t>(bytesSent));
+		
+	}
+	ConnectionController::closeConnection(event.data.fd);
 	return (true);
+
 }
 int	ConnectionController::addServer(int fd, ServerConfig server)
 {

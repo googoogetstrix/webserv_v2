@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 10:36:20 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/07 11:33:52 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,7 +219,7 @@ int Webserv::run(void)
 			for (int i=0;i<nfds;i++)
 			{
 				int			active_fd = events[i].data.fd;
-				Logger::log(LC_RED, "epoll event on fd#%d!" , active_fd);
+				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerFd(active_fd))
 				{
@@ -290,34 +290,26 @@ int Webserv::run(void)
 					{
 						HttpResponse httpResponse; 
 						// error handling
-						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
+						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 						{
-							Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
+							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR ient Socket %d hung up, closing socket ", events[i].data.fd);
 							close(events[i].data.fd);
 							Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 							continue ;
 						}
 
-						if ((events[i].events & EPOLLERR))
-						{
-
-							int error_code ;
-							socklen_t len = sizeof(error_code);
-							getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
-							
-							Logger::log(LC_ERROR, "ERR Client Socket %d error, closing socket ", events[i].data.fd);
-							std::cout << error_code << std::endl;
-							Logger::log(LC_ERROR, "ERROR: %s" , len);
-
-							close(events[i].data.fd);
-							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							continue ;
-						}
-
-
 						if(events[i].events & EPOLLIN)
 						{
+
+							Logger::log(LC_RED , "MANUAL - Handle Write - NEEDS TO BE REMOVED LATER");
+							httpResponse.setStatus(404);
+							// httpResponse.setBody("Hello Worm!");
+
+
+							cc.handleWrite(*conn, events[i], httpResponse);
+							continue; 
+
 
 							cc.handleRead(*conn, events[i]);
 
