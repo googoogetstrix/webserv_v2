@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Util.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:35:29 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 23:08:29 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/07 17:15:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@ class Util
 		static	std::string	toString(int i);
 		static	std::string	toString(size_t i);
 		static	int toInt(std::string);
+
+		static 	int	substrPos(std::string const haystack, std::string const needle);
 
 };
 

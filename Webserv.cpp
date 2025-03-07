@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 18:38:50 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/07 18:04:06 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "Webserv.hpp"
 #include "Logger.hpp"
@@ -180,6 +181,7 @@ int Webserv::run(void)
 
 	// setting up epoll
 	int epoll_fd = epoll_create1(0);
+	cc.setEpollSocket(epoll_fd);
 	if (epoll_fd == -1) 
 		throw std::runtime_error("Error creating epoll instance");
 	struct epoll_event		events[WEBS_MAX_EVENTS];
@@ -202,7 +204,8 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-
+	HttpResponse 	httpResposne; 
+	HttpRequest 	httpRequest;
 	while (true) 
 	{
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
@@ -217,7 +220,7 @@ int Webserv::run(void)
 			for (int i=0;i<nfds;i++)
 			{
 				int			active_fd = events[i].data.fd;
-				Logger::log(LC_RED, "epoll event on fd#%d!" , active_fd);
+				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerFd(active_fd))
 				{
@@ -257,7 +260,7 @@ int Webserv::run(void)
 
 
 						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
-						int da_size = cc.addConnection(client_socket, *server );
+						int da_size = cc.openConnection(client_socket, *server );
 						std::cout << "da_size " << da_size << std::endl;
 						
 						epoll_event  event; 
@@ -284,68 +287,100 @@ int Webserv::run(void)
 						Logger::log(LC_ERROR, " SERIOUS ERROR, cannot find connection #%d from the ConnectionController", active_fd);
 						continue;
 					}
-					HttpResponse 		 httpResponse;
-					
-					// error handling
-					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP))
+					else 
 					{
-						Logger::log(LC_CLOSE, "RDHUP Client Socket %d hung up, closing socket ", events[i].data.fd);
-						close(events[i].data.fd);
-						Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-						continue ;
-					}
-
-					if ((events[i].events & EPOLLERR))
-					{
-
-						int error_code ;
-						socklen_t len = sizeof(error_code);
-						getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
-						
-						Logger::log(LC_ERROR, "ERR Client Socket %d error, closing socket ", events[i].data.fd);
-						std::cout << error_code << std::endl;
-						Logger::log(LC_ERROR, "ERROR: %s" , len);
-
-						close(events[i].data.fd);
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-						continue ;
-					}
-
-
-					if(events[i].events & EPOLLIN)
-					{
-						
-						// check if the connection belong to which server?
-						// handleRequest(client_socket , &webserv obj , )
-						std::cout << "*** MOCKUP RESPONSE" << std::endl;
-						// httpResponse.setStatus(200);
-						// httpResponse.setBody("Hello42");
-						HttpRequest req;
-						std::string testReq = "GET /index.html HTTP/1.1\r\n";
-						testReq += "Host: www.example.com\r\n"; 
-						testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
-						testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
-						testReq += "Accept-Language: en-US,en;q=0.5\r\n";
-						testReq += "Accept-Encoding: gzip, deflate, br\r\n";
-						testReq += "Connection: keep-alive\r\n";
-						testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
-						req.parseRequest(httpResponse, servers[0], testReq);
-						const std::vector<RouteConfig>& routers = servers[0].getRoutes();
-						httpResponse.getStaticFile(req, servers[0], NULL);
-						if (httpResponse.response(active_fd))
+						HttpResponse httpResponse; 
+						// error handling
+						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 						{
+							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR ient Socket %d hung up, closing socket ", events[i].data.fd);
 							close(events[i].data.fd);
+							Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							continue ;
 						}
-						continue ;
-					}
 
-					if(events[i].events & EPOLLOUT)
-					{
-						
+						if(events[i].events & EPOLLIN)
+						{
+
+							Logger::log(LC_RED , "WE ARE WORKING HERE");
+
+							// httpResponse.setStatus(404);
+							// httpResponse.setBody("Hello Worm!");
+							// cc.handleWrite(*conn, events[i], httpResponse);
+
+
+							cc.handleRead(*conn, events[i], httpRequest, httpResponse);
+
+							if(conn->getIsReady())
+							{
+								cc.handleWrite(*conn, events[i], httpResponse);
+								continue; 		
+							}
+							else 
+							{
+								httpResponse.setStatus(201);
+								httpResponse.setBody("Created");
+								
+								cc.handleWrite(*conn, events[i], httpResponse);
+								continue;
+							}
+							
+							
+							
+
+							
+							// check if the connection belong to which server?
+							// handleRequest(client_socket , &webserv obj , )
+							// DEL ME DEBUG ONLY!
+							
+							
+							// httpResponse.getStaticFile(req, *server, NULL);
+
+
+							// std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
+							// httpResponse.setStatus(200);
+							// httpResponse.setBody("CoolTTT");
+							// if (httpResponse.response(active_fd))
+							// {
+							// 	close(events[i].data.fd);
+							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							// }
+							continue ;							
+						}
+						if(events[i].events & EPOLLOUT)
+						{
+
+							conn->handleWrite(cc.getEpollSocket(), events[i]);
+
+							// std::cout << "*** MOCKUP RESPONSE" << std::endl;
+							// ServerConfig *server = cc.getServer( events[i].data.fd);
+							// if(!server)
+							// 	throw std::runtime_error("Unable to load client connection server config");
+							// HttpRequest req;
+							// std::string testReq = "GET /index.html HTTP/1.1\r\n";
+							// testReq += "Host: www.example.com\r\n"; 
+							// testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
+							// testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
+							// testReq += "Accept-Language: en-US,en;q=0.5\r\n";
+							// testReq += "Accept-Encoding: gzip, deflate, br\r\n";
+							// testReq += "Connection: keep-alive\r\n";
+							// testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
+							// req.parseRequestHeaders(httpResponse, *server , testReq);
+							// // const std::vector<RouteConfig>& routers = server.getRoutes();??
+							// httpResponse.getStaticFile(req, *server, NULL);
+							// if (httpResponse.response(active_fd))
+							// {
+							// 	close(events[i].data.fd);
+							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
+							// }
+							continue ;
+							
+						}
 					}
+					
 				}
 
 				Logger::log(LC_RED, " *** END of the nfds loop");

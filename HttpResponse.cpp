@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 19:24:30 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/06 15:35:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,7 @@ std::string	HttpResponse::getBody() const
 
 bool	HttpResponse::setBody(std::string newBody)
 {
-	body = newBody; 
+ 	body = newBody; 
 	return true;
 }
 
@@ -183,6 +183,9 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 
 std::string HttpResponse::serialize()
 {
+
+
+	
 	std::ostringstream  	oss;
 	oss << "HTTP/1.1 " << status << " " << getStatusText(status) << "\r\n";
 	setHeader("Content-Length", Util::toString(body.size()) , true);
@@ -192,11 +195,11 @@ std::string HttpResponse::serialize()
 	// single set of \r\n since the header already sent the first set
 	oss << "\r\n" << body;
 
-	std::cout << "===================================" << std::endl;
-	std::cout << "response" << std::endl;
-	std::cout << "===================================" << std::endl;
-	std::cout << oss.str() << std::endl;
-	std::cout << "===================================" << std::endl;
+	// std::cout << "===================================" << std::endl;
+	// std::cout << "response" << std::endl;
+	// std::cout << "===================================" << std::endl;
+	// std::cout << oss.str() << std::endl;
+	// std::cout << "===================================" << std::endl;
 	return oss.str();
 	
 }
@@ -290,3 +293,4 @@ void	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &serve
 	buffer << file.rdbuf();
 	setBody(buffer.str());
 }
+
