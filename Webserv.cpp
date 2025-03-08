@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 18:04:06 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 19:36:34 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ bool Webserv::setupSockets(ConnectionController& cc)
 
 	Logger::log(LC_GREEN, " [1/3] Setting up sockets...");
 
-	int				success = 0;
+	int					success = 0;
 	std::set<int>		used_ports; 
 	
 
@@ -171,12 +171,7 @@ int Webserv::run(void)
 	Connection 			 *conn = NULL;
 
 	Logger::log(LC_GREEN, "Booting up webserv...");
-	// create listening sockets
-	// binds
-	// listen
 	setupSockets(cc);
-
-	
 
 
 	// setting up epoll
@@ -208,6 +203,7 @@ int Webserv::run(void)
 	HttpRequest 	httpRequest;
 	while (true) 
 	{
+		
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
 			// no effected fds, but happens from timeout
 			if(nfds == 0)
@@ -220,6 +216,7 @@ int Webserv::run(void)
 			for (int i=0;i<nfds;i++)
 			{
 				int			active_fd = events[i].data.fd;
+				ServerConfig *server = cc.getServer(events[i].data.fd);
 				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerFd(active_fd))
@@ -241,7 +238,7 @@ int Webserv::run(void)
 					if(events[i].events & EPOLLIN)
 					{
 
-						ServerConfig *server = cc.getServer(events[i].data.fd);
+						
 						if(!server)
 							throw std::runtime_error("ERROR Unable to load server configuration for fd....");
 						std::cout << " *** SERVER IS " << server->getNick() << std::endl ;
@@ -309,22 +306,39 @@ int Webserv::run(void)
 							// httpResponse.setBody("Hello Worm!");
 							// cc.handleWrite(*conn, events[i], httpResponse);
 
+							// read the request 
+							bool doneReading = cc.handleRead(*conn, events[i], httpRequest, httpResponse);
 
-							cc.handleRead(*conn, events[i], httpRequest, httpResponse);
 
-							if(conn->getIsReady())
+
+							if (doneReading)
 							{
-								cc.handleWrite(*conn, events[i], httpResponse);
-								continue; 		
+								bool headerIsOK = httpRequest.parseRequestHeaders(httpResponse, *server, conn->getRequestBuffer());
+								std::cout << "HeaderIsOK " << (headerIsOK ? "OK" : "FAIL") << std::endl;
+
+								if(!conn->processRequest(httpRequest, httpResponse))
+								{
+									return conn->ready(httpResponse);
+
+								}
+
+
+
 							}
-							else 
-							{
-								httpResponse.setStatus(201);
-								httpResponse.setBody("Created");
-								
-								cc.handleWrite(*conn, events[i], httpResponse);
-								continue;
-							}
+							
+							Logger::log(LC_RED, " REMOVE ORINGINAL LINE HERE\n" );
+							// if(conn->getIsReady())
+							// {
+							// 	cc.handleWrite(*conn, events[i], httpResponse);
+							// 	continue; 		
+							// }
+							// else 
+							// {	
+							// 	httpResponse.setStatus(201);
+							// 	httpResponse.setBody("Created");
+							// 	cc.handleWrite(*conn, events[i], httpResponse);
+							// 	continue;
+							// }
 							
 							
 							
@@ -401,3 +415,7 @@ int Webserv::run(void)
 	return (0);
 }
 
+std::vector<ServerConfig> Webserv::getServerConfigs()
+{
+	return servers;
+}

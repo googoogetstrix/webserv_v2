@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 18:04:29 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 15:11:42 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,8 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 {
 
 	(void) event;
+	(void) httpRequest;
+	(void) httpResponse;
 	std::cout << " *** handleRead() - Not Yet Done" << std::endl;
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
@@ -103,7 +105,7 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 				if (bytesRead == -1) {
 					// Done reading!
 		            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-		                break;
+		                return (true);
 		            }
 					Logger::log(LC_ERROR, "CLIENT ERROR: error recv()");
 		            closeConnection(conn.getFd());
@@ -121,9 +123,12 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 					conn.appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
 					conn.appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
 
+					Logger::log(LC_RED , "SKIPIING ORIGINAL READ HEADER");
+					/* 
 					ServerConfig 	*server = getServer(conn.getFd());
 					httpRequest.parseRequestHeaders(httpResponse, *server , conn.getRequestBuffer());
 					httpRequest.debug();
+					*/
 				}
 
 				if(!conn.isHeaderComplete())

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 17:15:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 19:34:23 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,13 @@ int Util::toInt(std::string s)
     ss >> i;
     return i;
 }
+size_t Util::toSizeT(std::string s)
+{
+    std::stringstream       ss(s);
+    size_t i;
+    ss >> i;
+    return i;
+}
 
 int	Util::substrPos(const std::string haystack,const  std::string needle)
 {
@@ -75,3 +82,16 @@ int	Util::substrPos(const std::string haystack,const  std::string needle)
 
 }
 
+
+
+size_t Util::charactersMatched(std::string find, std::string path)
+{
+	size_t matched = 0 ;
+	size_t maxCheck = find.length() < path.length() ? find.length() :path.length(); 
+	size_t i;
+	for(i = 0; i <maxCheck; i++)
+		if(find[i] != path[i])
+			break;
+	matched = i;
+	return (matched);
+}

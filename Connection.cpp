@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 13:42:53 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 19:34:38 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,9 +107,7 @@ bool	Connection::appendRequestBuffer(std::string str)
 bool	Connection::processRequestHeader()
 {
 	std::istringstream  headersStream(requestBuffer);
-	
 	std::string 		line;
-
 	size_t				lineNo = 0;
 
 
@@ -141,9 +139,9 @@ bool	Connection::processRequestHeader()
 
 		
 	}
-	catch (std::exception &exception)
+	catch (std::exception &e)
 	{
-
+			std::cerr << " ERROR " << e.what() << std::endl;
 	}
 
 	return (true);
@@ -156,9 +154,6 @@ bool 	Connection::ready(HttpResponse &httpResponse)
 	{
 		std::cout << " STILL NEEDS TO SET EMPTY BODY " << std::endl;
 	}
-
-	
-	httpResponse.setHeader("Content-Length", Util::toString( (httpResponse.getBody()).length()));
 	responseBuffer = httpResponse.serialize();
 	return true;
 	
@@ -254,3 +249,71 @@ ServerConfig		*Connection::getServerConfig()
 		return &serverConfig;
 	return  NULL ; 
 }
+
+
+bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResponse)
+{
+		RouteConfig *route = serverConfig.resolveRoute(httpRequest.getPath());
+
+		(void) httpResponse;
+
+		std::cout << "RouteGetPath == " << route->getPath() << std::endl; 
+
+		httpRequest.debug();
+		route->debug();
+		serverConfig.debug();
+
+	
+
+		// try check all the erro could possibly happen
+
+		// 400 Bad request
+		// 401 Unauthorized
+		// 403 Forbidden - since there's no login , al should be handled by 401?
+		// 404 Not Found
+		// 405 Method Not Allowed
+		// 411 Length Required
+		// 413 Content Too Large
+		// 414 URI Too Long
+		// 500 Internal Server Error
+
+		std::string path = httpRequest.getPath();		
+		if (path.find("..") != std::string::npos )		
+			return httpResponse.setStatus(400) && false; 
+		
+		std::string method = httpRequest.getMethod();
+		std::vector<std::string> allowedMethods = route->getMethods();
+
+		bool found = false;
+		for( size_t i = 0 ; i < allowedMethods.size(); i++)
+		{
+			if(allowedMethods[i] == method)
+			{
+				found = true;
+				break;
+			}				
+		}
+		if(!found)
+			return httpResponse.setStatus(405) && false; 
+
+		std::string test = httpRequest.getHeader("Content-Length");
+		if(test.empty())
+			return httpResponse.setStatus(411) && false; 
+		size_t maxSize = route->getClientMaxBodySize();
+		if(maxSize == 0)
+			maxSize = WEBS_DEF_MAX_BOD_SIZE;
+		maxSize *= WEBS_MB;
+		if(Util::toSizeT(test) > maxSize * WEBS_MB)
+			return httpResponse.setStatus(415) && false; 
+
+
+		std::cout << " STILL OK!!!!! " << std::endl;
+			
+
+
+
+
+		throw std::runtime_error("WORKING_EXCEPTION");
+}
+
+

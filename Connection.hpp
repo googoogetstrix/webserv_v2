@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 13:42:38 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 19:30:20 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,13 +23,16 @@
 # include 	<sstream>
 # include 	<unistd.h>
 
+# include	"Webserv.hpp"
 # include	"ServerConfig.hpp"
 # include	"HttpRequest.hpp"
 # include	"HttpResponse.hpp"
 # include	"ConnectionController.hpp"
 # include	"Logger.hpp"
+
 # define 	CON_RECV_BUFFER_SIZE 	4001
 # define 	CON_SOC_TIMEOUT_SECS 	1
+
 
 class Connection 
 {
@@ -44,9 +47,9 @@ class Connection
 		std::string 		responseBuffer;
 		std::vector<char>	rawPostBody;
 		bool				headerIsCompleted;
-
-		void 				setNonBlock();
 		int					epollSocket;
+		void 				setNonBlock();
+
 
 	
 	public:
@@ -75,7 +78,7 @@ class Connection
 		bool				appendRequestBuffer(std::string str);
 
 		bool				processRequestHeader();
-		bool				processRequest();
+		bool				processRequest(HttpRequest &httpRequest, HttpResponse &httpResponse);
 
 		bool				ready(HttpResponse &);
 		bool				getIsReady() const;

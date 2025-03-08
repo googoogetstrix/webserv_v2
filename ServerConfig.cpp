@@ -1,4 +1,5 @@
 #include "ServerConfig.hpp"
+#include "Util.hpp"
 
 ServerConfig::ServerConfig() : port(0), host("0.0.0.0"), clientMaxBodySize(1024 * 1024 * 8) {}
 
@@ -34,11 +35,57 @@ std::string ServerConfig::getNick()
     return ( host + std::string(":") + Util::toString(port));
 }
 
-RouteConfig 	*getRouteFromRequest(HttpRequest &httpRequest)
-{
+// RouteConfig 	*getRouteFromRequest(HttpRequest &httpRequest)
+// {
 
-    (void) httpRequest;
-    std::string uri = httpRequest.getPath();
-    std::cout << "uri = " << uri << std::endl;
-    return NULL;
+//     (void) httpRequest;
+//     std::string uri = httpRequest.getPath();
+//     std::cout << "uri = " << uri << std::endl;
+//     return NULL;
+// }
+
+
+
+RouteConfig     *ServerConfig::resolveRoute(std::string path)
+{
+	size_t		max = 0;
+	RouteConfig *returnRoute = NULL;
+
+	for(std::map<std::string,RouteConfig>::iterator it = routes.begin(); it != routes.end(); ++it)
+	{
+		if (returnRoute == NULL)
+			returnRoute = &(it->second); 
+
+		std::string loc = it->first;
+		if ( loc[loc.size() - 1] != '/')
+			loc += "/";
+		
+		if (path.find(loc) != std::string::npos)
+		{
+			size_t matchedLength = Util::charactersMatched(path, loc);
+			
+			if(matchedLength > max)
+			{
+				max = matchedLength;
+				returnRoute = &(it->second);
+			}
+		}
+	}
+	return returnRoute;
+
+}
+void ServerConfig::debug() const
+ {
+		std::cout << "========================\n Server Configuration:\n========================\n" << std::endl;
+        std::cout << " - Port: " << port << std::endl;
+        std::cout << " - Host: " << host << std::endl;
+        std::cout << " - Server Name: " << serverName << std::endl;
+        std::cout << " - Root: " << root << std::endl;
+        std::cout << " - Index: " << index << std::endl;
+
+        std::cout << " - Error Pages:" << std::endl;
+        std::map<int, std::string>::const_iterator it;
+        for (it = errorPages.begin(); it != errorPages.end(); ++it) {
+            std::cout << "    " << it->first << " -> " << it->second << std::endl;
+        }
 }

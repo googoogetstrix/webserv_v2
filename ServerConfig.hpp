@@ -49,29 +49,11 @@ class ServerConfig
 		void addErrorPage(int errorCode, const std::string& path);
 
 		std::string getNick();
-
-		void print() const {
-        std::cout << "Server Configuration: " << std::endl;
-        std::cout << "  Port: " << port << std::endl;
-        std::cout << "  Host: " << host << std::endl;
-        std::cout << "  Server Name: " << serverName << std::endl;
-        std::cout << "  Root: " << root << std::endl;
-        std::cout << "  Index: " << index << std::endl;
-
-        std::cout << "  Error Pages:" << std::endl;
-        std::map<int, std::string>::const_iterator it;
-        for (it = errorPages.begin(); it != errorPages.end(); ++it) {
-            std::cout << "    " << it->first << " -> " << it->second << std::endl;
-        }
+		RouteConfig 	*resolveRoute(std::string path);
 
 
-		RouteConfig 	*getRouteFromRequest(HttpRequest &httpRequest);
+		void debug() const;
 
-        // std::cout << "  Locations:" << std::endl;
-        // for (size_t i = 0; i < routes.size(); ++i) {
-        //     routes[i].print();
-        // }
-    }
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 18:11:42 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 19:30:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,3 +199,11 @@ void HttpRequest::debug()
 
 }
 
+std::string HttpRequest::getHeader(std::string const str)
+{
+	if(headers.find(str) == headers.end())
+		return "";
+
+	return headers.at(str);
+
+}
