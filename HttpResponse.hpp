@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/06 13:20:59 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 13:56:34 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,8 @@
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
 # include	"RouteConfig.hpp"
+
+class ServerConfig;
 
 class HttpRequest;
 

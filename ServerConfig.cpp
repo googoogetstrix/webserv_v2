@@ -33,3 +33,12 @@ std::string ServerConfig::getNick()
 {
     return ( host + std::string(":") + Util::toString(port));
 }
+
+RouteConfig 	*getRouteFromRequest(HttpRequest &httpRequest)
+{
+
+    (void) httpRequest;
+    std::string uri = httpRequest.getPath();
+    std::cout << "uri = " << uri << std::endl;
+    return NULL;
+}

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 17:41:41 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 13:42:53 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ Connection::Connection():fd(0),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 }
-Connection::Connection(int fd, ServerConfig config):fd(fd), config(config),isReady(false)
+Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 	setNonBlock();
@@ -29,7 +29,7 @@ Connection::Connection(Connection const &other)
 {
 	fd = other.fd;
 	expiresOn = other.expiresOn;
-	config = other.config;
+	serverConfig = other.serverConfig;
 	isReady = other.isReady; 
 
 }
@@ -37,7 +37,7 @@ Connection &Connection::operator=(Connection const other)
 {
 	fd = other.fd;
 	expiresOn = other.expiresOn;
-	config = other.config;
+	serverConfig = other.serverConfig;
 	return (*this);
 }
 
@@ -152,6 +152,13 @@ bool	Connection::processRequestHeader()
 bool 	Connection::ready(HttpResponse &httpResponse)
 {
 	isReady = true; 
+	if(httpResponse.getBody().empty())
+	{
+		std::cout << " STILL NEEDS TO SET EMPTY BODY " << std::endl;
+	}
+
+	
+	httpResponse.setHeader("Content-Length", Util::toString( (httpResponse.getBody()).length()));
 	responseBuffer = httpResponse.serialize();
 	return true;
 	
@@ -240,3 +247,10 @@ std::string 		Connection::getRequestBuffer() const
 
 
 
+
+ServerConfig		*Connection::getServerConfig()
+{
+	if(serverConfig.getPort() != 0)
+		return &serverConfig;
+	return  NULL ; 
+}

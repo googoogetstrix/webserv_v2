@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 15:44:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/08 13:42:38 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ class Connection
 
 		int					fd;	
 		time_t				expiresOn; 
-		ServerConfig		config;
+		ServerConfig		serverConfig;
 		bool				isReady;
 
 		std::string			requestBuffer;
@@ -84,6 +84,8 @@ class Connection
 		bool				handleWrite(int epoll_fd, struct epoll_event &event);
 
 		size_t				truncateResponseBuffer(size_t bytes);
+
+		ServerConfig		*getServerConfig();
 		
 
 		class ParseRequestException: public std::exception
@@ -91,8 +93,6 @@ class Connection
 			public:
 				virtual const char *what() const throw();
 		};
-
-
 		
 }; 
 

@@ -6,7 +6,10 @@
 # include <vector>
 # include <map>
 # include "RouteConfig.hpp"
+# include "HttpRequest.hpp"
 # include "Util.hpp"
+
+class HttpRequest; 
 
 class ServerConfig
 {
@@ -60,6 +63,9 @@ class ServerConfig
         for (it = errorPages.begin(); it != errorPages.end(); ++it) {
             std::cout << "    " << it->first << " -> " << it->second << std::endl;
         }
+
+
+		RouteConfig 	*getRouteFromRequest(HttpRequest &httpRequest);
 
         // std::cout << "  Locations:" << std::endl;
         // for (size_t i = 0; i < routes.size(); ++i) {
