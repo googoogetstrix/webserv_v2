@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 14:30:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 10:57:29 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -195,9 +195,9 @@ std::string HttpResponse::serialize()
 	// single set of \r\n since the header already sent the first set
 	oss << "\r\n" << body;
 
-	std::cout << "===================================" << std::endl;
+	std::cout << LC_GREEN << "===================================" << std::endl;
 	std::cout << "response" << std::endl;
-	std::cout << "===================================" << std::endl;
+	std::cout << "===================================" << LC_RESET << std::endl;
 	std::cout << oss.str() << std::endl;
 	std::cout << "===================================" << std::endl;
 	return oss.str();

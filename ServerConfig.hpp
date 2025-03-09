@@ -49,7 +49,7 @@ class ServerConfig
 		void addErrorPage(int errorCode, const std::string& path);
 
 		std::string getNick();
-		RouteConfig 	*resolveRoute(std::string path);
+		RouteConfig 	*findRoute(std::string path);
 
 
 		void debug() const;

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:30:20 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 11:02:46 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,10 @@ class Connection
 		size_t				truncateResponseBuffer(size_t bytes);
 
 		ServerConfig		*getServerConfig();
-		
+
+
+
+				
 
 		class ParseRequestException: public std::exception
 		{

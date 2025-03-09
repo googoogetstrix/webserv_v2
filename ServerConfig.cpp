@@ -46,7 +46,7 @@ std::string ServerConfig::getNick()
 
 
 
-RouteConfig     *ServerConfig::resolveRoute(std::string path)
+RouteConfig     *ServerConfig::findRoute(std::string path)
 {
 	size_t		max = 0;
 	RouteConfig *returnRoute = NULL;

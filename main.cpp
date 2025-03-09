@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:24:58 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 18:11:51 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 10:59:46 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 		// /*** TEST CODES ***/
 		// std::vector<ServerConfig> servers = webserv.getServerConfigs();
 		// ServerConfig  server = servers[0];
-		// RouteConfig *route = server.resolveRoute("/");
+		// RouteConfig *route = server.findRoute("/");
 		// std::cout << " RETURNED ROUTE = " << route->getPath() << std::endl;
 		// Logger::log(LC_RED, " EXIT IN MAIN" );
 		// throw std::runtime_error("ME FAIL");

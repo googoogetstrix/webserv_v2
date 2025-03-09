@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:34:38 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 11:20:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -253,11 +253,11 @@ ServerConfig		*Connection::getServerConfig()
 
 bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResponse)
 {
-		RouteConfig *route = serverConfig.resolveRoute(httpRequest.getPath());
+		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
 		(void) httpResponse;
 
-		std::cout << "RouteGetPath == " << route->getPath() << std::endl; 
+		route->debug();
 
 		httpRequest.debug();
 		route->debug();
@@ -293,11 +293,12 @@ bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResp
 				break;
 			}				
 		}
-		if(!found)
+		Logger::log(LC_NOTE, " REMOVE ME, I am skipping method not allowed checking");
+		if(false && !found)
 			return httpResponse.setStatus(405) && false; 
 
 		std::string test = httpRequest.getHeader("Content-Length");
-		if(test.empty())
+		if(method == "POST" && test.empty())
 			return httpResponse.setStatus(411) && false; 
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
@@ -307,13 +308,15 @@ bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResp
 			return httpResponse.setStatus(415) && false; 
 
 
-		std::cout << " STILL OK!!!!! " << std::endl;
-			
+		Logger::log(LC_GREEN, "Request seems OK so far");
+
+		
+	
 
 
 
 
-		throw std::runtime_error("WORKING_EXCEPTION");
+		throw std::runtime_error("WORKING_HERE_EXCEPTION, no needs to go any further");
 }
 
 
