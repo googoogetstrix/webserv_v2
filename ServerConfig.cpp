@@ -1,4 +1,5 @@
 #include "ServerConfig.hpp"
+#include "Util.hpp"
 
 ServerConfig::ServerConfig() : port(0), host("0.0.0.0"), clientMaxBodySize(1024 * 1024 * 8) {}
 
@@ -32,4 +33,106 @@ void ServerConfig::addErrorPage(int errorCode, const std::string& path)
 std::string ServerConfig::getNick()
 {
     return ( host + std::string(":") + Util::toString(port));
+}
+
+// RouteConfig 	*getRouteFromRequest(HttpRequest &httpRequest)
+// {
+
+//     (void) httpRequest;
+//     std::string uri = httpRequest.getPath();
+//     std::cout << "uri = " << uri << std::endl;
+//     return NULL;
+// }
+
+
+
+RouteConfig     *ServerConfig::findRoute(std::string path)
+{
+	size_t		max = 0;
+	RouteConfig *returnRoute = NULL;
+
+	for(std::map<std::string,RouteConfig>::iterator it = routes.begin(); it != routes.end(); ++it)
+	{
+		// set default matching to first route found , WHICH requires to be /
+		if (returnRoute == NULL)
+			returnRoute = &(it->second); 
+
+		if ( it->second.getPath() == path )
+			return &(it->second);
+
+		std::string loc = it->first;
+		if ( loc[loc.size() - 1] != '/')
+			loc += "/";
+		
+		if (path.find(loc) != std::string::npos)
+		{
+			size_t matchedLength = Util::charactersMatched(path, loc);
+			
+			if(matchedLength > max)
+			{
+				max = matchedLength;
+				returnRoute = &(it->second);
+			}
+		}
+	}
+	return returnRoute;
+}
+
+bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing)
+{
+		localPath = httpRequest.getPath();
+		{
+			bool extraSlash = Util::hasTrailingSlash(localPath);
+			std::cout << " has trailing slash = " << extraSlash << std::endl;  
+		}
+		std::string targetResource = Util::extractFileName(localPath);
+		
+		if (targetResource.empty() && route.getIndex().empty() &&  !route.getAutoindex())
+			throw RequestException(403, "Forbidden");
+
+		// if not end with file name, 
+		if(!Util::hasTrailingSlash(localPath) &&  targetResource == "")
+		{
+			std::cout << "\t\t ORIGINAL IS adding slash " << std::endl;
+			//  localPath += "/";
+		}
+			
+
+		// TODO - should we have ServerConfig level of this directive?
+		allowDirectoryListing = false;
+		allowDirectoryListing = route.getAutoindex();
+		// std::string extraSlash = (localPath != "/" && targetResource == "" && !Util::hasTrailingSlash(localPath) ) ? "/" : "";
+		// std::cout << " extraSlash = " << extraSlash << std::endl;  
+
+		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");
+		
+
+		// std::cout << " before attaching file name = " << localPath  << std::endl;  
+
+		if(targetResource == "" && !route.getIndex().empty())
+			localPath += route.getIndex();
+	
+		
+		// std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
+
+
+		return (true);
+}
+
+
+
+void ServerConfig::debug() const
+ {
+		std::cout << "========================\n Server Configuration:\n========================" << std::endl;
+        std::cout << " - Port: \t" << port << std::endl;
+        std::cout << " - Host: \t" << host << std::endl;
+        std::cout << " - Server Name:\t" << serverName << std::endl;
+        std::cout << " - Root:\t" << root << std::endl;
+        std::cout << " - Index:\t" << index << std::endl;
+
+        std::cout << " - Error Pages:\t" << std::endl;
+        std::map<int, std::string>::const_iterator it;
+        for (it = errorPages.begin(); it != errorPages.end(); ++it) {
+            std::cout << "    " << it->first << " -> " << it->second << std::endl;
+        }
 }

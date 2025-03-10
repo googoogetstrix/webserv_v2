@@ -3,19 +3,24 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/05 11:44:53 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:46:58 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #ifndef 	HTTP_REQUEST_HPP
 # define	HTTP_REQUEST_HPP
 # include	<map>
 # include	<string>
+# include	<cstring>
 # include   "ServerConfig.hpp"
 # include   "HttpResponse.hpp"
+# include   "RequestException.hpp"
+# include   "Logger.hpp"
+
 
 
 class ServerConfig;
@@ -36,6 +41,7 @@ class HttpRequest
 		// GET method submission
 		// index.php?name=first&last=blah ,,  split first one from "?" , name , value by "=" , each other by "&"
 		std::map<std::string, std::string> 		queryStrings;
+		std::string								rawQueryString;
 
 		std::string								body;
 
@@ -62,13 +68,25 @@ class HttpRequest
 		bool setQueryString(std::string key, std::string value);
 		bool setBody(std::string bodyStr);
 
+		std::string getRawQueryString() const; 
+
 
 		// &response ==> for setting value in case on error
 		// ServerConfig
 		// requestString = "HTTP1.1 GET /index.php \n\nn\"
-		bool parseRequest(HttpResponse &response, ServerConfig &server, std::string requestString);
+		// bool 		parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString);
+		bool 		parseRequestHeaders(ServerConfig server, std::string requestString);
+		static int preprocessContentLength(std::string requestString);
+
+		std::string getHeader(std::string const str);
+
+
+
+		void  debug();
+		
 
 		
 };
 
-#endif 
+#endif
+

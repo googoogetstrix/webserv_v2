@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 23:27:53 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:25:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,8 +100,45 @@ bool HttpRequest::setBody(std::string bodyStr)
 	return true;
 }
 
-bool HttpRequest::parseRequest(HttpResponse &response, ServerConfig &server, std::string requestString)
+
+int HttpRequest::preprocessContentLength(std::string requestString)
 {
+	int	return_len;
+	std::string			line ;
+	std::istringstream 	stream(requestString);
+	int lineCounter = 0;
+	while ( std::getline(stream , line)  && line != "\r")
+	{
+
+		lineCounter++;
+		if(lineCounter == 1)
+		{
+			std::istringstream reqLine(line);
+			std::string method , path ,version ;
+
+			if(!(reqLine >> method >> path >> version))
+				throw RequestException(400, "Bad Request");
+			Logger::log(LC_REQ_LOG, "[REQUEST] %s %s" , method.c_str() , path.c_str());
+		}
+
+
+		 if(line.find("Content-Length:") == 0)
+		 {
+			std::istringstream len_stream(line.substr(15));
+			if(!(len_stream >> return_len))
+				return -1;
+			return return_len;
+		 }
+	}
+	return -1; 
+
+}
+
+bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestString)
+{
+
+	// std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
+	// std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
 
@@ -113,17 +150,28 @@ bool HttpRequest::parseRequest(HttpResponse &response, ServerConfig &server, std
 		std::string httpVersion;
 		if (!(lineStream >> methodStr >> rawPathStr >> httpVersion))
 		{
-			response.setStatus(400);
+			throw RequestException(400, "Bad Request");
+			// response.setStatus(400);
 			return false;
 		}
+		{	// prevent url injection with ".." which allows the web server to go further back than webroots
+			size_t dotdotPos = rawPathStr.find("..");
+			if (dotdotPos != std::string::npos)
+			{
+				throw RequestException(400, "Bad Request");
+				// response.setStatus(400);
+				return false;
+			}
+		}
+
 		setMethod(methodStr);
 		setRawPath(rawPathStr);
 		size_t pos = rawPathStr.find('?');
 		if (pos != std::string::npos)
 		{
 			setPath(rawPathStr.substr(0, pos));
-			std::string queryString = rawPathStr.substr(pos + 1);
-			std::istringstream queryStream(queryString);
+			rawQueryString = rawPathStr.substr(pos + 1);
+			std::istringstream queryStream(rawQueryString);
 			std::string keyValuePair;
 			while (std::getline(queryStream, keyValuePair, '&'))
 			{
@@ -152,7 +200,8 @@ bool HttpRequest::parseRequest(HttpResponse &response, ServerConfig &server, std
 		size_t contentLengthVal = Util::toInt(headers["Content-Length"].c_str());
 		if (contentLengthVal > server.getClientMaxBodySize())
 		{
-			response.setStatus(413);
+			throw RequestException(400, "Content too large");
+			// response.setStatus(413);
 			return false;
 		}
 		setContentLength(contentLengthVal);
@@ -161,4 +210,37 @@ bool HttpRequest::parseRequest(HttpResponse &response, ServerConfig &server, std
         setBody(bodyStr);
 	}
 	return true;
+}
+
+std::string HttpRequest::getRawQueryString() const
+{
+	return rawQueryString; 
+}
+
+
+void HttpRequest::debug()
+{
+	std::cout << "========================\nHttpRequest\n========================" << std::endl;
+	std::cout << " - method:\t\t" << method << std::endl;
+	std::cout << " -  path:\t\t" << path << std::endl;
+	std::cout << " - rawPath:\t" << rawPath << std::endl;
+	std::cout << " - rawQueryString:\t" << rawQueryString << std::endl;
+	std::cout << " - contentLength:\t" << contentLength << std::endl;
+	std::cout << " - body:\t\t" << body << std::endl;
+	std::cout << " - header:" << std::endl;
+
+	for(std::map<std::string, std::string>::iterator  it = headers.begin(); it != headers.end() ; ++it)
+	{
+		std::cout << "\t" << it->first << "\t: " << it->second << std::endl;
+	}
+
+}
+
+std::string HttpRequest::getHeader(std::string const str)
+{
+	if(headers.find(str) == headers.end())
+		return "";
+
+	return headers.at(str);
+
 }
