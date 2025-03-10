@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Registration</title>
+    <link rel="stylesheet" href="CGI-style.css">
+	<script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const preview = document.getElementById('imagePreview');
+                preview.src = reader.result;
+                preview.style.display = 'block';
+                // Uncheck all radio buttons when custom image is selected
+                document.querySelectorAll('input[name=avatar]').forEach(r => r.checked = false);
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    </script>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Player Registration</h1>
+        <form action="processPlayer.py" method="post" enctype="multipart/form-data">
+            <label for="playerName">Player Name:</label>
+            <input type="text" id="playerName" name="playerName" required 
+                   placeholder="Enter your player name" minlength="2" maxlength="20">
+
+            <h3>Choose Your Avatar</h3>
+            <div class="avatar-options">
+                <div class="avatar-option">
+                    <input type="radio" id="avatar1" name="avatar" value="avatar1.jpg" required>
+                    <label for="avatar1">
+                        <img src="assets/avatar1.jpg" alt="Avatar 1">
+                    </label>
+                </div>
+                <div class="avatar-option">
+                    <input type="radio" id="avatar2" name="avatar" value="avatar2.jpg">
+                    <label for="avatar2">
+                        <img src="assets/avatar2.jpg" alt="Avatar 2">
+                    </label>
+                </div>
+                <div class="avatar-option">
+                    <input type="radio" id="avatar3" name="avatar" value="avatar3.jpg">
+                    <label for="avatar3">
+                        <img src="assets/avatar3.jpg" alt="Avatar 3">
+                    </label>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <h3>Or Upload Your Own Avatar</h3>
+                <input type="file" id="customAvatar" name="customAvatar" 
+                       accept="image/png, image/jpeg" 
+                       onchange="document.querySelectorAll('input[name=avatar]').forEach(r => r.checked = false)">
+                <small>Maximum file size: 1MB. Supported formats: PNG, JPEG</small>
+            </div>
+
+            <input type="submit" value="Register Player">
+        </form>
+    </div>
+</body>
+</html>
