@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 16:30:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 15:13:13 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,11 +39,13 @@ class ConnectionController
 		static int		epollSocket; 
 
 		Connection 		*findConnection(int fd);
-		static bool		closeConnection(int fd);
+		bool			closeConnection(int fd);
 		int				openConnection(int fd, ServerConfig config);
 
-		bool			handleRead(Connection& conn, struct epoll_event& event, HttpRequest &httpRequest, HttpResponse &httpResponse);
-		bool			handleWrite(Connection& conn, struct epoll_event& event , HttpResponse &httpResponse);
+		// bool			handleRead(Connection& conn, struct epoll_event& event, HttpRequest &httpRequest, HttpResponse &httpResponse);
+		// bool			handleWrite(Connection& conn, struct epoll_event& event, HttpRequest &httpRequest, HttpResponse &httpResponse);
+		bool			handleRead(int clientSocket, struct epoll_event& event);
+		bool			handleWrite(int clientSocket);
 
 		int				addServer(int fd, ServerConfig server);
 		ServerConfig	*getServer(int fd);

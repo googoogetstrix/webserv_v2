@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:32:15 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/02/13 11:33:32 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:28:58 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,10 +39,13 @@ Logger::~Logger()
 }
 void Logger::log(std::string color, std::string message, ...)
 {
+
+	if(color == LC_MINOR_NOTE)
+		return ; 
+
 	std::stringstream 	ss;
 	va_list		args;
 	va_start(args, message);
-
 	char	buff[500];
 	vsprintf(buff, message.c_str() , args);
 

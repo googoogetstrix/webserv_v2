@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 18:04:06 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:58:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,6 @@
 #include "Logger.hpp"
 
 class Logger; 
-
-
-
-
 
 Webserv::Webserv()
 {
@@ -38,50 +34,41 @@ Webserv &Webserv::operator=(Webserv const &other)
 
 Webserv::~Webserv()
 {
-
-	Logger::log(LC_SYSTEM, "Cleaning up opened fds");
-	for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
+	Logger::log(LC_SYSTEM, "Cleaning up opened sockets");
+	for( std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
 	{
-		std::cout << " - closing fd# " << *it << std::endl;
+		Logger::log(LC_MINOR_NOTE, " - closing socket#%d\n" , *it);
 		close(*it);
 	}
-		
-
 }
 
 size_t	Webserv::parseConfig(std::string config_file)
 {
-	servers = ConfigParser::parseAllConfigs(config_file);
-	Logger::log(LC_NOTE, "Done parsing file with %d servers", servers.size()) ;
-
-
-	return (servers.size());
+	serverConfigs = ConfigParser::parseAllConfigs(config_file);
+	Logger::log(LC_MINOR_NOTE, "Done parsing file with %d servers", serverConfigs.size()) ;
+	return (serverConfigs.size());
 }
 
 
-Webserv::Webserv(std::string config_file):config_file(config_file)
-{
-	
-	Logger::log(LC_GREEN , "Webserv instance created with config file as %s" , std::string(config_file).c_str());
-	parseConfig(config_file);	
-	
+Webserv::Webserv(std::string config_file):configFile(config_file)
+{	
+	Logger::log(LC_SYSTEM , "Webserv instance created with config file as %s" , std::string(config_file).c_str());
+	parseConfig(config_file);		
 }
 
 std::set<int>  Webserv::getListeningPorts()
 {
 	std::set<int>  ret;
-	for(std::vector<ServerConfig>::iterator it = servers.begin();it != servers.end(); ++it)
+	for (std::vector<ServerConfig>::iterator it = serverConfigs.begin();it != serverConfigs.end(); ++it)
 		ret.insert( it->getPort());
 	return (ret);
 }
 
-bool	Webserv::isServerFd(int fd)
+bool	Webserv::isServerSocket(int socket)
 {
-	for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
-		{
-			if (*it == fd)
-				return (true);
-		}
+	for (std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
+		if (*it == socket)
+			return (true);
 	return (false);
 }
 
@@ -89,16 +76,14 @@ bool	Webserv::isServerFd(int fd)
 bool Webserv::setupSockets(ConnectionController& cc)
 {
 
-	Logger::log(LC_GREEN, " [1/3] Setting up sockets...");
+	Logger::log(LC_MINOR_SYSTEM, " - Setting up sockets...");
 
-	int				success = 0;
+	int					success = 0;
 	std::set<int>		used_ports; 
 	
-
-	for( std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
+	for( std::vector<ServerConfig>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); ++it)
 	{
 		int	current_port = it->getPort();
-
 		if (used_ports.find(current_port) != used_ports.end())
 		{
 			Logger::log(LC_YELLOW, " port#%d is already bound",  current_port);
@@ -122,30 +107,27 @@ bool Webserv::setupSockets(ConnectionController& cc)
 			}
 			// reusable socket if the server was restart before port allocation timeout
 		    int opt = 1;
-			(void) opt;
-		    // if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-		    //     close(fd);
-		    //     throw std::runtime_error("Failed to set socket options: " + std::string(strerror(errno)));
-		    // }
+			if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+				Logger::log(LC_NOTE, "Fail to set socket#%d for reuse socket", fd);
 
 
-			// 
+
 			sockaddr_in		sv_addr;
 			memset(&sv_addr, 0 , sizeof(sockaddr_in));
 			sv_addr.sin_family = AF_INET;
 			sv_addr.sin_addr.s_addr = INADDR_ANY;
 			sv_addr.sin_port = htons(it->getPort());
 
+			// binding with port
 			if (bind(fd, (struct sockaddr*)&sv_addr , sizeof(sv_addr) ) < 0)
 				throw std::runtime_error("Failed to bind on server");
 
-			// no blocking here just yet, just to change the status of the socket
+			// no blocking here just yet, just to change the status of the socket, prepare for upcoming requests
 			if (listen(fd, WEBS_MAX_CONNS) < 0)
 				throw std::runtime_error("Failed to listen on server");
 
-			server_fds.push_back(fd);
+			serverSockets.push_back(fd);
 			used_ports.insert(current_port);
-
 			cc.addServer(fd, *it);
 
 		}
@@ -166,18 +148,10 @@ bool Webserv::setupSockets(ConnectionController& cc)
 
 int Webserv::run(void)
 {
-
 	ConnectionController cc;
-	Connection 			 *conn = NULL;
 
 	Logger::log(LC_GREEN, "Booting up webserv...");
-	// create listening sockets
-	// binds
-	// listen
 	setupSockets(cc);
-
-	
-
 
 	// setting up epoll
 	int epoll_fd = epoll_create1(0);
@@ -192,7 +166,7 @@ int Webserv::run(void)
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
-	for ( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
+	for ( std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
 	{
 		events[ctr].events = EPOLLIN;	
 		events[ctr].data.fd = *it;
@@ -204,10 +178,11 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-	HttpResponse 	httpResposne; 
+	HttpResponse 	httpResponse; 
 	HttpRequest 	httpRequest;
 	while (true) 
 	{
+		
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
 			// no effected fds, but happens from timeout
 			if(nfds == 0)
@@ -216,13 +191,14 @@ int Webserv::run(void)
 			if(nfds == -1)
 				throw std::runtime_error("epoll_wait error");
 
-			Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
+			// Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
 				int			active_fd = events[i].data.fd;
-				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
+				ServerConfig *server = cc.getServer(events[i].data.fd);
+				Logger::log(LC_MINOR_NOTE, "epoll event on fd#%d!" , active_fd);
 				
-				if (isServerFd(active_fd))
+				if (isServerSocket(active_fd))
 				{
 					// error handling
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
@@ -239,18 +215,17 @@ int Webserv::run(void)
 
 					// upcoming new request
 					if(events[i].events & EPOLLIN)
-					{
-
-						ServerConfig *server = cc.getServer(events[i].data.fd);
+					{						
 						if(!server)
 							throw std::runtime_error("ERROR Unable to load server configuration for fd....");
-						std::cout << " *** SERVER IS " << server->getNick() << std::endl ;
+						// std::cout << " *** SERVER IS " << server->getNick() << std::endl ;
 
 						struct sockaddr_in client_address;	
 						socklen_t len = sizeof(client_address);
-						Logger::log(LC_NOTE, "trying to accept new socket ");
+						// Logger::log(LC_NOTE, "trying to accept new socket ");
 
 						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
+						Logger::log(LC_RED, "Line after accept()");
 						if(client_socket < 0)
 							throw std::runtime_error("Unable to accept()");
 						// get whatever flag from the clinet socket, and make sure it's set to non-block
@@ -259,130 +234,55 @@ int Webserv::run(void)
 							throw std::runtime_error("Unable to set client socket into non-blocking mode");
 
 
-						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
-						int da_size = cc.openConnection(client_socket, *server );
-						std::cout << "da_size " << da_size << std::endl;
+						cc.openConnection(client_socket, *server);
 						
 						epoll_event  event; 
 						event.events = EPOLLIN;	
 						event.data.fd = client_socket;
-
-						Logger::log(LC_NOTE, "new incoming socket created as fd#%d" , client_socket);
 						epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket , &event);
-						Logger::log(LC_NOTE, "register fd#%d into epoll" , client_socket);
-
 						continue;
 					}
 					// end server fds
 					continue;
-					
 				}
 
-
-				// client sockets
+				// Start client Socket checking				
 				{
-					conn = cc.findConnection(active_fd);
-					if (conn == NULL)
+
+					if (cc.findConnection(active_fd) == NULL)
 					{
-						Logger::log(LC_ERROR, " SERIOUS ERROR, cannot find connection #%d from the ConnectionController", active_fd);
-						continue;
+						Logger::log(LC_ERROR, "SERIOUS ERROR, cannot find connection# &d from the ConnectionController", active_fd); 
+						throw std::runtime_error("Unmatched client socket");
+						continue; 
 					}
+						
 					else 
 					{
 						HttpResponse httpResponse; 
 						// error handling
 						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 						{
-							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR ient Socket %d hung up, closing socket ", events[i].data.fd);
-							close(events[i].data.fd);
-							Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
-							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
+							connectionController.closeConnection(events[i].data.fd);
 							continue ;
 						}
-
-						if(events[i].events & EPOLLIN)
-						{
-
-							Logger::log(LC_RED , "WE ARE WORKING HERE");
-
-							// httpResponse.setStatus(404);
-							// httpResponse.setBody("Hello Worm!");
-							// cc.handleWrite(*conn, events[i], httpResponse);
-
-
-							cc.handleRead(*conn, events[i], httpRequest, httpResponse);
-
-							if(conn->getIsReady())
-							{
-								cc.handleWrite(*conn, events[i], httpResponse);
-								continue; 		
-							}
-							else 
-							{
-								httpResponse.setStatus(201);
-								httpResponse.setBody("Created");
-								
-								cc.handleWrite(*conn, events[i], httpResponse);
-								continue;
-							}
-							
-							
-							
-
-							
-							// check if the connection belong to which server?
-							// handleRequest(client_socket , &webserv obj , )
-							// DEL ME DEBUG ONLY!
-							
-							
-							// httpResponse.getStaticFile(req, *server, NULL);
-
-
-							// std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
-							// httpResponse.setStatus(200);
-							// httpResponse.setBody("CoolTTT");
-							// if (httpResponse.response(active_fd))
-							// {
-							// 	close(events[i].data.fd);
-							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							// }
-							continue ;							
-						}
+						// still has something to write to socket, continue to do so
 						if(events[i].events & EPOLLOUT)
 						{
+							cc.handleWrite(events[i].data.fd);
+							continue;
+						}
 
-							conn->handleWrite(cc.getEpollSocket(), events[i]);
 
-							// std::cout << "*** MOCKUP RESPONSE" << std::endl;
-							// ServerConfig *server = cc.getServer( events[i].data.fd);
-							// if(!server)
-							// 	throw std::runtime_error("Unable to load client connection server config");
-							// HttpRequest req;
-							// std::string testReq = "GET /index.html HTTP/1.1\r\n";
-							// testReq += "Host: www.example.com\r\n"; 
-							// testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
-							// testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
-							// testReq += "Accept-Language: en-US,en;q=0.5\r\n";
-							// testReq += "Accept-Encoding: gzip, deflate, br\r\n";
-							// testReq += "Connection: keep-alive\r\n";
-							// testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
-							// req.parseRequestHeaders(httpResponse, *server , testReq);
-							// // const std::vector<RouteConfig>& routers = server.getRoutes();??
-							// httpResponse.getStaticFile(req, *server, NULL);
-							// if (httpResponse.response(active_fd))
-							// {
-							// 	close(events[i].data.fd);
-							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							// }
-							continue ;
-							
+						// reading from socket until finished, then process
+						if(events[i].events & EPOLLIN)
+						{
+							cc.handleRead( events[i].data.fd, events[i]);
+							continue ;							
 						}
 					}
 					
 				}
-
 				Logger::log(LC_RED, " *** END of the nfds loop");
 
 			}
@@ -399,5 +299,16 @@ int Webserv::run(void)
 
 
 	return (0);
+}
+
+std::vector<ServerConfig> Webserv::getServerConfigs()
+{
+	return serverConfigs;
+}
+
+
+ConnectionController &Webserv::getConnectionController()
+{
+	return connectionController;
 }
 

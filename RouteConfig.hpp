@@ -36,32 +36,7 @@ class RouteConfig
 		void setAutoindex(bool autoIndex);
 		void setClientMaxBodySize(size_t clientMaxBodySize);
 
-		void print() const
-		{
-			std::cout << "\n=== Route Configuration ===" << std::endl;
-			std::cout << "Path: " << path << std::endl;
-			std::cout << "Root: " << root << std::endl;
-			std::cout << "Index: " << index << std::endl;
-			
-			std::cout << "Allowed Methods: ";
-			for (std::vector<std::string>::const_iterator it = allow_methods.begin(); 
-				it != allow_methods.end(); ++it) {
-				std::cout << *it;
-				if (it + 1 != allow_methods.end())
-					std::cout << ", ";
-			}
-			std::cout << std::endl;
-			
-			std::cout << "CGI Configurations:" << std::endl;
-			for (std::map<std::string, std::string>::const_iterator it = CGIs.begin(); 
-				it != CGIs.end(); ++it) {
-				std::cout << "  Extension: " << it->first << " -> Interpreter: " << it->second << std::endl;
-			}
-			
-			std::cout << "Autoindex: " << (autoindex ? "on" : "off") << std::endl;
-			std::cout << "Client Max Body Size: " << clientMaxBodySize << std::endl;
-			std::cout << "==========================\n" << std::endl;
-		}
+		void debug() const;
 };
 
 #endif

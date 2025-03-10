@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/07 15:44:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 16:43:41 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,12 @@
 # include	"HttpResponse.hpp"
 # include	"ConnectionController.hpp"
 # include	"Logger.hpp"
+
 # define 	CON_RECV_BUFFER_SIZE 	4001
 # define 	CON_SOC_TIMEOUT_SECS 	1
+# define 	WEBS_MB					1048576 
+# define 	WEBS_DEF_MAX_BOD_SIZE	8
+# define	WEBS_RESP_SEND_SIZE 	4096
 
 class Connection 
 {
@@ -37,16 +41,18 @@ class Connection
 
 		int					fd;	
 		time_t				expiresOn; 
-		ServerConfig		config;
+		ServerConfig		serverConfig;
 		bool				isReady;
+		int					bodyLength;
 
 		std::string			requestBuffer;
 		std::string 		responseBuffer;
 		std::vector<char>	rawPostBody;
 		bool				headerIsCompleted;
-
-		void 				setNonBlock();
 		int					epollSocket;
+		void 				setNonBlock();
+		int 				contentLength;
+
 
 	
 	public:
@@ -57,11 +63,11 @@ class Connection
 		~Connection();
 
 		time_t				getExpiresOn() const ;
-		int 				getFd() const;
+		int 				getSocket() const;
 		std::string			getRequestBuffer() const;
 		std::string 		getResponseBuffer() const;
 
-		std::vector<char>	&getRawPostBody() const;
+		std::vector<char>	&getRawPostBody();
 
 		bool 				setExpiresOn(time_t);
 		bool 				setFd(int fd);
@@ -75,24 +81,31 @@ class Connection
 		bool				appendRequestBuffer(std::string str);
 
 		bool				processRequestHeader();
-		bool				processRequest();
+		bool				processRequest(HttpRequest &httpRequest);
 
-		bool				ready(HttpResponse &);
+		bool				ready(HttpResponse &httpResponse, bool sendAsWell=false);
 		bool				getIsReady() const;
 		void				setIsReady(bool newValue) ;
 		bool				needsToWrite();
-		bool				handleWrite(int epoll_fd, struct epoll_event &event);
+//		bool				handleWrite(int epoll_fd, struct epoll_event &event);
 
 		size_t				truncateResponseBuffer(size_t bytes);
-		
+
+
+		ServerConfig		&getServerConfig();
+
+		void 	setContentLength(int i);
+		int		getContentLength();
+
+
+				
 
 		class ParseRequestException: public std::exception
 		{
 			public:
 				virtual const char *what() const throw();
 		};
-
-
+		
 		
 }; 
 
