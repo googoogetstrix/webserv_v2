@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 14:04:53 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 15:33:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@
 # define	WEBS_SCK_TIMEOUT		1000
 
  // 8MB 
-# define	WEBS_DEBUG_RESPONSE		0
+# define	WEBS_DEBUG_RESPONSE		true
 
 class ServerConfig; 
 class ConnectionController;

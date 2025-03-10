@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 15:15:45 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 16:47:41 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,17 +162,48 @@ bool	Connection::processRequestHeader()
 	return (true);
 	
 }
-bool 	Connection::ready(HttpResponse &httpResponse)
+bool 	Connection::ready(HttpResponse &httpResponse, bool sendAsWell)
 {
 	isReady = true; 
 	requestBuffer = "";
 	
 	if(httpResponse.getBody().empty() && httpResponse.getStatus() >= 400 && httpResponse.getStatus() <= 599 )
 	{
-		std::cout << " STILL NEEDS TO SET EMPTY BODY " << std::endl;
 		httpResponse.setBody(HttpResponse::getErrorPage(httpResponse.getStatus(), serverConfig));
 	}
 	responseBuffer = httpResponse.serialize();
+
+	if(sendAsWell)
+	{
+		// ignores all the closseConnection() then main loop will handle this
+		while ( responseBuffer.length() > 0)
+		{
+			punchIn();
+			size_t sendingSize = getResponseBuffer().length() < WEBS_RESP_SEND_SIZE ? getResponseBuffer().length() : WEBS_RESP_SEND_SIZE;
+			int bytesSent = send( fd , getResponseBuffer().c_str() , sendingSize  , MSG_DONTWAIT);		
+			if (bytesSent <= 0)
+			{
+				Logger::log(LC_MINOR_NOTE, " bytesSent = %d" , bytesSent); 
+				if( bytesSent == -1)
+				{	
+					Logger::log(LC_MINOR_NOTE , " Minor Error: buffer full or would block!");
+					return (false);
+				}
+				if (bytesSent == 0)
+				{
+					Logger::log(LC_MINOR_NOTE , "DONE SENDING #1, YAHOO!");					
+					return (true);
+				}
+				
+				// catch all other errors
+				Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
+				return (false);
+			}
+			truncateResponseBuffer(static_cast<size_t>(bytesSent));
+		}
+		return true;
+	}
+	
 	return true;
 	
 
@@ -343,19 +374,18 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
 	
-	
-		httpResponse.getStaticFile(httpRequest, serverConfig , route);
-		throw RequestException(httpResponse.getStatus(), "OK");
+		
+		
+		if(!httpResponse.getStaticFile(localPath))
+		{
+
+
+		}
 		
 		
 
-				
-	
-
-
-
-		Logger::log(LC_RED, " DEL ME :: Connection::processRequest() ==> WORKING_HERE_EXCEPTION, no needs to go any further");
-		throw RequestException(599, "599");
+		ready(httpResponse, true);
+		return (true);
 }
 
 void 	Connection::setContentLength(int i)

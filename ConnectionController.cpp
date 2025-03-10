@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 15:15:15 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 16:38:56 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,10 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 		while(true)
 			{
 				int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
+
+				std::cout << LC_RED << "recv() is reading" << std::endl;
+				std::cout << std::string(buffer) << std::endl;
+				std::cout << "\n++++++++++++++++++++++++++++++++" << LC_RESET << std::endl;
 				if(bytesRead == 0)
 				{
 					Logger::log(LC_ERROR, "Connection disconnected from #%d" , conn->getSocket());
@@ -124,12 +128,15 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 					if(contentLengthFromHeader <= 0)
 					{
+						conn->appendRequestBuffer( std::string(buffer));
 						// no Post
 						conn->setHeaderIsComplete(true);
 						HttpRequest httpRequest;
 						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
 						conn->processRequest(httpRequest);
-						
+						// needs writing engine here???
+						closeConnection(conn->getSocket());
+						return (true);
 					} else if( actualContentLength > conn->getRawPostBody().size())
 					{
 						// with Post body, splitting between header & post body here, not yet complete
@@ -174,7 +181,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 	if(!conn->needsToWrite())
 		return (false);
 
-	size_t sendSize = conn->getResponseBuffer().length();	
+	size_t sendSize = WEBS_RESP_SEND_SIZE;
 
 	while( conn->getResponseBuffer().length() > 0 )
 	{
@@ -191,7 +198,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 			}
 			if (bytesSent == 0)
 			{
-				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
+				Logger::log(LC_MINOR_NOTE , "DONE SENDING #1, YAHOO!");
 				closeConnection(clientSocket);
 				return (true);
 			}

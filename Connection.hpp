@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 14:55:38 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 16:43:41 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@
 # define 	CON_SOC_TIMEOUT_SECS 	1
 # define 	WEBS_MB					1048576 
 # define 	WEBS_DEF_MAX_BOD_SIZE	8
+# define	WEBS_RESP_SEND_SIZE 	4096
 
 class Connection 
 {
@@ -82,7 +83,7 @@ class Connection
 		bool				processRequestHeader();
 		bool				processRequest(HttpRequest &httpRequest);
 
-		bool				ready(HttpResponse &);
+		bool				ready(HttpResponse &httpResponse, bool sendAsWell=false);
 		bool				getIsReady() const;
 		void				setIsReady(bool newValue) ;
 		bool				needsToWrite();

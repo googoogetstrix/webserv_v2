@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 15:14:02 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 16:14:08 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,12 @@ bool Webserv::setupSockets(ConnectionController& cc)
 				throw std::runtime_error("Failed to set server to non-blocking");
 			}
 			// reusable socket if the server was restart before port allocation timeout
-		    // int opt = 1;
+		    int opt = 1;
+			if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+				Logger::log(LC_NOTE, "Fail to set socket#%d for reuse socket", fd);
+
+
+
 			sockaddr_in		sv_addr;
 			memset(&sv_addr, 0 , sizeof(sockaddr_in));
 			sv_addr.sin_family = AF_INET;
