@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 11:02:46 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 19:33:21 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class Connection
 		time_t				expiresOn; 
 		ServerConfig		serverConfig;
 		bool				isReady;
+		int					bodyLength;
 
 		std::string			requestBuffer;
 		std::string 		responseBuffer;
@@ -49,6 +50,7 @@ class Connection
 		bool				headerIsCompleted;
 		int					epollSocket;
 		void 				setNonBlock();
+		int 				contentLength;
 
 
 	
@@ -84,12 +86,15 @@ class Connection
 		bool				getIsReady() const;
 		void				setIsReady(bool newValue) ;
 		bool				needsToWrite();
-		bool				handleWrite(int epoll_fd, struct epoll_event &event);
+//		bool				handleWrite(int epoll_fd, struct epoll_event &event);
 
 		size_t				truncateResponseBuffer(size_t bytes);
 
+
 		ServerConfig		*getServerConfig();
 
+		void 	setContentLength(int i);
+		int		getContentLength();
 
 
 				
@@ -99,6 +104,7 @@ class Connection
 			public:
 				virtual const char *what() const throw();
 		};
+		
 		
 }; 
 

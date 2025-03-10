@@ -7,6 +7,9 @@
 # include <map>
 # include "RouteConfig.hpp"
 # include "HttpRequest.hpp"
+# include "RequestException.hpp"
+# include "HttpResponse.hpp"
+
 # include "Util.hpp"
 
 class HttpRequest; 
@@ -50,6 +53,7 @@ class ServerConfig
 
 		std::string getNick();
 		RouteConfig 	*findRoute(std::string path);
+		bool			resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing);
 
 
 		void debug() const;

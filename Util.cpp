@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:34:23 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 17:22:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,4 +94,38 @@ size_t Util::charactersMatched(std::string find, std::string path)
 			break;
 	matched = i;
 	return (matched);
+}
+
+
+std::string	 Util::extractFileName(std::string const path)
+{
+    size_t pos = path.find_last_of("/");
+
+    if(pos == std::string::npos)
+        return path;
+    else
+    {
+        std::string  temp = path.substr(pos + 1);
+        if( temp.find(".") != std::string::npos)
+            return (temp);
+        else
+            return "";
+
+    } 
+        
+}
+bool	 Util::hasTrailingSlash(std::string const path)
+{
+    return  (path[ path.length() - 1] == '/');
+}
+
+
+bool 	Util::strInContainer(std::string const &str, std::vector<std::string> v)
+{
+	for( std::vector<std::string>::const_iterator it = v.begin(); it != v.end(); ++it)
+	{
+		if( str == *it)
+			return (true);		
+	}
+	return false;
 }

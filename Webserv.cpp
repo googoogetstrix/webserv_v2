@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:36:34 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 17:37:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,7 +199,7 @@ int Webserv::run(void)
 	Logger::log(LC_GREEN, "Webserv booted succesfully...");
 
 
-	HttpResponse 	httpResposne; 
+	HttpResponse 	httpResponse; 
 	HttpRequest 	httpRequest;
 	while (true) 
 	{
@@ -212,12 +212,12 @@ int Webserv::run(void)
 			if(nfds == -1)
 				throw std::runtime_error("epoll_wait error");
 
-			Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
+			// Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
 				int			active_fd = events[i].data.fd;
 				ServerConfig *server = cc.getServer(events[i].data.fd);
-				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
+				// Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerFd(active_fd))
 				{
@@ -236,16 +236,14 @@ int Webserv::run(void)
 
 					// upcoming new request
 					if(events[i].events & EPOLLIN)
-					{
-
-						
+					{						
 						if(!server)
 							throw std::runtime_error("ERROR Unable to load server configuration for fd....");
-						std::cout << " *** SERVER IS " << server->getNick() << std::endl ;
+						// std::cout << " *** SERVER IS " << server->getNick() << std::endl ;
 
 						struct sockaddr_in client_address;	
 						socklen_t len = sizeof(client_address);
-						Logger::log(LC_NOTE, "trying to accept new socket ");
+						// Logger::log(LC_NOTE, "trying to accept new socket ");
 
 						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
 						if(client_socket < 0)
@@ -256,17 +254,15 @@ int Webserv::run(void)
 							throw std::runtime_error("Unable to set client socket into non-blocking mode");
 
 
-						Logger::log(LC_NOTE, "trying to add the connectionXXXX.....")	;
-						int da_size = cc.openConnection(client_socket, *server );
-						std::cout << "da_size " << da_size << std::endl;
+						cc.openConnection(client_socket, *server);
 						
 						epoll_event  event; 
 						event.events = EPOLLIN;	
 						event.data.fd = client_socket;
 
-						Logger::log(LC_NOTE, "new incoming socket created as fd#%d" , client_socket);
+						// Logger::log(LC_NOTE, "new incoming socket created as fd#%d" , client_socket);
 						epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket , &event);
-						Logger::log(LC_NOTE, "register fd#%d into epoll" , client_socket);
+						// Logger::log(LC_NOTE, "register fd#%d into epoll" , client_socket);
 
 						continue;
 					}
@@ -275,15 +271,16 @@ int Webserv::run(void)
 					
 				}
 
-
-				// client sockets
+				// Start client Socket checking				
 				{
+
 					conn = cc.findConnection(active_fd);
 					if (conn == NULL)
 					{
-						Logger::log(LC_ERROR, " SERIOUS ERROR, cannot find connection #%d from the ConnectionController", active_fd);
-						continue;
+						Logger::log(LC_ERROR, "SERIOUS ERROR, cannot find connection# &d from the ConnectionController", active_fd); 
+						continue; 
 					}
+						
 					else 
 					{
 						HttpResponse httpResponse; 
@@ -296,107 +293,48 @@ int Webserv::run(void)
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 							continue ;
 						}
+						// still has something to write to socket, continue to do so
+						if(events[i].events & EPOLLOUT)
+						{
+							int out = cc.handleWrite(*conn, events[i] , httpRequest , httpResponse);
 
+							std::cout << " HANDLE WRITE RETURNS " << out << std::endl;
+							//conn->handleWrite(cc.getEpollSocket(), events[i]);
+							
+							continue ;	
+						}
+
+
+						// reading from socket until finished, then process
 						if(events[i].events & EPOLLIN)
 						{
-
 							Logger::log(LC_RED , "WE ARE WORKING HERE");
-
-							// httpResponse.setStatus(404);
-							// httpResponse.setBody("Hello Worm!");
-							// cc.handleWrite(*conn, events[i], httpResponse);
-
-							// read the request 
 							bool doneReading = cc.handleRead(*conn, events[i], httpRequest, httpResponse);
-
-
-
+							// done reading , do process & response
 							if (doneReading)
 							{
-								bool headerIsOK = httpRequest.parseRequestHeaders(httpResponse, *server, conn->getRequestBuffer());
-								std::cout << "HeaderIsOK " << (headerIsOK ? "OK" : "FAIL") << std::endl;
-
-								if(!conn->processRequest(httpRequest, httpResponse))
-								{
+								try {
+									if(!conn->processRequest(httpRequest, httpResponse))
 									return conn->ready(httpResponse);
-
 								}
-
-
-
+								catch(RequestException &e)
+								{
+									std::cout << " CAUGHT requestException HERE" << std::endl;
+									std::cout << " WITH CODE " << e.getCode() << std::endl;
+									httpResponse.setStatus(e.getCode());
+									std::cout << " httpRespons.status IS NOW  " << httpResponse.getStatus() << std::endl;
+									conn->ready(httpResponse);
+									cc.handleWrite(*conn, events[i], httpRequest , httpResponse);
+								}
+								
 							}
 							
 							Logger::log(LC_RED, " REMOVE ORINGINAL LINE HERE\n" );
-							// if(conn->getIsReady())
-							// {
-							// 	cc.handleWrite(*conn, events[i], httpResponse);
-							// 	continue; 		
-							// }
-							// else 
-							// {	
-							// 	httpResponse.setStatus(201);
-							// 	httpResponse.setBody("Created");
-							// 	cc.handleWrite(*conn, events[i], httpResponse);
-							// 	continue;
-							// }
-							
-							
-							
-
-							
-							// check if the connection belong to which server?
-							// handleRequest(client_socket , &webserv obj , )
-							// DEL ME DEBUG ONLY!
-							
-							
-							// httpResponse.getStaticFile(req, *server, NULL);
-
-
-							// std::cout << "*** MOCKUP DUMMY RESPONSE" << std::endl;
-							// httpResponse.setStatus(200);
-							// httpResponse.setBody("CoolTTT");
-							// if (httpResponse.response(active_fd))
-							// {
-							// 	close(events[i].data.fd);
-							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							// }
 							continue ;							
-						}
-						if(events[i].events & EPOLLOUT)
-						{
-
-							conn->handleWrite(cc.getEpollSocket(), events[i]);
-
-							// std::cout << "*** MOCKUP RESPONSE" << std::endl;
-							// ServerConfig *server = cc.getServer( events[i].data.fd);
-							// if(!server)
-							// 	throw std::runtime_error("Unable to load client connection server config");
-							// HttpRequest req;
-							// std::string testReq = "GET /index.html HTTP/1.1\r\n";
-							// testReq += "Host: www.example.com\r\n"; 
-							// testReq += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n";
-							// testReq += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
-							// testReq += "Accept-Language: en-US,en;q=0.5\r\n";
-							// testReq += "Accept-Encoding: gzip, deflate, br\r\n";
-							// testReq += "Connection: keep-alive\r\n";
-							// testReq += "Upgrade-Insecure-Requests: 1\r\n\r\n";
-							// req.parseRequestHeaders(httpResponse, *server , testReq);
-							// // const std::vector<RouteConfig>& routers = server.getRoutes();??
-							// httpResponse.getStaticFile(req, *server, NULL);
-							// if (httpResponse.response(active_fd))
-							// {
-							// 	close(events[i].data.fd);
-							// 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
-							// 	Logger::log(LC_GREEN , "Socket#%d Done writing, closing socket happily.", events[i].data.fd);
-							// }
-							continue ;
-							
 						}
 					}
 					
 				}
-
 				Logger::log(LC_RED, " *** END of the nfds loop");
 
 			}

@@ -53,8 +53,12 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 
 	for(std::map<std::string,RouteConfig>::iterator it = routes.begin(); it != routes.end(); ++it)
 	{
+		// set default matching to first route found , WHICH requires to be /
 		if (returnRoute == NULL)
 			returnRoute = &(it->second); 
+
+		if ( it->second.getPath() == path )
+			return &(it->second);
 
 		std::string loc = it->first;
 		if ( loc[loc.size() - 1] != '/')
@@ -72,18 +76,59 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 		}
 	}
 	return returnRoute;
-
 }
+
+bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing)
+{
+		localPath = httpRequest.getPath();
+		std::cout << " resolveRoute() localPath = " << localPath << std::endl;
+		std::string targetResource = Util::extractFileName(localPath);
+		std::cout << " targetResource = " << targetResource << std::endl;
+
+
+		if (targetResource.empty() && route.getIndex().empty() &&  !route.getAutoindex())
+			throw RequestException(403, "Forbidden");
+
+
+		// if not end with file name, 
+		if(!Util::hasTrailingSlash(localPath) &&  targetResource == "")
+			localPath += "/";
+
+
+
+		std::cout << "localPath then is << _" << localPath << "_" << std::endl;
+		// TODO - should we have ServerConfig level of this directive?
+		allowDirectoryListing = false;
+		allowDirectoryListing = route.getAutoindex();
+
+		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");
+		
+		// if(!Util::hasTrailingSlash(localPath))
+
+		std::cout << "localPath now is << _" << localPath << "_" << std::endl;
+
+		if(targetResource == "" && !route.getIndex().empty())
+			localPath += route.getIndex();
+
+		
+		std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
+
+
+		return (true);
+}
+
+
+
 void ServerConfig::debug() const
  {
-		std::cout << "========================\n Server Configuration:\n========================\n" << std::endl;
-        std::cout << " - Port: " << port << std::endl;
-        std::cout << " - Host: " << host << std::endl;
-        std::cout << " - Server Name: " << serverName << std::endl;
-        std::cout << " - Root: " << root << std::endl;
-        std::cout << " - Index: " << index << std::endl;
+		std::cout << "========================\n Server Configuration:\n========================" << std::endl;
+        std::cout << " - Port: \t" << port << std::endl;
+        std::cout << " - Host: \t" << host << std::endl;
+        std::cout << " - Server Name:\t" << serverName << std::endl;
+        std::cout << " - Root:\t" << root << std::endl;
+        std::cout << " - Index:\t" << index << std::endl;
 
-        std::cout << " - Error Pages:" << std::endl;
+        std::cout << " - Error Pages:\t" << std::endl;
         std::map<int, std::string>::const_iterator it;
         for (it = errorPages.begin(); it != errorPages.end(); ++it) {
             std::cout << "    " << it->first << " -> " << it->second << std::endl;

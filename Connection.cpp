@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 11:20:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 10:14:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,17 @@
 Connection::Connection():fd(0),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
+	Logger::log(LC_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 	setNonBlock();
+	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
 }
 Connection::~Connection()
 {
-
+	Logger::log(LC_NOTE, "connection destroyed");
 }
 Connection::Connection(Connection const &other)
 {
@@ -150,9 +152,10 @@ bool	Connection::processRequestHeader()
 bool 	Connection::ready(HttpResponse &httpResponse)
 {
 	isReady = true; 
-	if(httpResponse.getBody().empty())
+	if(httpResponse.getBody().empty() && httpResponse.getStatus() >= 400 && httpResponse.getStatus() <= 599 )
 	{
 		std::cout << " STILL NEEDS TO SET EMPTY BODY " << std::endl;
+		httpResponse.setBody(HttpResponse::getErrorPage(httpResponse.getStatus(), serverConfig));
 	}
 	responseBuffer = httpResponse.serialize();
 	return true;
@@ -176,50 +179,50 @@ bool	Connection::needsToWrite()
 }
 
 
-bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
-{
-	Logger::log(LC_RED, "Moved to COnnectionController->handleRead");
-	return false;
+// bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
+// {
+// 	Logger::log(LC_RED, "Moved to COnnectionController->handleRead");
+// 	return false;
 
-	(void) epoll_fd;
-	if(!needsToWrite())
-		return (false);
+// 	(void) epoll_fd;
+// 	if(!needsToWrite())
+// 		return (false);
 
-	size_t sendSize = responseBuffer.length();	
-	while( responseBuffer.length() > 0 )
-	{
-		punchIn();
-		// if(sendSize < responseBuffer.length())
-		// 	sendSize = responseBuffer.length();
- 		int bytesSent = send( event.data.fd , responseBuffer.c_str() ,sendSize , MSG_DONTWAIT);
-		if (bytesSent <= 0)
-		{
-			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
-			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
-			{	
-				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
-				return (false);
-			}
-			if (bytesSent == 0)
-			{
-				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
-				ConnectionController::closeConnection(event.data.fd);
-				return (true);
-			}
+// 	size_t sendSize = responseBuffer.length();	
+// 	while( responseBuffer.length() > 0 )
+// 	{
+// 		punchIn();
+// 		// if(sendSize < responseBuffer.length())
+// 		// 	sendSize = responseBuffer.length();
+//  		int bytesSent = send( event.data.fd , responseBuffer.c_str() ,sendSize , MSG_DONTWAIT);
+// 		if (bytesSent <= 0)
+// 		{
+// 			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
+// 			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
+// 			{	
+// 				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
+// 				return (false);
+// 			}
+// 			if (bytesSent == 0)
+// 			{
+// 				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
+// 				ConnectionController::closeConnection(event.data.fd);
+// 				return (true);
+// 			}
 			
-			// catch all other errors
-			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
-			ConnectionController::closeConnection(fd);
-		}
-		size_t compareSize = static_cast<size_t>(bytesSent);
-		compareSize = compareSize < responseBuffer.length() ? compareSize : responseBuffer.length();
-		responseBuffer =  responseBuffer.substr(compareSize); 
+// 			// catch all other errors
+// 			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
+// 			ConnectionController::closeConnection(fd);
+// 		}
+// 		size_t compareSize = static_cast<size_t>(bytesSent);
+// 		compareSize = compareSize < responseBuffer.length() ? compareSize : responseBuffer.length();
+// 		responseBuffer =  responseBuffer.substr(compareSize); 
 		
-	}
-	ConnectionController::closeConnection(event.data.fd);
-	return (true);
+// 	}
+// 	ConnectionController::closeConnection(event.data.fd);
+// 	return (true);
 	
-}
+// }
 
 
 size_t	Connection::truncateResponseBuffer(size_t bytesSent)
@@ -255,17 +258,10 @@ bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResp
 {
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
-		(void) httpResponse;
-
-		route->debug();
-
-		httpRequest.debug();
-		route->debug();
-		serverConfig.debug();
-
+		
 	
 
-		// try check all the erro could possibly happen
+		// try check all the error could possibly happen
 
 		// 400 Bad request
 		// 401 Unauthorized
@@ -277,28 +273,33 @@ bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResp
 		// 414 URI Too Long
 		// 500 Internal Server Error
 
-		std::string path = httpRequest.getPath();		
-		if (path.find("..") != std::string::npos )		
-			return httpResponse.setStatus(400) && false; 
-		
-		std::string method = httpRequest.getMethod();
-		std::vector<std::string> allowedMethods = route->getMethods();
+		std::cout << "request_buffer: " << requestBuffer << std::endl;
 
-		bool found = false;
-		for( size_t i = 0 ; i < allowedMethods.size(); i++)
+		httpRequest.parseRequestHeaders(httpResponse, serverConfig , requestBuffer);
+
+		// TODO 
+		if(false) 
 		{
-			if(allowedMethods[i] == method)
-			{
-				found = true;
-				break;
-			}				
+			serverConfig.debug();
 		}
-		Logger::log(LC_NOTE, " REMOVE ME, I am skipping method not allowed checking");
-		if(false && !found)
-			return httpResponse.setStatus(405) && false; 
+		httpRequest.debug();
+		route->debug();
+		
+
+
+		std::string path = httpRequest.getPath();		
+		std::string method = httpRequest.getMethod();
+		if (path.find("..") != std::string::npos )		
+			throw RequestException(400, "Bad Request");
+		
+		std::vector<std::string> allowedMethods = route->getMethods();
+		if(Util::strInContainer(method,  allowedMethods))
+			throw RequestException(405, "Method not allowed.");
+//			return httpResponse.setStatus(405) && false; 
+
 
 		std::string test = httpRequest.getHeader("Content-Length");
-		if(method == "POST" && test.empty())
+		if(httpRequest.getMethod() == "POST" && test.empty())
 			return httpResponse.setStatus(411) && false; 
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
@@ -308,15 +309,44 @@ bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResp
 			return httpResponse.setStatus(415) && false; 
 
 
+
+		Logger::log(LC_RED, " NEEDS CHECK IF IS CGI ?");
+		std::string m = httpRequest.getMethod() ;
+		Logger::log(LC_RED, " requestMethod = %s " , m.c_str());
+
+
+
+
 		Logger::log(LC_GREEN, "Request seems OK so far");
 
+		std::string  localPath = "";
+		bool		 allowDirectoryBrowsing = false;
+		if(!serverConfig.resolveRoute(httpRequest, *route, localPath , allowDirectoryBrowsing))
+			throw RequestException(403, "Forbidden");
+
+		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
+
+	
+	
+		httpResponse.getStaticFile(httpRequest, serverConfig , route);
+		throw RequestException(httpResponse.getStatus(), "OK");
 		
+		
+
+				
 	
 
 
 
-
-		throw std::runtime_error("WORKING_HERE_EXCEPTION, no needs to go any further");
+		Logger::log(LC_RED, " DEL ME :: Connection::processRequest() ==> WORKING_HERE_EXCEPTION, no needs to go any further");
+		throw RequestException(599, "599");
 }
 
-
+void 	Connection::setContentLength(int i)
+{
+		contentLength = i;
+}
+int		Connection::getContentLength()
+{
+		return contentLength; 
+}

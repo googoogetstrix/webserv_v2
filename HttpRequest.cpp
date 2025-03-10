@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:30:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 19:22:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,11 +100,31 @@ bool HttpRequest::setBody(std::string bodyStr)
 	return true;
 }
 
+
+int HttpRequest::preprocessContentLength(std::string requestString)
+{
+	int	return_len;
+	std::string			line ;
+	std::istringstream 	stream(requestString);
+	while ( std::getline(stream , line)  && line != "\r")
+	{
+		 if(line.find("Content-Length:") == 0)
+		 {
+			std::istringstream len_stream(line.substr(15));
+			if(!(len_stream >> return_len))
+				return -1;
+			return return_len;
+		 }
+	}
+	return -1; 
+
+}
+
 bool HttpRequest::parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString)
 {
 
-	std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
-	std::cout << "raw param: " << requestString << std::endl;
+	// std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
+	// std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
 
@@ -183,14 +203,14 @@ std::string HttpRequest::getRawQueryString() const
 
 void HttpRequest::debug()
 {
-	Logger::log(LC_RED, " DEBUG HttpRequest Object");
-	std::cout << "method:\t\t" << method << std::endl;
-	std::cout << "path:\t\t" << path << std::endl;
-	std::cout << "rawPath:\t" << rawPath << std::endl;
-	std::cout << "rawQueryString:\t" << rawQueryString << std::endl;
-	std::cout << "contentLength:\t" << contentLength << std::endl;
-	std::cout << "body:\t\t" << body << std::endl;
-	std::cout << "header:" << std::endl;
+	std::cout << "========================\nHttpRequest\n========================" << std::endl;
+	std::cout << " - method:\t\t" << method << std::endl;
+	std::cout << " -  path:\t\t" << path << std::endl;
+	std::cout << " - rawPath:\t" << rawPath << std::endl;
+	std::cout << " - rawQueryString:\t" << rawQueryString << std::endl;
+	std::cout << " - contentLength:\t" << contentLength << std::endl;
+	std::cout << " - body:\t\t" << body << std::endl;
+	std::cout << " - header:" << std::endl;
 
 	for(std::map<std::string, std::string>::iterator  it = headers.begin(); it != headers.end() ; ++it)
 	{

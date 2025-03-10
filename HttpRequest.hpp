@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:24:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 19:22:56 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,11 @@
 # define	HTTP_REQUEST_HPP
 # include	<map>
 # include	<string>
+# include	<cstring>
 # include   "ServerConfig.hpp"
 # include   "HttpResponse.hpp"
 # include   "Logger.hpp"
+
 
 
 class ServerConfig;
@@ -72,6 +74,7 @@ class HttpRequest
 		// ServerConfig
 		// requestString = "HTTP1.1 GET /index.php \n\nn\"
 		bool parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString);
+		static int preprocessContentLength(std::string requestString);
 
 		std::string getHeader(std::string const str);
 

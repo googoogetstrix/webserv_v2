@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/02/20 19:18:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 16:49:33 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@
 #define  	LC_ERROR  			"\033[31m\033[1m"
 #define  	LC_NOTE  			"\033[33m"
 #define  	LC_CLOSE  			"\033[34m"
+
+#define  	LC_INFO  			"\033[33m"
 
 
 class Logger

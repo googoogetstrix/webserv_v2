@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:35:13 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 16:51:31 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@
 # include 	"ServerConfig.hpp"
 # include 	"HttpRequest.hpp"
 # include 	"HttpResponse.hpp"
+# include 	"RequestException.hpp"
+# include 	"ResponseOkException.hpp"
 # include 	"ConnectionController.hpp"
 # include 	"ConfigParser.hpp"
 
@@ -36,6 +38,8 @@
 
 # define 	WEBS_MB					1048576 
 # define 	WEBS_DEF_MAX_BOD_SIZE	8 // 8MB 
+# define	WEBS_DEBUG_RESPONSE		0
+
 class ServerConfig; 
 class ConnectionController;
 

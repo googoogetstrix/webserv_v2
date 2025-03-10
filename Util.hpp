@@ -6,13 +6,14 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:35:29 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/08 19:34:10 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 17:22:24 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef		UTIL_HPP
 # define 	UTIL_HPP 
 # include 	<iostream>
+# include 	<vector>
 
 class Util
 {
@@ -26,7 +27,11 @@ class Util
 
 		static 	int	substrPos(std::string const haystack, std::string const needle);
 		static	size_t charactersMatched(std::string find, std::string path);
+		static  std::string	 extractFileName(std::string const path);
+		static  bool	 hasTrailingSlash(std::string const path);
 
+
+		static  bool 	 strInContainer(std::string const &str, std::vector<std::string> v);
 };
 
 #endif
