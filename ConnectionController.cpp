@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 16:38:56 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:40:49 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,20 +87,16 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
-	Logger::log(LC_RED, "WE ARE WORKING HERE !!!!  appendRequestBuffer is broken!!!!");
-
+	
 	try {
 
 		while(true)
 			{
 				int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
 
-				std::cout << LC_RED << "recv() is reading" << std::endl;
-				std::cout << std::string(buffer) << std::endl;
-				std::cout << "\n++++++++++++++++++++++++++++++++" << LC_RESET << std::endl;
 				if(bytesRead == 0)
 				{
-					Logger::log(LC_ERROR, "Connection disconnected from #%d" , conn->getSocket());
+					Logger::log(LC_CON_FAIL, "Connection disconnected from #%d" , conn->getSocket());
 					closeConnection(conn->getSocket());
 					return (false);
 				}
@@ -120,10 +116,8 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 				if (pos != -1)
 				{
-					std::cout << "*** FOUND CRLF ***" << std::endl;
 					int  contentLengthFromHeader = HttpRequest::preprocessContentLength( std::string(buffer, bytesRead)); 
 					size_t	actualContentLength = static_cast<size_t>(contentLengthFromHeader);
-					std::cout << "*** contentLengthFromHeader ***" << contentLengthFromHeader << std::endl;
 					conn->setContentLength(contentLengthFromHeader);	
 
 					if(contentLengthFromHeader <= 0)
@@ -158,6 +152,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 		
 	} 
 	catch (RequestException &e) {
+			Logger::log(LC_DEBUG, " Tell me when you see this one, i need extra handle for this case!");
 			std::cout << "Request Exception " << e.getCode() << ", " << e.getMessage() << std::endl;	
 			HttpResponse httpResponse;
 			httpResponse.setStatus(e.getCode());
@@ -189,7 +184,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
  		int bytesSent = send( clientSocket , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
-			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
+			Logger::log(LC_MINOR_NOTE, " bytesSent = %d" , bytesSent); 
 			// ## if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
 			if( bytesSent == -1)
 			{	
@@ -198,20 +193,18 @@ bool	ConnectionController::handleWrite(int clientSocket )
 			}
 			if (bytesSent == 0)
 			{
-				Logger::log(LC_MINOR_NOTE , "DONE SENDING #1, YAHOO!");
+				Logger::log(LC_MINOR_NOTE , " Done sending");
 				closeConnection(clientSocket);
 				return (true);
 			}
 			
 			// catch all other errors
-			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
+			Logger::log(LC_CON_FAIL, "Unrecoverable socket error, abort process");
 			closeConnection(conn->getSocket());
 		}
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
-
-	std::cout <<  " *** OUTSIDE LOOP HERE << " << std::endl;
 	closeConnection(clientSocket);
 	return (true);
 

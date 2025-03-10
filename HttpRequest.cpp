@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 14:47:10 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:25:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,8 +106,22 @@ int HttpRequest::preprocessContentLength(std::string requestString)
 	int	return_len;
 	std::string			line ;
 	std::istringstream 	stream(requestString);
+	int lineCounter = 0;
 	while ( std::getline(stream , line)  && line != "\r")
 	{
+
+		lineCounter++;
+		if(lineCounter == 1)
+		{
+			std::istringstream reqLine(line);
+			std::string method , path ,version ;
+
+			if(!(reqLine >> method >> path >> version))
+				throw RequestException(400, "Bad Request");
+			Logger::log(LC_REQ_LOG, "[REQUEST] %s %s" , method.c_str() , path.c_str());
+		}
+
+
 		 if(line.find("Content-Length:") == 0)
 		 {
 			std::istringstream len_stream(line.substr(15));

@@ -81,37 +81,33 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing)
 {
 		localPath = httpRequest.getPath();
-		std::cout << " resolveRoute() localPath = " << localPath << std::endl;
 		std::string targetResource = Util::extractFileName(localPath);
-		std::cout << " targetResource = " << targetResource << std::endl;
-
-
+		
 		if (targetResource.empty() && route.getIndex().empty() &&  !route.getAutoindex())
 			throw RequestException(403, "Forbidden");
 
-
 		// if not end with file name, 
 		if(!Util::hasTrailingSlash(localPath) &&  targetResource == "")
-			localPath += "/";
+		{
+			std::cout << "\t\t ORIGINAL IS adding slash " << std::endl;
+			//  localPath += "/";
+		}
+			
 
-
-
-		std::cout << "localPath then is << _" << localPath << "_" << std::endl;
 		// TODO - should we have ServerConfig level of this directive?
 		allowDirectoryListing = false;
 		allowDirectoryListing = route.getAutoindex();
 
-		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");
+
+		std::string extraSlash = !Util::hasTrailingSlash(localPath) ? "/" : "";
+
+		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + extraSlash);
 		
-		// if(!Util::hasTrailingSlash(localPath))
-
-		std::cout << "localPath now is << _" << localPath << "_" << std::endl;
-
 		if(targetResource == "" && !route.getIndex().empty())
 			localPath += route.getIndex();
 
 		
-		std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
+		// std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
 
 
 		return (true);

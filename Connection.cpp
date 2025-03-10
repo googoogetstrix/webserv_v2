@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 16:47:41 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 18:08:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,10 +167,10 @@ bool 	Connection::ready(HttpResponse &httpResponse, bool sendAsWell)
 	isReady = true; 
 	requestBuffer = "";
 	
+	// cannot move to response since it requires ServerConfig
 	if(httpResponse.getBody().empty() && httpResponse.getStatus() >= 400 && httpResponse.getStatus() <= 599 )
-	{
 		httpResponse.setBody(HttpResponse::getErrorPage(httpResponse.getStatus(), serverConfig));
-	}
+
 	responseBuffer = httpResponse.serialize();
 
 	if(sendAsWell)
@@ -320,7 +320,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		// 414 URI Too Long
 		// 500 Internal Server Error
 
-		std::cout << "request_buffer: " << requestBuffer << std::endl;
 
 		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
@@ -328,9 +327,10 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(false) 
 		{
 			serverConfig.debug();
+			httpRequest.debug();
+			route->debug();
+
 		}
-		httpRequest.debug();
-		route->debug();
 		
 
 
@@ -340,6 +340,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 			throw RequestException(400, "Bad Request");
 		
 		std::vector<std::string> allowedMethods = route->getMethods();
+		route->debug();
 		if(Util::strInContainer(method,  allowedMethods))
 			throw RequestException(405, "Method not allowed.");
 //			return httpResponse.setStatus(405) && false; 
@@ -357,14 +358,9 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 
 
-		Logger::log(LC_RED, " NEEDS CHECK IF IS CGI ?");
+		
 		std::string m = httpRequest.getMethod() ;
-		Logger::log(LC_RED, " requestMethod = %s " , m.c_str());
-
-
-
-
-		Logger::log(LC_GREEN, "Request seems OK so far");
+		Logger::log(LC_MINOR_NOTE, "Request seems OK so far");
 
 		std::string  localPath = "";
 		bool		 allowDirectoryBrowsing = false;

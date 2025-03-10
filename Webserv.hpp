@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 15:33:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:37:12 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,12 @@
 
 # define 	WEBS_MAX_FDS			10240
 # define 	WEBS_MAX_CONNS			100
-# define 	WEBS_MAX_EVENTS			10240  // should be change!
+# define 	WEBS_MAX_EVENTS			1024  // should be change!
 # define	WEBS_SCK_TIMEOUT		1000
 
- // 8MB 
-# define	WEBS_DEBUG_RESPONSE		true
+# define	WEBS_DEBUG_RESPONSE		false
+# define 	WEBS_APP_NAME			"Webserv42/1.0"
+
 
 class ServerConfig; 
 class ConnectionController;

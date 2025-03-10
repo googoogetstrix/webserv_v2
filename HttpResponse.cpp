@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:04:33 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:35:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,7 +186,8 @@ std::string HttpResponse::serialize()
 {
 	std::ostringstream  	oss;
 	oss << "HTTP/1.1 " << status << " " << getStatusText(status) << "\r\n";
-	// body += "\r\n\r\n";
+	
+	setHeader("Server", WEBS_APP_NAME, true);
 	setHeader("Content-Length", Util::toString(body.size() ) , true);
 
 	for (std::map<std::string,std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
@@ -194,13 +195,13 @@ std::string HttpResponse::serialize()
 	// single set of \r\n since the header already sent the first set
 	oss << "\r\n" << body ;
 
-	Logger::log(LC_INFO, "[RESPOND] %d - %s " , status, getStatusText(status).c_str() );
+	std::string color = (status >= 400) ? LC_RES_NOK_LOG : LC_RES_OK_LOG;
+	Logger::log(color, "[RESPOND] %d - %s " , status, getStatusText(status).c_str() );
 
 	if (WEBS_DEBUG_RESPONSE)
 	{
-		std::cout << LC_DEBUG << " size = " << oss.str().length() << "\n"
-		<< "===================================" << std::endl
-		<< "response" << std::endl
+		std::cout << LC_DEBUG << "===================================" << std::endl
+		<< "response, size = " << oss.str().length() << std::endl
 		<< "===================================" << LC_RESET << std::endl
 		<< oss.str() << std::endl
 		<< "===================================" << std::endl;
@@ -296,10 +297,10 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 		extension = filePath.substr(dotPos);
 	else
 		extension = "";
-	Logger::log(LC_DEBUG, " extension is %s " , extension.c_str());
+	
 	setHeader("Content-Type", getMimeType(extension), true);
 	
-	debug();
+	
 	
 	std::stringstream buffer;
 	buffer << file.rdbuf();

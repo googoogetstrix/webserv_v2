@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 16:14:08 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 17:58:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -235,18 +235,11 @@ int Webserv::run(void)
 
 
 						cc.openConnection(client_socket, *server);
-						Logger::log(LC_RED, "Line after openConnection()");
-
-						Logger::log(LC_GREEN , " SHOULD BE AFTER THE FIRST ONE ***");
 						
 						epoll_event  event; 
 						event.events = EPOLLIN;	
 						event.data.fd = client_socket;
-
-						// Logger::log(LC_NOTE, "new incoming socket created as fd#%d" , client_socket);
 						epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket , &event);
-						// Logger::log(LC_NOTE, "register fd#%d into epoll" , client_socket);
-
 						continue;
 					}
 					// end server fds
