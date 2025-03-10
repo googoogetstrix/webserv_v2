@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 16:51:31 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 11:42:54 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,7 @@
 # define 	WEBS_MAX_EVENTS			10240  // should be change!
 # define	WEBS_SCK_TIMEOUT		1000
 
-# define 	WEBS_MB					1048576 
-# define 	WEBS_DEF_MAX_BOD_SIZE	8 // 8MB 
+ // 8MB 
 # define	WEBS_DEBUG_RESPONSE		0
 
 class ServerConfig; 
@@ -51,6 +50,7 @@ class Webserv
 		std::vector<ServerConfig>	servers;
 		std::string					config_file;
 		std::vector<int>			server_fds;
+		ConnectionController		connectionController; 
 		
 		Webserv();
 		Webserv(Webserv const &other);
@@ -65,6 +65,8 @@ class Webserv
 		bool	findServerFromRequest(HttpRequest &req, ServerConfig &sc);
 
 		bool	isServerFd(int fd);
+
+		ConnectionController &getConnectionController();
 
 
 

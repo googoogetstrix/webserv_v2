@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 17:37:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 13:58:48 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ bool	Webserv::isServerFd(int fd)
 bool Webserv::setupSockets(ConnectionController& cc)
 {
 
-	Logger::log(LC_GREEN, " [1/3] Setting up sockets...");
+	Logger::log(LC_GREEN, " - Setting up sockets...");
 
 	int					success = 0;
 	std::set<int>		used_ports; 
@@ -166,13 +166,10 @@ bool Webserv::setupSockets(ConnectionController& cc)
 
 int Webserv::run(void)
 {
-
 	ConnectionController cc;
-	Connection 			 *conn = NULL;
 
 	Logger::log(LC_GREEN, "Booting up webserv...");
 	setupSockets(cc);
-
 
 	// setting up epoll
 	int epoll_fd = epoll_create1(0);
@@ -246,6 +243,7 @@ int Webserv::run(void)
 						// Logger::log(LC_NOTE, "trying to accept new socket ");
 
 						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
+						Logger::log(LC_RED, "Line after accept()");
 						if(client_socket < 0)
 							throw std::runtime_error("Unable to accept()");
 						// get whatever flag from the clinet socket, and make sure it's set to non-block
@@ -255,6 +253,9 @@ int Webserv::run(void)
 
 
 						cc.openConnection(client_socket, *server);
+						Logger::log(LC_RED, "Line after openConnection()");
+
+						Logger::log(LC_GREEN , " SHOULD BE AFTER THE FIRST ONE ***");
 						
 						epoll_event  event; 
 						event.events = EPOLLIN;	
@@ -274,10 +275,10 @@ int Webserv::run(void)
 				// Start client Socket checking				
 				{
 
-					conn = cc.findConnection(active_fd);
-					if (conn == NULL)
+					if (cc.findConnection(active_fd) == NULL)
 					{
 						Logger::log(LC_ERROR, "SERIOUS ERROR, cannot find connection# &d from the ConnectionController", active_fd); 
+						throw std::runtime_error("Unmatched client socket");
 						continue; 
 					}
 						
@@ -287,21 +288,17 @@ int Webserv::run(void)
 						// error handling
 						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 						{
-							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR ient Socket %d hung up, closing socket ", events[i].data.fd);
-							close(events[i].data.fd);
-							Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
-							epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
+							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
+							connectionController.closeConnection(events[i].data.fd);
+							// close(events[i].data.fd);
+							// Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
+							// epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 							continue ;
 						}
 						// still has something to write to socket, continue to do so
 						if(events[i].events & EPOLLOUT)
 						{
-							int out = cc.handleWrite(*conn, events[i] , httpRequest , httpResponse);
-
-							std::cout << " HANDLE WRITE RETURNS " << out << std::endl;
-							//conn->handleWrite(cc.getEpollSocket(), events[i]);
-							
-							continue ;	
+							cc.handleWrite(events[i].data.fd, events[i] , httpRequest , httpResponse);
 						}
 
 
@@ -309,25 +306,26 @@ int Webserv::run(void)
 						if(events[i].events & EPOLLIN)
 						{
 							Logger::log(LC_RED , "WE ARE WORKING HERE");
-							bool doneReading = cc.handleRead(*conn, events[i], httpRequest, httpResponse);
+							// bool doneReading = 
+							cc.handleRead( events[i].data.fd, events[i], httpRequest, httpResponse);
 							// done reading , do process & response
-							if (doneReading)
-							{
-								try {
-									if(!conn->processRequest(httpRequest, httpResponse))
-									return conn->ready(httpResponse);
-								}
-								catch(RequestException &e)
-								{
-									std::cout << " CAUGHT requestException HERE" << std::endl;
-									std::cout << " WITH CODE " << e.getCode() << std::endl;
-									httpResponse.setStatus(e.getCode());
-									std::cout << " httpRespons.status IS NOW  " << httpResponse.getStatus() << std::endl;
-									conn->ready(httpResponse);
-									cc.handleWrite(*conn, events[i], httpRequest , httpResponse);
-								}
+							// if (doneReading)
+							// {
+							// 	try {
+							// 		if(!conn->processRequest(httpRequest, httpResponse))
+							// 		return conn->ready(httpResponse);
+							// 	}
+							// 	catch(RequestException &e)
+							// 	{
+							// 		std::cout << " CAUGHT requestException HERE" << std::endl;
+							// 		std::cout << " WITH CODE " << e.getCode() << std::endl;
+							// 		httpResponse.setStatus(e.getCode());
+							// 		std::cout << " httpRespons.status IS NOW  " << httpResponse.getStatus() << std::endl;
+							// 		conn->ready(httpResponse);
+							// 		cc.handleWrite(*conn, events[i], httpRequest , httpResponse);
+							// 	}
 								
-							}
+							// }
 							
 							Logger::log(LC_RED, " REMOVE ORINGINAL LINE HERE\n" );
 							continue ;							
@@ -357,3 +355,10 @@ std::vector<ServerConfig> Webserv::getServerConfigs()
 {
 	return servers;
 }
+
+
+ConnectionController &Webserv::getConnectionController()
+{
+	return connectionController;
+}
+

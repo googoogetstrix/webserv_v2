@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 10:11:31 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:21:38 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,13 @@ Connection *ConnectionController::findConnection(int fd)
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
 	Logger::log(LC_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+
+	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
-	close(clientSocket);
+	close(clientSocket);	
+	if(it != connections.end())
+		connections.erase(clientSocket);
+
 	return (true);
 }
 int		ConnectionController::openConnection(int clientSocket, ServerConfig config)
@@ -67,16 +72,20 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig config)
 		return (-1);
 	}
 
+	Logger::log(LC_RED, "RESTORE ME");
+
 	connections[ clientSocket ] = Connection(clientSocket, config);
 	return connections.size();
 
 }
 
 
-bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &event, HttpRequest &httpRequest, HttpResponse &httpResponse)
+bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &event, HttpRequest &httpRequest, HttpResponse &httpResponse)
 {
-	(void) httpRequest;
-	(void) httpResponse;
+	(void) httpRequest; 
+	(void) httpResponse; 
+	Connection *conn = findConnection(clientSocket);
+
 
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
@@ -86,11 +95,11 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 
 		while(true)
 			{
-				int  bytesRead = recv(conn.getFd(), &buffer, bufferSize, 0 );
+				int  bytesRead = recv(conn->getFd(), &buffer, bufferSize, 0 );
 				if(bytesRead == 0)
 				{
-					Logger::log(LC_ERROR, "Connection disconnected from %d" , conn.getFd());
-					ConnectionController::closeConnection(conn.getFd());
+					Logger::log(LC_ERROR, "Connection disconnected from #%d" , conn->getFd());
+					closeConnection(conn->getFd());
 					return (false);
 				}
 					
@@ -99,7 +108,7 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 		            if (event.events & EAGAIN || event.events & EWOULDBLOCK) {
 		                return (true);
 		            }
-		            closeConnection(conn.getFd());
+		            closeConnection(conn->getFd());
 		            return (false);
 		        }
 				// make sure it's null terminated
@@ -115,18 +124,18 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 
 					if(contentLengthFromHeader <= 0)
 					{
-						conn.setContentLength(contentLengthFromHeader);	
-						conn.setHeaderIsComplete(true);
-						conn.appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
-						conn.appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
+						conn->setContentLength(contentLengthFromHeader);	
+						conn->setHeaderIsComplete(true);
+						conn->appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
+						conn->appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
 					}
 					
 				}
 
-				if(!conn.isHeaderComplete())
-					conn.appendRequestBuffer( std::string(buffer));
+				if(!conn->isHeaderComplete())
+					conn->appendRequestBuffer( std::string(buffer));
 				else 
-					conn.appendRawPostBody(buffer , bytesRead);
+					conn->appendRawPostBody(buffer , bytesRead);
 			}		
 			// end while true 
 	} catch (std::exception &e)
@@ -136,19 +145,22 @@ bool	ConnectionController::handleRead(Connection& conn, struct epoll_event &even
 	return (true);
 }
 
-bool	ConnectionController::handleWrite(Connection& conn, struct epoll_event &event, HttpRequest &httpRequest, HttpResponse &httpResponse)
+bool	ConnectionController::handleWrite(int clientSocket, struct epoll_event &event, HttpRequest &httpRequest, HttpResponse &httpResponse)
 {
 	(void) httpRequest;
-	conn.ready(httpResponse);
-	if(!conn.needsToWrite())
+
+	Connection *conn = findConnection(clientSocket);
+
+	conn->ready(httpResponse);
+	if(!conn->needsToWrite())
 		return (false);
 
-	size_t sendSize = conn.getResponseBuffer().length();	
+	size_t sendSize = conn->getResponseBuffer().length();	
 
-	while( conn.getResponseBuffer().length() > 0 )
+	while( conn->getResponseBuffer().length() > 0 )
 	{
-		conn.punchIn();
- 		int bytesSent = send( event.data.fd , conn.getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
+		conn->punchIn();
+ 		int bytesSent = send( event.data.fd , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
 			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
@@ -161,23 +173,23 @@ bool	ConnectionController::handleWrite(Connection& conn, struct epoll_event &eve
 			if (bytesSent == 0)
 			{
 				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
-				ConnectionController::closeConnection(event.data.fd);
+				closeConnection(event.data.fd);
 				return (true);
 			}
 			
 			// catch all other errors
 			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
-			ConnectionController::closeConnection(conn.getFd());
+			closeConnection(conn->getFd());
 		}
 		// size_t compareSize = static_cast<size_t>(bytesSent);
 		// compareSize = compareSize < conn.getResponseBuffer().length() ? compareSize : conn.getResponseBuffer().length();
 		// responseBuffer =  responseBuffer.substr(compareSize); 
-		conn.truncateResponseBuffer(static_cast<size_t>(bytesSent));
+		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
 
 	std::cout <<  " *** OUTSIDE LOOP HERE << " << std::endl;
-	ConnectionController::closeConnection(event.data.fd);
+	closeConnection(event.data.fd);
 	return (true);
 
 }

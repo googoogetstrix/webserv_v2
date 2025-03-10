@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 19:33:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 11:43:12 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@
 # include 	<sstream>
 # include 	<unistd.h>
 
-# include	"Webserv.hpp"
 # include	"ServerConfig.hpp"
 # include	"HttpRequest.hpp"
 # include	"HttpResponse.hpp"
@@ -32,7 +31,8 @@
 
 # define 	CON_RECV_BUFFER_SIZE 	4001
 # define 	CON_SOC_TIMEOUT_SECS 	1
-
+# define 	WEBS_MB					1048576 
+# define 	WEBS_DEF_MAX_BOD_SIZE	8
 
 class Connection 
 {

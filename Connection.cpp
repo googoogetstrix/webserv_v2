@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 10:14:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:34:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config)
 }
 Connection::~Connection()
 {
-	Logger::log(LC_NOTE, "connection destroyed");
+	Logger::log(LC_NOTE, "connection #%d destroyed", fd);
 }
 Connection::Connection(Connection const &other)
 {
@@ -33,6 +33,12 @@ Connection::Connection(Connection const &other)
 	expiresOn = other.expiresOn;
 	serverConfig = other.serverConfig;
 	isReady = other.isReady; 
+	bodyLength = other.bodyLength; 
+	requestBuffer = other.requestBuffer;
+	responseBuffer = other.responseBuffer;
+	rawPostBody = other.rawPostBody;
+	contentLength = other.contentLength;
+	epollSocket = other.epollSocket; 
 
 }
 Connection &Connection::operator=(Connection const other)
@@ -40,6 +46,13 @@ Connection &Connection::operator=(Connection const other)
 	fd = other.fd;
 	expiresOn = other.expiresOn;
 	serverConfig = other.serverConfig;
+	isReady = other.isReady; 
+	bodyLength = other.bodyLength; 
+	requestBuffer = other.requestBuffer;
+	responseBuffer = other.responseBuffer;
+	rawPostBody = other.rawPostBody;
+	contentLength = other.contentLength;
+	epollSocket = other.epollSocket; 
 	return (*this);
 }
 
@@ -152,6 +165,8 @@ bool	Connection::processRequestHeader()
 bool 	Connection::ready(HttpResponse &httpResponse)
 {
 	isReady = true; 
+	requestBuffer = "";
+	
 	if(httpResponse.getBody().empty() && httpResponse.getStatus() >= 400 && httpResponse.getStatus() <= 599 )
 	{
 		std::cout << " STILL NEEDS TO SET EMPTY BODY " << std::endl;
