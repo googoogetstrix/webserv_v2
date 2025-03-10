@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 13:58:48 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 15:14:02 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,6 @@
 #include "Logger.hpp"
 
 class Logger; 
-
-
-
-
 
 Webserv::Webserv()
 {
@@ -38,50 +34,41 @@ Webserv &Webserv::operator=(Webserv const &other)
 
 Webserv::~Webserv()
 {
-
-	Logger::log(LC_SYSTEM, "Cleaning up opened fds");
-	for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
+	Logger::log(LC_SYSTEM, "Cleaning up opened sockets");
+	for( std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
 	{
-		std::cout << " - closing fd# " << *it << std::endl;
+		Logger::log(LC_MINOR_NOTE, " - closing socket#%d\n" , *it);
 		close(*it);
 	}
-		
-
 }
 
 size_t	Webserv::parseConfig(std::string config_file)
 {
-	servers = ConfigParser::parseAllConfigs(config_file);
-	Logger::log(LC_NOTE, "Done parsing file with %d servers", servers.size()) ;
-
-
-	return (servers.size());
+	serverConfigs = ConfigParser::parseAllConfigs(config_file);
+	Logger::log(LC_MINOR_NOTE, "Done parsing file with %d servers", serverConfigs.size()) ;
+	return (serverConfigs.size());
 }
 
 
-Webserv::Webserv(std::string config_file):config_file(config_file)
-{
-	
-	Logger::log(LC_GREEN , "Webserv instance created with config file as %s" , std::string(config_file).c_str());
-	parseConfig(config_file);	
-	
+Webserv::Webserv(std::string config_file):configFile(config_file)
+{	
+	Logger::log(LC_SYSTEM , "Webserv instance created with config file as %s" , std::string(config_file).c_str());
+	parseConfig(config_file);		
 }
 
 std::set<int>  Webserv::getListeningPorts()
 {
 	std::set<int>  ret;
-	for(std::vector<ServerConfig>::iterator it = servers.begin();it != servers.end(); ++it)
+	for (std::vector<ServerConfig>::iterator it = serverConfigs.begin();it != serverConfigs.end(); ++it)
 		ret.insert( it->getPort());
 	return (ret);
 }
 
-bool	Webserv::isServerFd(int fd)
+bool	Webserv::isServerSocket(int socket)
 {
-	for( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
-		{
-			if (*it == fd)
-				return (true);
-		}
+	for (std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
+		if (*it == socket)
+			return (true);
 	return (false);
 }
 
@@ -89,16 +76,14 @@ bool	Webserv::isServerFd(int fd)
 bool Webserv::setupSockets(ConnectionController& cc)
 {
 
-	Logger::log(LC_GREEN, " - Setting up sockets...");
+	Logger::log(LC_MINOR_SYSTEM, " - Setting up sockets...");
 
 	int					success = 0;
 	std::set<int>		used_ports; 
 	
-
-	for( std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
+	for( std::vector<ServerConfig>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); ++it)
 	{
 		int	current_port = it->getPort();
-
 		if (used_ports.find(current_port) != used_ports.end())
 		{
 			Logger::log(LC_YELLOW, " port#%d is already bound",  current_port);
@@ -121,31 +106,23 @@ bool Webserv::setupSockets(ConnectionController& cc)
 				throw std::runtime_error("Failed to set server to non-blocking");
 			}
 			// reusable socket if the server was restart before port allocation timeout
-		    int opt = 1;
-			(void) opt;
-		    // if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-		    //     close(fd);
-		    //     throw std::runtime_error("Failed to set socket options: " + std::string(strerror(errno)));
-		    // }
-
-
-			// 
+		    // int opt = 1;
 			sockaddr_in		sv_addr;
 			memset(&sv_addr, 0 , sizeof(sockaddr_in));
 			sv_addr.sin_family = AF_INET;
 			sv_addr.sin_addr.s_addr = INADDR_ANY;
 			sv_addr.sin_port = htons(it->getPort());
 
+			// binding with port
 			if (bind(fd, (struct sockaddr*)&sv_addr , sizeof(sv_addr) ) < 0)
 				throw std::runtime_error("Failed to bind on server");
 
-			// no blocking here just yet, just to change the status of the socket
+			// no blocking here just yet, just to change the status of the socket, prepare for upcoming requests
 			if (listen(fd, WEBS_MAX_CONNS) < 0)
 				throw std::runtime_error("Failed to listen on server");
 
-			server_fds.push_back(fd);
+			serverSockets.push_back(fd);
 			used_ports.insert(current_port);
-
 			cc.addServer(fd, *it);
 
 		}
@@ -184,7 +161,7 @@ int Webserv::run(void)
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
-	for ( std::vector<int>::iterator it = server_fds.begin(); it != server_fds.end(); ++it)
+	for ( std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
 	{
 		events[ctr].events = EPOLLIN;	
 		events[ctr].data.fd = *it;
@@ -214,9 +191,9 @@ int Webserv::run(void)
 			{
 				int			active_fd = events[i].data.fd;
 				ServerConfig *server = cc.getServer(events[i].data.fd);
-				// Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
+				Logger::log(LC_MINOR_NOTE, "epoll event on fd#%d!" , active_fd);
 				
-				if (isServerFd(active_fd))
+				if (isServerSocket(active_fd))
 				{
 					// error handling
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
@@ -269,7 +246,6 @@ int Webserv::run(void)
 					}
 					// end server fds
 					continue;
-					
 				}
 
 				// Start client Socket checking				
@@ -290,44 +266,20 @@ int Webserv::run(void)
 						{
 							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
 							connectionController.closeConnection(events[i].data.fd);
-							// close(events[i].data.fd);
-							// Logger::log(LC_CLOSE, "Removing Socket %d from epoll event ", events[i].data.fd);
-							// epoll_ctl(epoll_fd, EPOLL_CTL_DEL , events[i].data.fd , NULL);
 							continue ;
 						}
 						// still has something to write to socket, continue to do so
 						if(events[i].events & EPOLLOUT)
 						{
-							cc.handleWrite(events[i].data.fd, events[i] , httpRequest , httpResponse);
+							cc.handleWrite(events[i].data.fd);
+							continue;
 						}
 
 
 						// reading from socket until finished, then process
 						if(events[i].events & EPOLLIN)
 						{
-							Logger::log(LC_RED , "WE ARE WORKING HERE");
-							// bool doneReading = 
-							cc.handleRead( events[i].data.fd, events[i], httpRequest, httpResponse);
-							// done reading , do process & response
-							// if (doneReading)
-							// {
-							// 	try {
-							// 		if(!conn->processRequest(httpRequest, httpResponse))
-							// 		return conn->ready(httpResponse);
-							// 	}
-							// 	catch(RequestException &e)
-							// 	{
-							// 		std::cout << " CAUGHT requestException HERE" << std::endl;
-							// 		std::cout << " WITH CODE " << e.getCode() << std::endl;
-							// 		httpResponse.setStatus(e.getCode());
-							// 		std::cout << " httpRespons.status IS NOW  " << httpResponse.getStatus() << std::endl;
-							// 		conn->ready(httpResponse);
-							// 		cc.handleWrite(*conn, events[i], httpRequest , httpResponse);
-							// 	}
-								
-							// }
-							
-							Logger::log(LC_RED, " REMOVE ORINGINAL LINE HERE\n" );
+							cc.handleRead( events[i].data.fd, events[i]);
 							continue ;							
 						}
 					}
@@ -353,7 +305,7 @@ int Webserv::run(void)
 
 std::vector<ServerConfig> Webserv::getServerConfigs()
 {
-	return servers;
+	return serverConfigs;
 }
 
 

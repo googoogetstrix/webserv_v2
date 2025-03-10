@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 12:34:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 15:15:45 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,17 @@
 Connection::Connection():fd(0),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
-	Logger::log(LC_NOTE, "new connection created");
+	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
 	setNonBlock();
-	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
+	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
 }
 Connection::~Connection()
 {
-	Logger::log(LC_NOTE, "connection #%d destroyed", fd);
+	Logger::log(LC_MINOR_NOTE, "connection #%d destroyed", fd);
 }
 Connection::Connection(Connection const &other)
 {
@@ -71,7 +71,7 @@ time_t	Connection::getExpiresOn() const
 	return (expiresOn);
 }
 
-int 	Connection::getFd() const
+int 	Connection::getSocket() const
 {
 	return (fd);
 }
@@ -261,19 +261,20 @@ std::string 		Connection::getRequestBuffer() const
 
 
 
-ServerConfig		*Connection::getServerConfig()
+ServerConfig		&Connection::getServerConfig()
 {
-	if(serverConfig.getPort() != 0)
-		return &serverConfig;
-	return  NULL ; 
+	// if(serverConfig.getPort() != 0)
+	// 	return &serverConfig;
+	// return  NULL ; 
+	return serverConfig;
 }
 
 
-bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResponse)
+bool	Connection::processRequest(HttpRequest &httpRequest)
 {
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
-		
+		HttpResponse httpResponse;
 	
 
 		// try check all the error could possibly happen
@@ -290,7 +291,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest, HttpResponse &httpResp
 
 		std::cout << "request_buffer: " << requestBuffer << std::endl;
 
-		httpRequest.parseRequestHeaders(httpResponse, serverConfig , requestBuffer);
+		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
 		// TODO 
 		if(false) 
@@ -364,4 +365,10 @@ void 	Connection::setContentLength(int i)
 int		Connection::getContentLength()
 {
 		return contentLength; 
+}
+
+
+std::vector<char>	&Connection::getRawPostBody()
+{
+	return rawPostBody;
 }

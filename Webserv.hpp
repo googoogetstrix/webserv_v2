@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 11:42:54 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:04:53 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,42 +44,33 @@ class ConnectionController;
 
 class Webserv
 {
-	
-
 	private:
-		std::vector<ServerConfig>	servers;
-		std::string					config_file;
-		std::vector<int>			server_fds;
+		
+		std::vector<ServerConfig>	serverConfigs;
+		std::string					configFile;
+		std::vector<int>			serverSockets;
 		ConnectionController		connectionController; 
+		
 		
 		Webserv();
 		Webserv(Webserv const &other);
 		Webserv &operator=(Webserv const &other);
 
-
-		size_t	parseConfig(std::string config_file);
-
-
-		bool	setupSockets(ConnectionController &cc);
-
-		bool	findServerFromRequest(HttpRequest &req, ServerConfig &sc);
-
-		bool	isServerFd(int fd);
-
-		ConnectionController &getConnectionController();
-
-
+		size_t						parseConfig(std::string config_file);
+		bool						setupSockets(ConnectionController &cc);
+		bool						findServerFromRequest(HttpRequest &req, ServerConfig &sc);
+		bool						isServerSocket(int fd);
 
 	public:
 		
 		~Webserv();
-		Webserv(std::string config_file);
-		std::set<int> getListeningPorts();
+		Webserv(std::string configFile);
+		std::set<int> 				getListeningPorts();
+		ConnectionController 		&getConnectionController();
 
 		int 						run(void);
 		std::vector<ServerConfig> 	getServerConfigs();
 		
-
 };
 
 #endif

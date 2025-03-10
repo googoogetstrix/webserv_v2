@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 12:21:38 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 15:15:15 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ Connection *ConnectionController::findConnection(int fd)
 }
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
-	Logger::log(LC_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+	Logger::log(LC_MINOR_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
 
 	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
@@ -63,7 +63,7 @@ bool	ConnectionController::closeConnection(int clientSocket)
 
 	return (true);
 }
-int		ConnectionController::openConnection(int clientSocket, ServerConfig config)
+int		ConnectionController::openConnection(int clientSocket, ServerConfig serverConfig)
 {
 	int flags = fcntl(clientSocket, F_GETFL, 0);
 	if (flags < 0 || fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK) < 0) {
@@ -74,32 +74,30 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig config)
 
 	Logger::log(LC_RED, "RESTORE ME");
 
-	connections[ clientSocket ] = Connection(clientSocket, config);
+	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
 	return connections.size();
 
 }
 
 
-bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &event, HttpRequest &httpRequest, HttpResponse &httpResponse)
+bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &event)
 {
-	(void) httpRequest; 
-	(void) httpResponse; 
 	Connection *conn = findConnection(clientSocket);
 
 
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
-	Logger::log(LC_RED, " appendRequestBuffer is broken!!!!");
+	Logger::log(LC_RED, "WE ARE WORKING HERE !!!!  appendRequestBuffer is broken!!!!");
 
 	try {
 
 		while(true)
 			{
-				int  bytesRead = recv(conn->getFd(), &buffer, bufferSize, 0 );
+				int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
 				if(bytesRead == 0)
 				{
-					Logger::log(LC_ERROR, "Connection disconnected from #%d" , conn->getFd());
-					closeConnection(conn->getFd());
+					Logger::log(LC_ERROR, "Connection disconnected from #%d" , conn->getSocket());
+					closeConnection(conn->getSocket());
 					return (false);
 				}
 					
@@ -108,7 +106,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 		            if (event.events & EAGAIN || event.events & EWOULDBLOCK) {
 		                return (true);
 		            }
-		            closeConnection(conn->getFd());
+		            closeConnection(conn->getSocket());
 		            return (false);
 		        }
 				// make sure it's null terminated
@@ -120,13 +118,25 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 				{
 					std::cout << "*** FOUND CRLF ***" << std::endl;
 					int  contentLengthFromHeader = HttpRequest::preprocessContentLength( std::string(buffer, bytesRead)); 
+					size_t	actualContentLength = static_cast<size_t>(contentLengthFromHeader);
 					std::cout << "*** contentLengthFromHeader ***" << contentLengthFromHeader << std::endl;
+					conn->setContentLength(contentLengthFromHeader);	
 
 					if(contentLengthFromHeader <= 0)
 					{
-						conn->setContentLength(contentLengthFromHeader);	
+						// no Post
 						conn->setHeaderIsComplete(true);
+						HttpRequest httpRequest;
+						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
+						conn->processRequest(httpRequest);
+						
+					} else if( actualContentLength > conn->getRawPostBody().size())
+					{
+						// with Post body, splitting between header & post body here, not yet complete
 						conn->appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
+						conn->appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
+					} else {
+						// with Post , complete
 						conn->appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
 					}
 					
@@ -138,20 +148,29 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 					conn->appendRawPostBody(buffer , bytesRead);
 			}		
 			// end while true 
-	} catch (std::exception &e)
+		
+	} 
+	catch (RequestException &e) {
+			std::cout << "Request Exception " << e.getCode() << ", " << e.getMessage() << std::endl;	
+			HttpResponse httpResponse;
+			httpResponse.setStatus(e.getCode());
+			conn->ready(httpResponse);
+			epoll_event  event;
+			memset( &event , 0 , sizeof(event));
+			handleWrite(conn->getSocket());
+	}
+	catch (std::exception &e)
 	{
 		std::cout << "EXCEPTION" << e.what() << std::endl;	
 	} 
 	return (true);
 }
 
-bool	ConnectionController::handleWrite(int clientSocket, struct epoll_event &event, HttpRequest &httpRequest, HttpResponse &httpResponse)
+bool	ConnectionController::handleWrite(int clientSocket )
 {
-	(void) httpRequest;
 
 	Connection *conn = findConnection(clientSocket);
 
-	conn->ready(httpResponse);
 	if(!conn->needsToWrite())
 		return (false);
 
@@ -160,36 +179,33 @@ bool	ConnectionController::handleWrite(int clientSocket, struct epoll_event &eve
 	while( conn->getResponseBuffer().length() > 0 )
 	{
 		conn->punchIn();
- 		int bytesSent = send( event.data.fd , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
+ 		int bytesSent = send( clientSocket , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
 			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
 			// ## if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
 			if( bytesSent == -1)
 			{	
-				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
+				Logger::log(LC_MINOR_NOTE , " Minor Error: buffer full or would block!");
 				return (false);
 			}
 			if (bytesSent == 0)
 			{
 				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
-				closeConnection(event.data.fd);
+				closeConnection(clientSocket);
 				return (true);
 			}
 			
 			// catch all other errors
 			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
-			closeConnection(conn->getFd());
+			closeConnection(conn->getSocket());
 		}
-		// size_t compareSize = static_cast<size_t>(bytesSent);
-		// compareSize = compareSize < conn.getResponseBuffer().length() ? compareSize : conn.getResponseBuffer().length();
-		// responseBuffer =  responseBuffer.substr(compareSize); 
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
 
 	std::cout <<  " *** OUTSIDE LOOP HERE << " << std::endl;
-	closeConnection(event.data.fd);
+	closeConnection(clientSocket);
 	return (true);
 
 }
@@ -202,8 +218,6 @@ int	ConnectionController::addServer(int fd, ServerConfig server)
 }
 ServerConfig	*ConnectionController::getServer(int fd)
 {
-	// if(servers.find(fd) != servers.end())
-	// 	return (NULL);
 	for( std::map<int, ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
 		if(fd == it->first)

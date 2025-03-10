@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 11:43:12 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:55:38 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,11 +62,11 @@ class Connection
 		~Connection();
 
 		time_t				getExpiresOn() const ;
-		int 				getFd() const;
+		int 				getSocket() const;
 		std::string			getRequestBuffer() const;
 		std::string 		getResponseBuffer() const;
 
-		std::vector<char>	&getRawPostBody() const;
+		std::vector<char>	&getRawPostBody();
 
 		bool 				setExpiresOn(time_t);
 		bool 				setFd(int fd);
@@ -80,7 +80,7 @@ class Connection
 		bool				appendRequestBuffer(std::string str);
 
 		bool				processRequestHeader();
-		bool				processRequest(HttpRequest &httpRequest, HttpResponse &httpResponse);
+		bool				processRequest(HttpRequest &httpRequest);
 
 		bool				ready(HttpResponse &);
 		bool				getIsReady() const;
@@ -91,7 +91,7 @@ class Connection
 		size_t				truncateResponseBuffer(size_t bytes);
 
 
-		ServerConfig		*getServerConfig();
+		ServerConfig		&getServerConfig();
 
 		void 	setContentLength(int i);
 		int		getContentLength();

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 19:22:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:47:10 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,7 +120,7 @@ int HttpRequest::preprocessContentLength(std::string requestString)
 
 }
 
-bool HttpRequest::parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString)
+bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestString)
 {
 
 	// std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
@@ -136,14 +136,16 @@ bool HttpRequest::parseRequestHeaders(HttpResponse &response, ServerConfig &serv
 		std::string httpVersion;
 		if (!(lineStream >> methodStr >> rawPathStr >> httpVersion))
 		{
-			response.setStatus(400);
+			throw RequestException(400, "Bad Request");
+			// response.setStatus(400);
 			return false;
 		}
 		{	// prevent url injection with ".." which allows the web server to go further back than webroots
 			size_t dotdotPos = rawPathStr.find("..");
 			if (dotdotPos != std::string::npos)
 			{
-				response.setStatus(400);
+				throw RequestException(400, "Bad Request");
+				// response.setStatus(400);
 				return false;
 			}
 		}
@@ -184,7 +186,8 @@ bool HttpRequest::parseRequestHeaders(HttpResponse &response, ServerConfig &serv
 		size_t contentLengthVal = Util::toInt(headers["Content-Length"].c_str());
 		if (contentLengthVal > server.getClientMaxBodySize())
 		{
-			response.setStatus(413);
+			throw RequestException(400, "Content too large");
+			// response.setStatus(413);
 			return false;
 		}
 		setContentLength(contentLengthVal);

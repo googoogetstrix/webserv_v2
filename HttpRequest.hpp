@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 19:22:56 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:46:58 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include	<cstring>
 # include   "ServerConfig.hpp"
 # include   "HttpResponse.hpp"
+# include   "RequestException.hpp"
 # include   "Logger.hpp"
 
 
@@ -73,7 +74,8 @@ class HttpRequest
 		// &response ==> for setting value in case on error
 		// ServerConfig
 		// requestString = "HTTP1.1 GET /index.php \n\nn\"
-		bool parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString);
+		// bool 		parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString);
+		bool 		parseRequestHeaders(ServerConfig server, std::string requestString);
 		static int preprocessContentLength(std::string requestString);
 
 		std::string getHeader(std::string const str);
