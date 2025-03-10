@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:35:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 19:17:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -261,6 +261,8 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 		// cut /
 	// if (route != NULL)
 	// {}
+	Logger::log(LC_YELLOW, " in getStaticFile()");
+
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
