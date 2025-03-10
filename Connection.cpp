@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 18:08:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/10 19:29:01 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -348,26 +348,39 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 		std::string test = httpRequest.getHeader("Content-Length");
 		if(httpRequest.getMethod() == "POST" && test.empty())
-			return httpResponse.setStatus(411) && false; 
+			throw RequestException(411, "Content-Length is required");
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
 			maxSize = WEBS_DEF_MAX_BOD_SIZE;
 		maxSize *= WEBS_MB;
 		if(Util::toSizeT(test) > maxSize * WEBS_MB)
-			return httpResponse.setStatus(415) && false; 
+			throw RequestException(415, "Request too large");
 
 
 
 		
-		std::string m = httpRequest.getMethod() ;
-		Logger::log(LC_MINOR_NOTE, "Request seems OK so far");
+		// std::string m = httpRequest.getMethod() ;
+		// if(!Util::strInContainer(m, route->getMethods()))
+		// {
+		// 	Logger::log(LC_YELLOW , "reach method checking here");
+		// 	throw RequestException(405, "Method not allowed");
+		// }
+
+
+
+		
 
 		std::string  localPath = "";
 		bool		 allowDirectoryBrowsing = false;
 		if(!serverConfig.resolveRoute(httpRequest, *route, localPath , allowDirectoryBrowsing))
 			throw RequestException(403, "Forbidden");
 
-		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
+		if(allowDirectoryBrowsing)
+			throw RequestException(501, "Directoly listing");
+
+		Logger::log(LC_NOTE, "Request seems OK so far");	
+
+		//std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
 	
 		
