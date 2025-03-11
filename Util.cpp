@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 15:29:13 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 16:14:22 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,10 +121,8 @@ bool	 Util::hasTrailingSlash(std::string const path)
 
 bool 	Util::strInContainer(std::string const &str, std::vector<std::string> v)
 {
-    std::cout << " size = " << v.size() << std::endl; 
 	for( std::vector<std::string>::const_iterator it = v.begin(); it != v.end(); ++it)
 	{
-        std::cout << " comparing str = " << str << " to *it " << *it << std::endl;
 		if( str == *it)
 			return (true);		
 	}

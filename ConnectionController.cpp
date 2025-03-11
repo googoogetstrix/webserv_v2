@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 13:38:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 16:13:22 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,14 +152,13 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 		
 	} 
 	catch (RequestException &e) {
+			// This is kinda happen to partially parsed request? 
 			Logger::log(LC_DEBUG, " Tell me when you see this one, i need extra handle for this case!");
 			std::cout << "Request Exception " << e.getCode() << ", " << e.getMessage() << std::endl;	
-			HttpResponse httpResponse;
-			httpResponse.setStatus(e.getCode());
-			conn->ready(httpResponse);
-			epoll_event  event;
-			memset( &event , 0 , sizeof(event));
-			handleWrite(conn->getSocket());
+
+			handleRequestException(e, *conn);
+
+			
 	}
 	catch (std::exception &e)
 	{
@@ -258,3 +257,24 @@ size_t	ConnectionController::purgeExpiredConnections()
 	}
 	return (count);
 }
+
+
+bool ConnectionController::handleRequestException(RequestException &e, Connection &conn)
+{
+	HttpResponse httpResponse;
+	int statusCode = e.getCode();
+	httpResponse.setStatus(e.getCode());
+	// handle the 300 series which require redirection 
+	if(statusCode >= 300 && statusCode <= 399)
+	{
+		if(!e.getMessage().empty())
+			httpResponse.setHeader("Location", e.getMessage());
+	}
+	
+	conn.ready(httpResponse);
+	epoll_event  event;
+	memset( &event , 0 , sizeof(event));
+	handleWrite(conn.getSocket());
+	return (true);
+}
+

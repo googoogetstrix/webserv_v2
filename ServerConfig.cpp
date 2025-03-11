@@ -92,10 +92,19 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		allowDirectoryListing = false;
 		allowDirectoryListing = route.getAutoindex();
 
-		original = Util::hasTrailingSlash(original) ? "" : "/";
-		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + original);	
+		// original = (!Util::hasTrailingSlash(original) && original != "/")? "" : "***";
+		// original = (!Util::hasTrailingSlash(original) && filename == "")? "***" : "";
+		
+		// std::cout << "original = " << original << std::endl;
+		// ORIGINAL localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + original);	
+		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");	
+
+
+		// std::cout << " BEFORE APPENDING INDEX IS " << localPath << std::endl;
 		if(filename.empty() && !route.getIndex().empty() && !route.getAutoindex())
 		{
+			if( !Util::hasTrailingSlash(localPath))
+				localPath += "/";
 			localPath += route.getIndex();
 		}
 
