@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:24:58 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/03 16:38:14 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/09 10:59:46 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,11 @@ void sigpipe_handler(int signo)
 
 int main(int argc, char **argv)
 {
+	// std::string haystack = "Hello World";
+	// std::string needle = "XWor";
+	// int  pos = Util::substrPos(haystack , needle);
+	// std::cout << "pos = " << pos << std::endl ;
+	// return (0);
 
 	try {
 		if (argc > 2)
@@ -41,6 +46,18 @@ int main(int argc, char **argv)
 		std::string config = (argc == 1) ? WS_DEF_CONFIG_FILE : std::string(argv[1]);
 
 		Webserv webserv(config);
+
+
+		// /*** TEST CODES ***/
+		// std::vector<ServerConfig> servers = webserv.getServerConfigs();
+		// ServerConfig  server = servers[0];
+		// RouteConfig *route = server.findRoute("/");
+		// std::cout << " RETURNED ROUTE = " << route->getPath() << std::endl;
+		// Logger::log(LC_RED, " EXIT IN MAIN" );
+		// throw std::runtime_error("ME FAIL");
+		// /*** TEST CODES ***/
+
+
 		webserv.run();
 		signal(SIGPIPE, sigpipe_handler);
 		

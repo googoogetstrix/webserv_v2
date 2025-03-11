@@ -65,7 +65,7 @@ body {
     letter-spacing: 0.2em;
     text-transform: uppercase;
     margin-bottom: 1rem;
-    background: linear-gradient(to right, #ffffff, #e0e0e0);
+    background: linear-gradient(to right, #e0e0e0, #ff0000);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -76,7 +76,7 @@ body {
     font-weight: 200;
     letter-spacing: 0.5em;
     text-transform: uppercase;
-    color: #a0a0a0;
+    
 }
 /* Footer Styles */
 .footer {

@@ -1,61 +1,63 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ServerConfig.hpp                                   :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/13 10:12:40 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/04 11:22:48 by bworrawa         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+#ifndef SERVERCONFIG_HPP
+# define SERVERCONFIG_HPP
 
-#ifndef		SERVERCONFIG_HPP
-# define	SERVERCONFIG_HPP
-# include 	<iostream>
-# include 	<vector>
-# include 	<sstream>
+# include <iostream>
+# include <string>
+# include <vector>
+# include <map>
+# include "RouteConfig.hpp"
+# include "HttpRequest.hpp"
+# include "RequestException.hpp"
+# include "HttpResponse.hpp"
 
-typedef struct s_path
-{
-	bool						autoindex;  // on/off
-	std::string 				index;  	// tours1.html;
-	std::vector<std::string> 	allow_methods; // GET POST PUT HEAD;
-	std::string					root; // ./;
-	std::string					cgi_path ; // /usr/bin/python3 /bin/bash;
-	std::vector<std::string>	cgi_ext ; // .py .sh;	
-} t_path;
+# include "Util.hpp"
 
+class HttpRequest; 
 
 class ServerConfig
 {
 	private:
-		int							port;
-		std::string					server_name;
-		std::string					root;
-		std::string					index;
-		std::vector<std::string>	allowed_methods;
-		std::vector<s_path>			paths; // aka locations /red
-
-
-
+		int port;
+		std::string serverName;
+		std::string host;
+		std::string root;
+		std::string index;
+		size_t clientMaxBodySize;
+		std::map<int, std::string> errorPages;
+		std::map<std::string, RouteConfig> routes;
 
 	public:
 		ServerConfig();
-		ServerConfig(ServerConfig const &other);
-		ServerConfig &operator=(ServerConfig const &other);
-		~ServerConfig();
 
+		int getPort() const;
+		const std::string& getServerName() const;
+		const std::string& getHost() const;
+		const std::string& getRoot() const;
+		const std::string& getIndex() const;
+		size_t getClientMaxBodySize() const;
+		const std::map<int, std::string>& getErrorPages() const;
+		const std::map<std::string, RouteConfig>& getRoutes() const;
 
-		void dummy(void);
-		void dummy2(void);
-
-
-		int			getPort(void);
-		std::string	getNick();
-
-
+		void setPort(int port);
+		void setServerName(const std::string& serverName);
+		void setHost(const std::string& host);
+		void setRoot(const std::string& root);
+		void setIndex(const std::string& index);
+		void setClientMaxBodySize(size_t clientMaxBodySize);
+		void setErrorPages(const std::map<int, std::string>& errorPages);
+		void setRoutes(const std::map<std::string, RouteConfig>& routes);
 		
+		
+		void addRoute(const RouteConfig& routeConfig);
+		void addErrorPage(int errorCode, const std::string& path);
+
+		std::string getNick();
+		RouteConfig 	*findRoute(std::string path);
+		bool			resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing);
+
+
+		void debug() const;
+
 };
 
 #endif

@@ -4,9 +4,14 @@ CXX 					= c++
 
 CXXFLAGS 				= -Wall -Wextra -Werror -std=c++98 -pedantic -g3 -O0
 
-HEAD					= HttpRequest.hpp HttpResponse.hpp ServerConfig.hpp Webserv.hpp Logger.hpp Util.hpp
+HEAD					= HttpRequest.hpp HttpResponse.hpp ServerConfig.hpp Webserv.hpp Logger.hpp Util.hpp \
+						RouteConfig.hpp RequestException.hpp ResponseOkException.hpp \
+						Connection.hpp ConnectionController.hpp ConfigParser.hpp
 
-SRC 					= HttpRequest.cpp HttpResponse.cpp ServerConfig.cpp Webserv.cpp Logger.cpp Util.cpp main.cpp
+SRC 					= HttpRequest.cpp HttpResponse.cpp ServerConfig.cpp Webserv.cpp Logger.cpp Util.cpp \
+						RouteConfig.cpp RequestException.cpp ResponseOkException.cpp \
+						Connection.cpp ConnectionController.cpp ConfigParser.cpp \
+						main.cpp
 
 OBJ 					= $(SRC:.cpp=.o)
 
@@ -29,5 +34,9 @@ fclean: 				clean
 						rm -f $(NAME)
 
 re: 					fclean all
+
+
+redo: 					fclean all
+						clear && ./webserv
 
 .PHONY: 				all clean fclean re
