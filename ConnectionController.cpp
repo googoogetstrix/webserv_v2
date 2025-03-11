@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 13:21:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 13:38:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,7 +205,6 @@ bool	ConnectionController::handleWrite(int clientSocket )
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
-	// DEBUG
 	closeConnection(clientSocket);
 	return (true);
 
