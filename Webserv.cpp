@@ -6,9 +6,10 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 10:36:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 13:39:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 
 #include "Webserv.hpp"
@@ -285,21 +286,12 @@ int Webserv::run(void)
 					}
 					
 				}
-				Logger::log(LC_RED, " *** END of the nfds loop");
-
 			}
-			
-		
+			connectionController.purgeExpiredConnections();
 	}
-
 	// this won't be reached anyway 
 	close(epoll_fd);
-	
-	
-
 	// handling
-
-
 	return (0);
 }
 

@@ -16,6 +16,8 @@ class RouteConfig
 		std::map<std::string, std::string> CGIs;
 		bool autoindex;
 		size_t clientMaxBodySize;
+		int returnStatus;
+		std::string returnValue;
 
 	public:
 		RouteConfig();
@@ -27,6 +29,8 @@ class RouteConfig
 		const std::map<std::string, std::string>& getCGIs() const;
 		bool getAutoindex() const;
 		size_t getClientMaxBodySize() const;
+		int getReturnStatus() const;
+		const std::string& getReturnValue() const;
 
 		void setPath(const std::string& path);
 		void setRoot(const std::string& root);
@@ -35,6 +39,8 @@ class RouteConfig
 		void setCGIs(const std::string& ext, const std::string& path);
 		void setAutoindex(bool autoIndex);
 		void setClientMaxBodySize(size_t clientMaxBodySize);
+		void setReturnStatus(int status);
+		void setReturnValue(const std::string &value);
 
 		void debug() const;
 };
