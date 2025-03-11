@@ -119,7 +119,7 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
                 currentLocation = trim(locationLine);
 
             RouteConfig routeConfig = parseRouteConfig(file, currentLocation);
-            routeConfig.debug();
+           // routeConfig.debug();
             currentServerConfig.addRoute(routeConfig);
         }
     }
