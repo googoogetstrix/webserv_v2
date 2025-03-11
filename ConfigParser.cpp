@@ -45,8 +45,8 @@ RouteConfig ConfigParser::parseRouteConfig(std::ifstream& file, const std::strin
             routeConfig.setRoot(line.substr(5));
         else if (line.find("index") == 0 && line.length() > 6)
             routeConfig.setIndex(line.substr(6));
-        else if (line.find("allow_methods") == 0 && line.length() > 14)
-            routeConfig.setMethods(split(line.substr(14), ' '));
+        else if (line.find("allowed_methods") == 0 && line.length() > 16)
+            routeConfig.setMethods(split(line.substr(16), ' '));
         else if (line.find("cgi_pass") == 0 && line.length() > 9)
         {
             size_t spacePos = line.find(' ', 9);
@@ -110,6 +110,7 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
                 currentLocation = trim(locationLine);
 
             RouteConfig routeConfig = parseRouteConfig(file, currentLocation);
+            // routeConfig.debug();
             currentServerConfig.addRoute(routeConfig);
         }
     }
