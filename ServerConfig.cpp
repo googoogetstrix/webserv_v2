@@ -57,6 +57,7 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 		if (returnRoute == NULL)
 			returnRoute = &(it->second); 
 
+		//std::cout << "\t *** comparing << _" << it->second.getPath() << "_ to _" << path << "_" << std::endl;
 		if ( it->second.getPath() == path )
 			return &(it->second);
 
@@ -75,6 +76,7 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 			}
 		}
 	}
+	// std::cout << "returning << _" << returnRoute << "_" << std::endl;
 	return returnRoute;
 }
 
@@ -97,13 +99,20 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		
 		// std::cout << "original = " << original << std::endl;
 		// ORIGINAL localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + original);	
-		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");	
+		std::string lastClose = "/";
+		std::cout << " filename _" << filename << "_" << std::endl;
+		std::cout << " hasTrailingSlash() _" <<  (Util::hasTrailingSlash(original) ? "TRUE":"FALSE") << "_" << std::endl;
+		if (original != "/" && Util::hasTrailingSlash(original) && filename.empty())
+			lastClose = "";
+		std::cout << " lastClose _" << lastClose << "_" << std::endl;
+		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + lastClose);	
+		std::cout << " AFTER REPLACE = " << localPath << std::endl;
 
 
 		// std::cout << " BEFORE APPENDING INDEX IS " << localPath << std::endl;
 		if(filename.empty() && !route.getIndex().empty() && !route.getAutoindex())
 		{
-			if( !Util::hasTrailingSlash(localPath))
+			if( !Util::hasTrailingSlash(original))
 				localPath += "/";
 			localPath += route.getIndex();
 		}

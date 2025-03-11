@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:04:03 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 17:37:00 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -376,24 +376,24 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!serverConfig.resolveRoute(httpRequest, *route, localPath , allowDirectoryBrowsing))
 			throw RequestException(403, "Forbidden");
 
-		if(allowDirectoryBrowsing)
-			throw RequestException(501, "Directory listing");
-
 		Logger::log(LC_NOTE, "Request seems OK so far");	
-
 		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
-	
-		
-		
-		if(!httpResponse.getStaticFile(localPath))
-		{
 
+
+		if(allowDirectoryBrowsing)
+		{
+			httpResponse.generateDirectoryListing(localPath);
+		} 
+		else if(!httpResponse.getStaticFile(localPath))
+		{
+			httpResponse.setStatus(599);
 
 		}
+			
 		
 		
-
+		Logger::log(LC_DEBUG, "Response is ready!");
 		ready(httpResponse, true);
 		return (true);
 }

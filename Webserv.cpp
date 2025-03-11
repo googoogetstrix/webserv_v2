@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:30:55 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 18:52:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,7 +165,7 @@ int Webserv::run(void)
 	// reset the epoll_events array
 	memset( events, 0 , sizeof(events));
 
-	debugConfig( serverConfigs[2]);
+	debugConfig( serverConfigs[0]);
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
@@ -310,22 +310,24 @@ static  void debugConfig(ServerConfig server)
 {
 	Logger::log(LC_DEBUG, "REMOVE ME!!!!");
 	return ;
+
 	HttpRequest req;
 	req.setMethod("GET");
 
 	server.debug();
-	RouteConfig *route = server.findRoute(req.getPath());
-	route->debug();
+	RouteConfig *route;
+	
 
 	std::vector<std::string> tests;
 	tests.push_back("/");
-	tests.push_back("/methods");
-	tests.push_back("/methods/");
-	tests.push_back("..");
+	tests.push_back("/uploads");
+	tests.push_back("/uploads/");
 
 
 	for(size_t i = 0 ; i < tests.size(); i ++)
 	{
+		route = server.findRoute(req.getPath());
+		// route->debug();
 		req.setPath( tests[i] );
 
 		bool allowDirectoryListing = false;
