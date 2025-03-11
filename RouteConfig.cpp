@@ -40,7 +40,7 @@ void RouteConfig::debug() const
 		std::cout << "  Extension: " << it->first << " -> Interpreter: " << it->second << std::endl;
 	}
 	
-	std::cout << " - Autoindex: " << (autoindex ? "on" : "off") << std::endl;
-	std::cout << " - Client Max Body Size: " << clientMaxBodySize << std::endl;
+	std::cout << "- Autoindex: " << (autoindex ? "on" : "off") << std::endl;
+	std::cout << "- Client Max Body Size: " << clientMaxBodySize << std::endl;
 	std::cout << "====================\n" << std::endl;
 }

@@ -81,21 +81,25 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing)
 {
 		localPath = httpRequest.getPath();
-		
+		std::string original = localPath;		
 		std::string targetResource = Util::extractFileName(localPath, false);
 		std::string filename = Util::extractFileName(localPath, true);
-		
+
 		if (targetResource.empty() && route.getIndex().empty() &&  !route.getAutoindex())
-			throw RequestException(403, "Forbidden");			
+			throw RequestException(403, "Forbidden");
 
 		// TODO - should we have ServerConfig level of this directive?
 		allowDirectoryListing = false;
 		allowDirectoryListing = route.getAutoindex();
 
-		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");
-		
-		if(targetResource == "" && !route.getIndex().empty())
+		original = Util::hasTrailingSlash(original) ? "" : "/";
+		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + original);	
+		if(filename.empty() && !route.getIndex().empty() && !route.getAutoindex())
+		{
 			localPath += route.getIndex();
+		}
+
+		// std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
 		return (true);
 }
 
