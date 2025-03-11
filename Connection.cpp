@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 19:29:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 10:38:08 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -339,10 +339,12 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if (path.find("..") != std::string::npos )		
 			throw RequestException(400, "Bad Request");
 		
-		std::vector<std::string> allowedMethods = route->getMethods();
-		route->debug();
-		if(Util::strInContainer(method,  allowedMethods))
-			throw RequestException(405, "Method not allowed.");
+		// TODO 2025-03-11 the methods seems not working yet
+		
+		// std::vector<std::string> allowedMethods = route->getMethods();
+		// route->debug();
+		// if(Util::strInContainer(method,  allowedMethods))
+		// 	throw RequestException(405, "Method not allowed.");
 //			return httpResponse.setStatus(405) && false; 
 
 
