@@ -1,21 +1,20 @@
 #ifndef DIRECTORYLISTING_HPP
 #define DIRECTORYLISTING_HPP
 
-#include <string>
-#include <vector>
-#include <sys/types.h>
 #include <dirent.h>
-#include <sys/stat.h>
+#include <errno.h>
+#include <fstream>
+#include <iostream>
 #include <sstream>
-#include <iomanip>
-#include <ctime>
+#include <string>
+#include <string.h>
+#include <vector>
 
-class DirectoryListing {
-public:
-    static std::string generateListing(const std::string& path, const std::string& uri);
-private:
-    static std::string formatFileSize(off_t size);
-    static std::string formatLastModified(time_t time);
+
+class DirectoryListing
+{
+    public:
+        static void generateDirectoryListing(const std::string& path, const std::string& outputFilePath);
 };
 
 #endif
