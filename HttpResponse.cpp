@@ -6,9 +6,10 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 17:01:55 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/11 17:17:26 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "HttpResponse.hpp"
 #include "Webserv.hpp"
@@ -261,7 +262,7 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 		// cut /
 	// if (route != NULL)
 	// {}
-	Logger::log(LC_YELLOW, " in getStaticFile()");
+	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())

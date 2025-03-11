@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 14:35:14 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/11 16:04:03 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -329,48 +329,47 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 			serverConfig.debug();
 			httpRequest.debug();
 			route->debug();
-
 		}
 		
-
-
 		std::string path = httpRequest.getPath();		
 		std::string method = httpRequest.getMethod();
+		// check for malicious request, contains .. which could lead to exposing
 		if (path.find("..") != std::string::npos )		
 			throw RequestException(400, "Bad Request");
 		
-		// TODO 2025-03-11 the methods seems not working yet
-		
-		std::vector<std::string> allowedMethods = route->getMethods();
-		route->debug();
-		// if(Util::strInContainer(method,  allowedMethods))
-		// 	throw RequestException(405, "Method not allowed.");
-//			return httpResponse.setStatus(405) && false; 
+		// check for allowed methods
+		std::vector<std::string> allowedMethods = route->getMethods();		
+		Logger::log(LC_MINOR_NOTE, " method from header = %s" , method.c_str());
+		if(!Util::strInContainer(method,  allowedMethods))
+			throw RequestException(405, "Method not allowed.");
 
-
+		// check if is POST , content length is required
 		std::string test = httpRequest.getHeader("Content-Length");
 		if(httpRequest.getMethod() == "POST" && test.empty())
 			throw RequestException(411, "Content-Length is required");
+		// also check for body too large
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
 			maxSize = WEBS_DEF_MAX_BOD_SIZE;
 		maxSize *= WEBS_MB;
 		if(Util::toSizeT(test) > maxSize * WEBS_MB)
-			throw RequestException(415, "Request too large");
+			throw RequestException(415, "Request too large");	
+
+		// check for redirection (directive return)	
+		if(route->getReturnStatus() != 0)
+		{
+			int statusCode = route->getReturnStatus();
+			// is one of the redirections
+			if(statusCode >= 300 and statusCode <= 399)
+			{
+				if(!route->getReturnValue().empty())
+					throw RequestException(statusCode , route->getReturnValue());
+			}
+			throw RequestException(statusCode , "");
+
+		}
 
 
-
-		
-		// std::string m = httpRequest.getMethod() ;
-		// if(!Util::strInContainer(m, route->getMethods()))
-		// {
-		// 	Logger::log(LC_YELLOW , "reach method checking here");
-		// 	throw RequestException(405, "Method not allowed");
-		// }
-
-
-
-		
 
 		std::string  localPath = "";
 		bool		 allowDirectoryBrowsing = false;
@@ -378,11 +377,11 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 			throw RequestException(403, "Forbidden");
 
 		if(allowDirectoryBrowsing)
-			throw RequestException(501, "Directoly listing");
+			throw RequestException(501, "Directory listing");
 
 		Logger::log(LC_NOTE, "Request seems OK so far");	
 
-		//std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
+		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
 	
 		
@@ -412,4 +411,8 @@ int		Connection::getContentLength()
 std::vector<char>	&Connection::getRawPostBody()
 {
 	return rawPostBody;
+}
+bool				Connection::isExpired(time_t comp) const
+{
+	return expiresOn < comp;
 }
