@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:58:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 12:55:04 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,10 +283,11 @@ int Webserv::run(void)
 					}
 					
 				}
-				Logger::log(LC_RED, " *** END of the nfds loop");
+				Logger::log(LC_YELLOW, " *** END of the nfds loop");
 
 			}
 			
+			Logger::log(LC_YELLOW, " *** OUTD of the nfds loop");
 		
 	}
 

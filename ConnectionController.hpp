@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 15:13:13 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 12:55:35 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,9 @@ class ConnectionController
 
 		static void		setEpollSocket(int epollFd);
 		static  int		getEpollSocket();
+
+
+		size_t			purgeExpiredConnections();
 };
 
 #endif

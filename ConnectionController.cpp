@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:40:49 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 13:21:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,6 +205,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
+	// DEBUG
 	closeConnection(clientSocket);
 	return (true);
 
@@ -240,4 +241,21 @@ int		ConnectionController::getEpollSocket()
 {
 
 	return (epollSocket);
+}
+
+size_t	ConnectionController::purgeExpiredConnections()
+{
+	time_t		now = time(NULL);
+	size_t 		count = 0;
+
+	for ( std::map<int, Connection>::iterator it = connections.begin(); it != connections.end(); ++it)
+	{
+		if(it->second.isExpired(now) )
+		{
+			Logger::log(LC_NOTE, "Connection #%d timeout, closing connection and remove from epoll", it->second.getSocket());
+			closeConnection(it->second.getSocket());
+			count ++;
+		}
+	}
+	return (count);
 }

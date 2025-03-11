@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 16:43:41 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 12:58:52 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,9 @@ class Connection
 //		bool				handleWrite(int epoll_fd, struct epoll_event &event);
 
 		size_t				truncateResponseBuffer(size_t bytes);
+
+		bool				isExpired(time_t comp) const;
+
 
 
 		ServerConfig		&getServerConfig();

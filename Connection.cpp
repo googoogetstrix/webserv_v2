@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 19:29:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 13:09:24 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -410,4 +410,8 @@ int		Connection::getContentLength()
 std::vector<char>	&Connection::getRawPostBody()
 {
 	return rawPostBody;
+}
+bool				Connection::isExpired(time_t comp) const
+{
+	return expiresOn < comp;
 }
