@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 12:55:35 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 16:12:50 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ class ConnectionController
 
 
 		size_t			purgeExpiredConnections();
+		bool 			handleRequestException(RequestException &reqException,Connection &conn);
 };
 
 #endif
