@@ -81,6 +81,10 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing)
 {
 		localPath = httpRequest.getPath();
+		
+		std::string targetResource = Util::extractFileName(localPath, false);
+		std::string filename = Util::extractFileName(localPath, true);
+
 		std::string targetResource = Util::extractFileName(localPath);
 		
 		if (targetResource.empty() && route.getIndex().empty() &&  !route.getAutoindex())
@@ -91,9 +95,21 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		allowDirectoryListing = route.getAutoindex();
 
 		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + "/");
+		
+
+		// std::cout << " before attaching file name = " << localPath  << std::endl;  
 
 		if(targetResource == "" && !route.getIndex().empty())
 			localPath += route.getIndex();
+		}
+		
+		// if(filename == "" && !route.getIndex().empty())
+		// 	localPath += "/" + route.getIndex();
+	
+		
+		std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
+
+
 		return (true);
 }
 
