@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 17:22:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 16:14:22 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ size_t Util::charactersMatched(std::string find, std::string path)
 }
 
 
-std::string	 Util::extractFileName(std::string const path)
+std::string	 Util::extractFileName(std::string const path, bool containsDot)
 {
     size_t pos = path.find_last_of("/");
 
@@ -106,11 +106,10 @@ std::string	 Util::extractFileName(std::string const path)
     else
     {
         std::string  temp = path.substr(pos + 1);
-        if( temp.find(".") != std::string::npos)
+        if(containsDot)
+            return (temp.find(".") != std::string::npos)? temp : "" ;
+        else 
             return (temp);
-        else
-            return "";
-
     } 
         
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 16:58:59 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 16:47:33 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 # include 	<sstream>
 # include	<string>
 # include 	<unistd.h>
+# include	<dirent.h>
+# include	<errno.h>
 # include 	"Util.hpp"
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
@@ -67,6 +69,7 @@ class HttpResponse
 
 		void								debug() const;
 		
+		bool								generateDirectoryListing(const std::string& path);
 
 };
 #endif 

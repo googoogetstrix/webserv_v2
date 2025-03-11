@@ -6,15 +6,18 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:58:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 18:52:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 
 #include "Webserv.hpp"
 #include "Logger.hpp"
 
 class Logger; 
+
+static void debugConfig(ServerConfig server);
 
 Webserv::Webserv()
 {
@@ -162,7 +165,7 @@ int Webserv::run(void)
 	// reset the epoll_events array
 	memset( events, 0 , sizeof(events));
 
-
+	debugConfig( serverConfigs[0]);
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
@@ -283,21 +286,12 @@ int Webserv::run(void)
 					}
 					
 				}
-				Logger::log(LC_RED, " *** END of the nfds loop");
-
 			}
-			
-		
+			connectionController.purgeExpiredConnections();
 	}
-
 	// this won't be reached anyway 
 	close(epoll_fd);
-	
-	
-
 	// handling
-
-
 	return (0);
 }
 
@@ -312,3 +306,41 @@ ConnectionController &Webserv::getConnectionController()
 	return connectionController;
 }
 
+static  void debugConfig(ServerConfig server)
+{
+	Logger::log(LC_DEBUG, "REMOVE ME!!!!");
+	return ;
+
+	HttpRequest req;
+	req.setMethod("GET");
+
+	server.debug();
+	RouteConfig *route;
+	
+
+	std::vector<std::string> tests;
+	tests.push_back("/");
+	tests.push_back("/uploads");
+	tests.push_back("/uploads/");
+
+
+	for(size_t i = 0 ; i < tests.size(); i ++)
+	{
+		route = server.findRoute(req.getPath());
+		// route->debug();
+		req.setPath( tests[i] );
+
+		bool allowDirectoryListing = false;
+		std::string localPath = "";
+
+		std::cout << "input path = " << tests[i] << "\n" << std::endl; 
+		
+		server.resolveRoute(req, *route, localPath, allowDirectoryListing );
+		std::cout << "localPath = " << localPath << std::endl;
+		std::cout << "allowDirectoryListing = " << allowDirectoryListing << std::endl;
+		std::cout << "===========================\n" << std::endl;
+	}
+
+	_exit(1);
+
+}

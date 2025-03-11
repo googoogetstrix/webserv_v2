@@ -6,9 +6,10 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 19:17:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 18:30:34 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "HttpResponse.hpp"
 #include "Webserv.hpp"
@@ -261,12 +262,14 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 		// cut /
 	// if (route != NULL)
 	// {}
-	Logger::log(LC_YELLOW, " in getStaticFile()");
+	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())
-	{
+	{		
 		struct stat fileStat;
+
+		Logger::log(LC_DEBUG, " getStaicFile ==> filePath = %s" , filePath.c_str());
 		if (stat(filePath.c_str(), &fileStat) != 0)
 		{
 			if (errno == ENOENT)
@@ -374,4 +377,39 @@ void HttpResponse::debug() const
 		std::cout << std::endl;
 }
 
+bool HttpResponse::generateDirectoryListing(const std::string& path)
+{
+	DIR* dir = opendir(path.c_str());
+	if (dir == NULL)
+	{
+		std::cerr << "Error: " << strerror(errno) << std::endl;
+		setStatus(403);
+		return false;
+	}
 
+	std::ostringstream html;
+	html << "<!DOCTYPE html>" << std::endl;
+	// <link href='css/style.css' rel='stylesheet'>
+	html << "<html><head><title>Directory Listing</title></head><body>" << std::endl;
+	html << "<h1>Directory Listing for " << path << "</h1>" << std::endl;
+	html << "<ul>" << std::endl;
+
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+		{
+			html << "<li><a href=\"" << name << "\">" << name << "</a></li>" << std::endl;
+		}
+	}
+
+	html << "</ul>" << std::endl;
+	html << "</body></html>" << std::endl;
+
+	closedir(dir);
+
+	setStatus(200);
+	setBody(html.str());
+	return true;
+}
