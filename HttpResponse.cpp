@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 10:43:47 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/11 17:01:55 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -376,4 +376,38 @@ void HttpResponse::debug() const
 		std::cout << std::endl;
 }
 
+bool HttpResponse::generateDirectoryListing(const std::string& path)
+{
+	DIR* dir = opendir(path.c_str());
+	if (dir == NULL)
+	{
+		std::cerr << "Error: " << strerror(errno) << std::endl;
+		setStatus(403);
+		return false;
+	}
 
+	std::ostringstream html;
+	html << "<!DOCTYPE html>" << std::endl;
+	html << "<html><head><title>Directory Listing</title><link href='css/style.css' rel='stylesheet'></head><body>" << std::endl;
+	html << "<h1>Directory Listing for " << path << "</h1>" << std::endl;
+	html << "<ul>" << std::endl;
+
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+		{
+			html << "<li><a href=\"" << name << "\">" << name << "</a></li>" << std::endl;
+		}
+	}
+
+	html << "</ul>" << std::endl;
+	html << "</body></html>" << std::endl;
+
+	closedir(dir);
+
+	setStatus(200);
+	setBody(html.str());
+	return true;
+}
