@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 18:52:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 12:02:20 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,7 +206,7 @@ int Webserv::run(void)
 					// error handling
 					if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 					{
-						Logger::log(LC_ERROR, "Listening Socket %d error, abort listening ", events[i].data.fd);
+						Logger::log(LC_CONN_LOG, "Listening Socket %d error, abort listening ", events[i].data.fd);
 						int error_code ;
 						socklen_t len = sizeof(error_code);
 						getsockopt(active_fd , SOL_SOCKET, SO_ERROR , &error_code , &len);
@@ -235,14 +235,9 @@ int Webserv::run(void)
 						int flag = fcntl( events[i].data.fd, F_GETFL , 0);
 						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
 							throw std::runtime_error("Unable to set client socket into non-blocking mode");
-
-
 						cc.openConnection(client_socket, *server);
 						
-						epoll_event  event; 
-						event.events = EPOLLIN;	
-						event.data.fd = client_socket;
-						epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket , &event);
+						
 						continue;
 					}
 					// end server fds

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:33:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 12:02:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ Connection *ConnectionController::findConnection(int fd)
 }
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
-	Logger::log(LC_MINOR_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+	Logger::log(LC_CONN_LOG, "Closing client socket #%d, unregistererd from epoll", clientSocket);
 
 	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
@@ -75,6 +75,13 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 	Logger::log(LC_RED, "RESTORE ME");
 
 	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
+
+	epoll_event  event; 
+	event.events = EPOLLIN;	
+	event.data.fd = clientSocket;
+	epoll_ctl(epollSocket,  EPOLL_CTL_ADD, clientSocket , &event);
+	Logger::log(LC_CONN_LOG, "Accepting client connection #%d, reigistered into epoll", clientSocket);
+
 	return connections.size();
 
 }
