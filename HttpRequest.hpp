@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 14:46:58 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 08:03:27 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ class HttpRequest
 		bool 		parseRequestHeaders(ServerConfig server, std::string requestString);
 		static int preprocessContentLength(std::string requestString);
 
-		std::string getHeader(std::string const str);
+		std::string getHeader(std::string const str) const;
 
 
 

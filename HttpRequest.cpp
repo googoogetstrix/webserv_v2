@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:25:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 08:03:38 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,7 +236,7 @@ void HttpRequest::debug()
 
 }
 
-std::string HttpRequest::getHeader(std::string const str)
+std::string HttpRequest::getHeader(std::string const str) const
 {
 	if(headers.find(str) == headers.end())
 		return "";

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:13:22 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 09:49:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,12 +153,10 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 	} 
 	catch (RequestException &e) {
 			// This is kinda happen to partially parsed request? 
-			Logger::log(LC_DEBUG, " Tell me when you see this one, i need extra handle for this case!");
-			std::cout << "Request Exception " << e.getCode() << ", " << e.getMessage() << std::endl;	
-
+			Logger::log(LC_DEBUG, "RequestException was thrown in the main loop");
+			std::cout << e.getCode() << ", " << e.getMessage() << std::endl;
 			handleRequestException(e, *conn);
 
-			
 	}
 	catch (std::exception &e)
 	{

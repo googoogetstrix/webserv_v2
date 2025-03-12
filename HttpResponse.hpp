@@ -3,10 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2025/03/12 11:13:32 by nusamank         ###   ########.fr       */
+=======
+/*   Updated: 2025/03/12 11:15:23 by bworrawa         ###   ########.fr       */
+>>>>>>> develop
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +19,7 @@
 # include 	<map>
 # include 	<sys/socket.h>
 # include	<sys/stat.h>
+# include	<sys/wait.h>
 # include	<fstream>
 # include 	<iostream>
 # include 	<vector>
@@ -23,6 +28,7 @@
 # include 	<unistd.h>
 # include	<dirent.h>
 # include	<errno.h>
+# include	<signal.h>
 # include 	"Util.hpp"
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
@@ -62,7 +68,6 @@ class HttpResponse
 		static std::string					getErrorPage(int statusCode, ServerConfig server);
 		static std::string					getDefaultErrorPage(int statusCode);
 		static std::string					getMimeType(const std::string & extension);
-		// void								getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig *route);
 		bool								getStaticFile(std::string const &localPath);
 
 		bool 								response(int clientSocket);
@@ -70,6 +75,8 @@ class HttpResponse
 		void								debug() const;
 		
 		bool								generateDirectoryListing(const HttpRequest& request, const std::string& path);
+
+		void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
 
 };
 #endif 

@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:24:49 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:29:09 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,9 @@ std::string HttpResponse::getStatusText(int statusCode)
 			return "Payload Too Large";
 		case 500:
 			return "Internal Server Error";
+		case 503:
+			return "Service Unavailable";
+
 		default:
 			return "Unknown Status";
 	}
@@ -254,14 +257,6 @@ std::string HttpResponse::getMimeType(const std::string & extension)
 
 bool	HttpResponse::getStaticFile(std::string const &filePath )
 {
-	// std::string filePath = server.getRoot() + request.getPath();
-	// find route
-	// for route in routes
-	// 		if route.path == request.getPath 
-				// openfile
-		// cut /
-	// if (route != NULL)
-	// {}
 	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
@@ -273,24 +268,11 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 		if (stat(filePath.c_str(), &fileStat) != 0)
 		{
 			if (errno == ENOENT)
-			{
 				throw RequestException(404, "File not found");
-				// setStatus(404);
-				// setBody(getDefaultErrorPage(404));
-			}
 			else if (errno == EACCES)
-			{
 				throw RequestException(403, "Forbidden");
-				// setStatus(403);
-				// setBody(getDefaultErrorPage(403));
-			}
 			else
-			{
-				Logger::log(LC_DEBUG, "Why 405 here???");
 				throw RequestException(405, "Method not allowed");
-				// setStatus(405);
-				// setBody(getDefaultErrorPage(405));
-			}
 		}
 		return false;
 	}
@@ -305,64 +287,12 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 	
 	setHeader("Content-Type", getMimeType(extension), true);
 	
-	
-	
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	setBody(buffer.str());
 	return true; 
 }
 
-
-// void	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig *route)
-// {
-// 	(void)route;
-// 	std::string filePath = server.getRoot() + request.getPath();
-// 	// find route
-// 	// for route in routes
-// 	// 		if route.path == request.getPath 
-// 				// openfile
-// 		// cut /
-// 	if (route != NULL)
-// 	{}
-// 	std::ifstream file(filePath.c_str(), std::ios::binary);
-// 	if (!file.is_open())
-// 	{
-// 		struct stat fileStat;
-// 		if (stat(filePath.c_str(), &fileStat) != 0)
-// 		{
-// 			if (errno == ENOENT)
-// 			{
-// 				setStatus(404);
-// 				setBody(getDefaultErrorPage(404));
-// 			}
-// 			else if (errno == EACCES)
-// 			{
-// 				setStatus(403);
-// 				setBody(getDefaultErrorPage(403));
-// 			}
-// 			else
-// 			{
-// 				setStatus(405);
-// 				setBody(getDefaultErrorPage(405));
-// 			}
-// 		}
-// 		return ;
-// 	}
-// 	setStatus(200);
-
-// 	size_t dotPos = filePath.find_last_of(".");
-// 	std::string extension;
-// 	if (dotPos != std::string::npos)
-// 		extension = filePath.substr(dotPos);
-// 	else
-// 		extension = "";
-// 	setHeader("Content-Type", getMimeType(extension));
-	
-// 	std::stringstream buffer;
-// 	buffer << file.rdbuf();
-// 	setBody(buffer.str());
-// }
 
 
 void HttpResponse::debug() const
@@ -382,6 +312,7 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	DIR* dir = opendir(path.c_str());
 	if (dir == NULL)
 	{
+		Logger::log(LC_DEBUG, " Getting Here???");
 		std::cerr << "Error: " << strerror(errno) << std::endl;
 		setStatus(403);
 		return false;
@@ -431,4 +362,133 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	setStatus(200);
 	setBody(html.str());
 	return true;
+}
+
+void handle_timeout(int sig)
+{
+	(void)sig;
+    std::cerr << "Error: Child process timed out" << std::endl;
+    exit(1);
+}
+
+void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route)
+{
+	(void)server;
+	(void)route;
+	// Path to the script
+	const char *scriptPath = "processPlayer.py";
+	// std::string scriptPath = route.getCGIPath(".py"); 
+
+	// Arguments for the script (argv array must be null-terminated)
+	// char *const argv[] = {const_cast<char *>("/usr/bin/env"), const_cast<char *>("python3"), const_cast<char *>(scriptPath), NULL};
+	char *const argv[] = {const_cast<char *>("/usr/bin/python3"), const_cast<char *>(scriptPath), NULL};
+	std::string method = "REQUEST_METHOD=" + request.getMethod();
+	std::string query = "QUERY_STRING=" + request.getRawQueryString();
+	std::string contentType = "CONTENT_TYPE=" + request.getHeader("Content-Type");
+	std::string contentLength = "CONTENT_LENGTH=" + Util::toString(request.getContentLength());
+	std::string uploadDir = "UPLOAD_DIR=/tmp";
+	std::string fileSize = "HTTP_FILESIZE=" + Util::toString(request.getContentLength());
+	std::string status = "REDIRECT_STATUS=200";
+
+	char * envp[] = {
+		const_cast<char *>(method.c_str()),
+		const_cast<char *>(query.c_str()),
+		const_cast<char *>(contentType.c_str()),
+		const_cast<char *>(contentLength.c_str()),
+		const_cast<char *>(uploadDir.c_str()),
+		const_cast<char *>(fileSize.c_str()),
+		const_cast<char *>(status.c_str()),
+		NULL
+	};
+
+	// Create pipes for stdin and stdout
+	int pipe_stdin[2];
+	int pipe_stdout[2];
+
+	if (pipe(pipe_stdin) == -1 || pipe(pipe_stdout) == -1)
+	{
+		std::cerr << "Error creating pipes: " << strerror(errno) << std::endl;
+		setStatus(500);
+		setHeader("Content-Type", "text/html");
+		return ;
+	}
+
+	// Fork the process
+	pid_t pid = fork();
+	if (pid == -1)
+	{
+		std::cerr << "Error forking process: " << strerror(errno) << std::endl;
+		setStatus(500);
+		setHeader("Content-Type", "text/html");
+		return ;
+	}
+
+	if (pid == 0)
+	{
+		// Child process
+		// Redirect stdin
+		if (dup2(pipe_stdin[0], STDIN_FILENO) == -1)
+		{
+			std::cerr << "Error redirecting stdin: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
+		close(pipe_stdin[0]);
+		close(pipe_stdin[1]);
+
+		// Redirect stdout
+		if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1)
+		{
+			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
+		close(pipe_stdout[0]);
+		close(pipe_stdout[1]);
+
+		// Execute the script
+		if (execve(argv[0], argv, envp) == -1)
+		{
+			std::cerr << "Error executing script: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
+	}
+	else
+	{
+		// Parent process
+		close(pipe_stdin[0]);
+		close(pipe_stdout[1]);
+
+		signal(SIGALRM, handle_timeout);
+		alarm(5);
+		
+		close(pipe_stdin[1]);
+
+		// Read from the child's stdout
+		char buffer[1024];
+		size_t bytesRead;
+		while ((bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1)) > 0)
+		{
+			buffer[bytesRead] = '\0';
+			std::cout << buffer;
+		}
+		close(pipe_stdout[0]);
+
+		// Wait for the child process to finish
+		int status;
+		if (waitpid(pid, &status, 0) == -1)
+		{
+			std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
+			setStatus(500);
+			setHeader("Content-Type", "text/html");
+			return ;
+		}
+		alarm(0);
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+			setStatus(200);
+		else
+		{
+			std::cerr << "Child process exited with error status: " << WEXITSTATUS(status) << std::endl;
+			setStatus(500);
+			setHeader("Content-Type", "text/html");
+		}
+	}
 }
