@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 13:31:38 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 16:19:08 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -371,17 +371,18 @@ void handle_timeout(int sig)
     exit(1);
 }
 
-void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route)
+void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route)
 {
+
 	(void)server;
 	(void)route;
-	// Path to the script
-	const char *scriptPath = "processPlayer.py";
-	// std::string scriptPath = route.getCGIPath(".py"); 
-
-	// Arguments for the script (argv array must be null-terminated)
-	// char *const argv[] = {const_cast<char *>("/usr/bin/env"), const_cast<char *>("python3"), const_cast<char *>(scriptPath), NULL};
-	char *const argv[] = {const_cast<char *>("/usr/bin/python3"), const_cast<char *>(scriptPath), NULL};
+	// const char *scriptPath = "processPlayer.py";
+	
+	char *const argv[] = {
+		const_cast<char *>(command.c_str()), 
+		const_cast<char *>(scriptFile.c_str())
+		, NULL
+	};
 	std::string method = "REQUEST_METHOD=" + request.getMethod();
 	std::string query = "QUERY_STRING=" + request.getRawQueryString();
 	std::string contentType = "CONTENT_TYPE=" + request.getHeader("Content-Type");
@@ -409,7 +410,7 @@ void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig serv
 	{
 		std::cerr << "Error creating pipes: " << strerror(errno) << std::endl;
 		setStatus(500);
-		setHeader("Content-Type", "text/html");
+		setHeader("Content-Type", "text/html", true);
 		return ;
 	}
 
@@ -419,7 +420,7 @@ void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig serv
 	{
 		std::cerr << "Error forking process: " << strerror(errno) << std::endl;
 		setStatus(500);
-		setHeader("Content-Type", "text/html");
+		setHeader("Content-Type", "text/html", true);
 		return ;
 	}
 
@@ -465,9 +466,11 @@ void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig serv
 		// Read from the child's stdout
 		char buffer[1024];
 		size_t bytesRead;
+		std::string  output = "";
 		while ((bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1)) > 0)
 		{
 			buffer[bytesRead] = '\0';
+			output += std::string(buffer);
 			std::cout << buffer;
 		}
 		close(pipe_stdout[0]);
@@ -483,12 +486,74 @@ void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig serv
 		}
 		alarm(0);
 		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
-			setStatus(200);
+		{
+			setCGIResponse(output, output.length());
+		}
 		else
 		{
 			std::cerr << "Child process exited with error status: " << WEXITSTATUS(status) << std::endl;
 			setStatus(500);
 			setHeader("Content-Type", "text/html");
+			return ; 
 		}
 	}
 }
+
+bool	HttpResponse::isRepeatableHeader(std::string const &str)
+{
+	if(str == "Set-Cookie" || str == ("User-Agent"))
+		return (true);
+	return (false);
+}
+
+
+size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
+{
+
+	// char	buffer[5000];
+	// memset(buffer,0,5000);
+
+	int sepLength = 4;
+	size_t splitPos = output.find("\r\n\r\n");
+	if (splitPos == std::string::npos)
+	{
+		splitPos = output.find("\n\n");
+		sepLength = 2; 
+		if (splitPos == std::string::npos)
+		{
+			setBody("");
+			setStatus(500);
+			return (500);
+		}
+	}
+
+	
+	std::string buffer ;
+	
+	std::istringstream stream(output.substr(0, splitPos));
+	
+	std::string		headerName , headerValue ; 
+    while (std::getline(stream, buffer))
+	{
+		std::istringstream token(buffer); 
+		if( token >> headerName >> headerValue) 
+		{
+			headerName = headerName.substr(0 , headerName.length() - 1);
+			std::cout << " _" << headerName << "_ , _" << headerValue << "_ " << std::endl;
+
+			if(isRepeatableHeader(headerName))
+				setHeader(headerName, headerValue, false);
+			else 
+				setHeader(headerName, headerValue, true);
+			
+
+		}
+	}
+
+
+	setBody( output.substr(splitPos + sepLength, length - (splitPos + sepLength)));
+	return 200; 	
+
+}
+
+

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 08:03:38 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 14:10:06 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,16 @@ HttpRequest::HttpRequest(HttpRequest const &other)
 HttpRequest &HttpRequest::operator=(HttpRequest const &other)
 {
 	if(this != &other)
-		*this = other;
+	{
+		method = other.method;
+		path = other.path;
+		rawPath = other.rawPath;
+		contentLength = other.contentLength; 
+		rawQueryString =  other.rawQueryString;
+		body = other.body;
+		queryStrings = other.queryStrings;
+		headers = other.headers;
+	}
 	return (*this);
 }
 
