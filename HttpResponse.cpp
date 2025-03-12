@@ -163,7 +163,7 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 {
 	std::string errorText = getStatusText(statusCode);
 	
-	std::ifstream file("errorPages/errorPage.html");
+	std::ifstream file("errors/errorPage.html");
 	if (!file.is_open())
 
         return "<html><body><h1>Error " + Util::toString(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
