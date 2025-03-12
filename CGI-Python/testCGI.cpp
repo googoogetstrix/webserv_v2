@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <string>
 
-// void processPythonCGI(const HttpRequest request, HttpResponse &response)
+// void processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route)
 // {
 
 // }

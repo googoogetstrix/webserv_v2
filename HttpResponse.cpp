@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 18:30:34 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 10:16:51 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -412,4 +412,133 @@ bool HttpResponse::generateDirectoryListing(const std::string& path)
 	setStatus(200);
 	setBody(html.str());
 	return true;
+}
+
+void handle_timeout(int sig)
+{
+	(void)sig;
+    std::cerr << "Error: Child process timed out" << std::endl;
+    exit(1);
+}
+
+void HttpResponse::processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route)
+{
+	(void)server;
+	(void)route;
+	// Path to the script
+	const char *scriptPath = "processPlayer.py";
+	// std::string scriptPath = route.getCGIPath(".py"); 
+
+	// Arguments for the script (argv array must be null-terminated)
+	// char *const argv[] = {const_cast<char *>("/usr/bin/env"), const_cast<char *>("python3"), const_cast<char *>(scriptPath), NULL};
+	char *const argv[] = {const_cast<char *>("/usr/bin/python3"), const_cast<char *>(scriptPath), NULL};
+	std::string method = "REQUEST_METHOD=" + request.getMethod();
+	std::string query = "QUERY_STRING=" + request.getRawQueryString();
+	std::string contentType = "CONTENT_TYPE=" + request.getHeader("Content-Type");
+	std::string contentLength = "CONTENT_LENGTH=" + Util::toString(request.getContentLength());
+	std::string uploadDir = "UPLOAD_DIR=/tmp";
+	std::string fileSize = "HTTP_FILESIZE=" + Util::toString(request.getContentLength());
+	std::string status = "REDIRECT_STATUS=200";
+
+	char * envp[] = {
+		const_cast<char *>(method.c_str()),
+		const_cast<char *>(query.c_str()),
+		const_cast<char *>(contentType.c_str()),
+		const_cast<char *>(contentLength.c_str()),
+		const_cast<char *>(uploadDir.c_str()),
+		const_cast<char *>(fileSize.c_str()),
+		const_cast<char *>(status.c_str()),
+		NULL
+	};
+
+	// Create pipes for stdin and stdout
+	int pipe_stdin[2];
+	int pipe_stdout[2];
+
+	if (pipe(pipe_stdin) == -1 || pipe(pipe_stdout) == -1)
+	{
+		std::cerr << "Error creating pipes: " << strerror(errno) << std::endl;
+		setStatus(500);
+		setHeader("Content-Type", "text/html");
+		return ;
+	}
+
+	// Fork the process
+	pid_t pid = fork();
+	if (pid == -1)
+	{
+		std::cerr << "Error forking process: " << strerror(errno) << std::endl;
+		setStatus(500);
+		setHeader("Content-Type", "text/html");
+		return ;
+	}
+
+	if (pid == 0)
+	{
+		// Child process
+		// Redirect stdin
+		if (dup2(pipe_stdin[0], STDIN_FILENO) == -1)
+		{
+			std::cerr << "Error redirecting stdin: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
+		close(pipe_stdin[0]);
+		close(pipe_stdin[1]);
+
+		// Redirect stdout
+		if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1)
+		{
+			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
+		close(pipe_stdout[0]);
+		close(pipe_stdout[1]);
+
+		// Execute the script
+		if (execve(argv[0], argv, envp) == -1)
+		{
+			std::cerr << "Error executing script: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
+	}
+	else
+	{
+		// Parent process
+		close(pipe_stdin[0]);
+		close(pipe_stdout[1]);
+
+		signal(SIGALRM, handle_timeout);
+		alarm(5);
+		
+		close(pipe_stdin[1]);
+
+		// Read from the child's stdout
+		char buffer[1024];
+		size_t bytesRead;
+		while ((bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1)) > 0)
+		{
+			buffer[bytesRead] = '\0';
+			std::cout << buffer;
+		}
+		close(pipe_stdout[0]);
+
+		// Wait for the child process to finish
+		int status;
+		if (waitpid(pid, &status, 0) == -1)
+		{
+			std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
+			setStatus(500);
+			setHeader("Content-Type", "text/html");
+			return ;
+		}
+		alarm(0);
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+			setStatus(200);
+		else
+		{
+			std::cerr << "Child process exited with error status: " << WEXITSTATUS(status) << std::endl;
+			setStatus(500);
+			setHeader("Content-Type", "text/html");
+		}
+	}
 }
