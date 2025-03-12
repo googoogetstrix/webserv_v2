@@ -100,13 +100,13 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		// std::cout << "original = " << original << std::endl;
 		// ORIGINAL localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + original);	
 		std::string lastClose = "/";
-		std::cout << " filename _" << filename << "_" << std::endl;
-		std::cout << " hasTrailingSlash() _" <<  (Util::hasTrailingSlash(original) ? "TRUE":"FALSE") << "_" << std::endl;
+		// std::cout << " filename _" << filename << "_" << std::endl;
+		// std::cout << " hasTrailingSlash() _" <<  (Util::hasTrailingSlash(original) ? "TRUE":"FALSE") << "_" << std::endl;
 		if (original != "/" && Util::hasTrailingSlash(original) && filename.empty())
 			lastClose = "";
-		std::cout << " lastClose _" << lastClose << "_" << std::endl;
+		// std::cout << " lastClose _" << lastClose << "_" << std::endl;
 		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + lastClose);	
-		std::cout << " AFTER REPLACE = " << localPath << std::endl;
+		// std::cout << " AFTER REPLACE = " << localPath << std::endl;
 
 
 		// std::cout << " BEFORE APPENDING INDEX IS " << localPath << std::endl;
@@ -116,6 +116,9 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 				localPath += "/";
 			localPath += route.getIndex();
 		}
+
+		// 
+		localPath = Util::replaceAll(localPath, "//", "/");
 
 		// std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
 		return (true);

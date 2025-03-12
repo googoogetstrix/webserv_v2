@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 10:37:36 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:15:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,9 @@ std::string HttpResponse::getStatusText(int statusCode)
 			return "Payload Too Large";
 		case 500:
 			return "Internal Server Error";
+		case 503:
+			return "Service Unavailable";
+
 		default:
 			return "Unknown Status";
 	}
@@ -254,14 +257,6 @@ std::string HttpResponse::getMimeType(const std::string & extension)
 
 bool	HttpResponse::getStaticFile(std::string const &filePath )
 {
-	// std::string filePath = server.getRoot() + request.getPath();
-	// find route
-	// for route in routes
-	// 		if route.path == request.getPath 
-				// openfile
-		// cut /
-	// if (route != NULL)
-	// {}
 	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
@@ -273,24 +268,11 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 		if (stat(filePath.c_str(), &fileStat) != 0)
 		{
 			if (errno == ENOENT)
-			{
 				throw RequestException(404, "File not found");
-				// setStatus(404);
-				// setBody(getDefaultErrorPage(404));
-			}
 			else if (errno == EACCES)
-			{
 				throw RequestException(403, "Forbidden");
-				// setStatus(403);
-				// setBody(getDefaultErrorPage(403));
-			}
 			else
-			{
-				Logger::log(LC_DEBUG, "Why 405 here???");
 				throw RequestException(405, "Method not allowed");
-				// setStatus(405);
-				// setBody(getDefaultErrorPage(405));
-			}
 		}
 		return false;
 	}
@@ -305,64 +287,12 @@ bool	HttpResponse::getStaticFile(std::string const &filePath )
 	
 	setHeader("Content-Type", getMimeType(extension), true);
 	
-	
-	
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	setBody(buffer.str());
 	return true; 
 }
 
-
-// void	HttpResponse::getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig *route)
-// {
-// 	(void)route;
-// 	std::string filePath = server.getRoot() + request.getPath();
-// 	// find route
-// 	// for route in routes
-// 	// 		if route.path == request.getPath 
-// 				// openfile
-// 		// cut /
-// 	if (route != NULL)
-// 	{}
-// 	std::ifstream file(filePath.c_str(), std::ios::binary);
-// 	if (!file.is_open())
-// 	{
-// 		struct stat fileStat;
-// 		if (stat(filePath.c_str(), &fileStat) != 0)
-// 		{
-// 			if (errno == ENOENT)
-// 			{
-// 				setStatus(404);
-// 				setBody(getDefaultErrorPage(404));
-// 			}
-// 			else if (errno == EACCES)
-// 			{
-// 				setStatus(403);
-// 				setBody(getDefaultErrorPage(403));
-// 			}
-// 			else
-// 			{
-// 				setStatus(405);
-// 				setBody(getDefaultErrorPage(405));
-// 			}
-// 		}
-// 		return ;
-// 	}
-// 	setStatus(200);
-
-// 	size_t dotPos = filePath.find_last_of(".");
-// 	std::string extension;
-// 	if (dotPos != std::string::npos)
-// 		extension = filePath.substr(dotPos);
-// 	else
-// 		extension = "";
-// 	setHeader("Content-Type", getMimeType(extension));
-	
-// 	std::stringstream buffer;
-// 	buffer << file.rdbuf();
-// 	setBody(buffer.str());
-// }
 
 
 void HttpResponse::debug() const
@@ -382,6 +312,7 @@ bool HttpResponse::generateDirectoryListing(const std::string& path)
 	DIR* dir = opendir(path.c_str());
 	if (dir == NULL)
 	{
+		Logger::log(LC_DEBUG, " Getting Here???");
 		std::cerr << "Error: " << strerror(errno) << std::endl;
 		setStatus(403);
 		return false;

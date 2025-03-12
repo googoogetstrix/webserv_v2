@@ -22,6 +22,15 @@ void RouteConfig::setClientMaxBodySize(size_t clientMaxBodySize) { this->clientM
 void RouteConfig::setReturnStatus(int status) { this->returnStatus = status; }
 void RouteConfig::setReturnValue(const std::string &value) { this->returnValue = value; }
 
+std::string RouteConfig::getCGI(std::string ext)
+{
+	if(CGIs.find(ext) != CGIs.end())
+		return CGIs[ext];
+	return "";
+}
+
+
+
 void RouteConfig::debug() const
 {
 	std::cout << "\n====================\n Route Configuration\n====================" << std::endl;
@@ -50,3 +59,5 @@ void RouteConfig::debug() const
     std::cout << " - Return Value: " << returnValue << std::endl;
 	std::cout << "====================\n" << std::endl;
 }
+
+
