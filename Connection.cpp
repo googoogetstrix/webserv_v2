@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 13:39:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 15:52:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -395,23 +395,16 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 			{
 				// is CGI
 				Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
-				Logger::log(LC_DEBUG, " TO BE IMPLEMENTED");
-				httpResponse.processPythonCGI( httpRequest, serverConfig , *route );
-
-				
-
+				httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route );				
 			}
 			else
 			{
 				Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());
 				httpResponse.getStaticFile(localPath);
-			
+
 			}
 
-		}
-			
-		
-		
+		}	
 		Logger::log(LC_DEBUG, "Response is ready!");
 		ready(httpResponse, true);
 		return (true);

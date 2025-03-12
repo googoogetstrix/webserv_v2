@@ -6,6 +6,9 @@ import cgi
 print("Content-Type: text/html")    
 print()  # Blank line to end headers
 
+# print("OK")
+
+
 # Parse GET and POST data
 get_params = cgi.FieldStorage()
 post_params = cgi.FieldStorage(environ={'REQUEST_METHOD': 'POST'})
