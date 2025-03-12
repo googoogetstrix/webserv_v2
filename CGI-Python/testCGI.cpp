@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <string>
 
-// void processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route)
+// void processPythonCGI(const HttpRequest request, HttpResponse &response)
 // {
 
 // }
@@ -13,6 +13,7 @@ void processPythonCGI_Dummy()
 {
 	// Path to the script
 	const char *scriptPath = "processPlayer.py";
+	httpRequest->getPath()
 
 	// Arguments for the script (argv array must be null-terminated)
 	// char *const argv[] = {const_cast<char *>("/usr/bin/env"), const_cast<char *>("python3"), const_cast<char *>(scriptPath), NULL};
@@ -20,7 +21,7 @@ void processPythonCGI_Dummy()
 	std::string method = "REQUEST_METHOD=POST";
 	std::string query = "QUERY_STRING=playerName=John";
 	std::string contentType = "CONTENT_TYPE=application/x-www-form-urlencoded";
-	std::string contentLength = "CONTENT_LENGTH=16";
+	std::string contentLength = "CONTENT_LENGTH=16"; httpRequest->contentLength
 	std::string uploadDir = "UPLOAD_DIR=/tmp";
 	std::string fileSize = "HTTP_FILESIZE=1024";
 	std::string status = "REDIRECT_STATUS=200";
