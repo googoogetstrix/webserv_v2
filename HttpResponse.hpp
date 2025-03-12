@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:33:57 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 16:06:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,9 @@ class HttpResponse
 		
 		bool								generateDirectoryListing(const HttpRequest& request, const std::string& path);
 
-		void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
-
+		// void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
+		void								processPythonCGI(std::string command, std::string scriptfile, HttpRequest request, ServerConfig server, RouteConfig route);
+		size_t								setCGIResponse(std::string &output, size_t length);
+		bool								isRepeatableHeader(std::string const &str);
 };
 #endif 
