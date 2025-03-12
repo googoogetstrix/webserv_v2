@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:47:33 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:13:32 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ class HttpResponse
 
 		void								debug() const;
 		
-		bool								generateDirectoryListing(const std::string& path);
+		bool								generateDirectoryListing(const HttpRequest& request, const std::string& path);
 
 };
 #endif 
