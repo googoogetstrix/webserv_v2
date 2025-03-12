@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 09:49:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 12:02:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ Connection *ConnectionController::findConnection(int fd)
 }
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
-	Logger::log(LC_MINOR_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+	Logger::log(LC_CONN_LOG, "Closing client socket #%d, unregistererd from epoll", clientSocket);
 
 	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
@@ -75,6 +75,13 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 	Logger::log(LC_RED, "RESTORE ME");
 
 	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
+
+	epoll_event  event; 
+	event.events = EPOLLIN;	
+	event.data.fd = clientSocket;
+	epoll_ctl(epollSocket,  EPOLL_CTL_ADD, clientSocket , &event);
+	Logger::log(LC_CONN_LOG, "Accepting client connection #%d, reigistered into epoll", clientSocket);
+
 	return connections.size();
 
 }
@@ -96,7 +103,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 				if(bytesRead == 0)
 				{
-					Logger::log(LC_CON_FAIL, "Connection disconnected from #%d" , conn->getSocket());
+					Logger::log(LC_CON_FAIL, "Connection disconnected from client on socket#%d" , conn->getSocket());
 					closeConnection(conn->getSocket());
 					return (false);
 				}
@@ -128,7 +135,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 						HttpRequest httpRequest;
 						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
 						conn->processRequest(httpRequest);
-						// needs writing engine here???
+						Logger::log(LC_DEBUG, " EXPECTED NORMAL close connection here");
 						closeConnection(conn->getSocket());
 						return (true);
 					} else if( actualContentLength > conn->getRawPostBody().size())
@@ -202,6 +209,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
+	Logger::log(LC_DEBUG, " handleWrite closing connection");
 	closeConnection(clientSocket);
 	return (true);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:30:12 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 13:08:13 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -380,7 +380,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
 		
-		std::string requestPathContainFile = Util::extractFileName( httpRequest.getPath(), true);
+		std::string requestPathContainFile = Util::extractFileName( localPath, true);
 		if(requestPathContainFile.empty())
 		{
 			if(!allowDirectoryBrowsing)
@@ -389,7 +389,8 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		} 
 		else 
 		{
-			std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));			
+			std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
+			
 			if(!cmd.empty())
 			{
 				// is CGI

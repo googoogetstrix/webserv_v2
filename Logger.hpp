@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/10 17:38:55 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:56:21 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@
 #define  	LC_RES_OK_LOG  		"\033[32m"
 #define  	LC_RES_NOK_LOG  	"\033[31m"
 #define  	LC_CON_FAIL  		"\033[31m"
+#define  	LC_CONN_LOG  		"\033[35m"
 
 
 
