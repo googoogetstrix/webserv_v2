@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 12:58:52 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 19:22:46 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ class Connection
 		bool				headerIsCompleted;
 		int					epollSocket;
 		void 				setNonBlock();
-		int 				contentLength;
+		size_t 				contentLength;
 
 
 	
@@ -98,7 +98,10 @@ class Connection
 		ServerConfig		&getServerConfig();
 
 		void 	setContentLength(int i);
-		int		getContentLength();
+		size_t				getContentLength();
+
+		void				debugPostBody();
+		
 
 
 				
