@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 16:19:08 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 22:02:58 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -364,12 +364,16 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	return true;
 }
 
-void handle_timeout(int sig)
-{
-	(void)sig;
-    std::cerr << "Error: Child process timed out" << std::endl;
-    exit(1);
-}
+// void handle_timeout(int sig)
+// {
+// 	if (sig == SIGALRM)
+// 	{
+// 		std::cerr << "Error: Child process timed out" << std::endl;
+// 		if (child_pid != -1)
+// 			kill(child_pid, SIGKILL);
+//     	exit(1);
+// 	}
+// }
 
 void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route)
 {
@@ -426,6 +430,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 
 	if (pid == 0)
 	{
+		// sleep(10);
 		// Child process
 		// Redirect stdin
 		if (dup2(pipe_stdin[0], STDIN_FILENO) == -1)
@@ -458,8 +463,10 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[0]);
 		close(pipe_stdout[1]);
 
-		signal(SIGALRM, handle_timeout);
-		alarm(5);
+		size_t byte_written = write(pipe_stdin[1], "name=aaa", 8);
+		std::cout << byte_written << std::endl;
+		// signal(SIGALRM, handle_timeout);
+		// alarm(5);
 		
 		close(pipe_stdin[1]);
 
