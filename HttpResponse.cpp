@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 22:02:58 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 22:05:17 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -375,7 +375,7 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 // 	}
 // }
 
-void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route)
+void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
 {
 
 	(void)server;
@@ -463,10 +463,14 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[0]);
 		close(pipe_stdout[1]);
 
-		size_t byte_written = write(pipe_stdin[1], "name=aaa", 8);
-		std::cout << byte_written << std::endl;
-		// signal(SIGALRM, handle_timeout);
-		// alarm(5);
+
+		int  bytesWritten = write(pipe_stdin[1], rawBytes.data() , rawBytes.size());
+		if(bytesWritten < 0)
+			throw RequestException(500,"Internal Server Error");
+
+
+		signal(SIGALRM, handle_timeout);
+		alarm(5);
 		
 		close(pipe_stdin[1]);
 
