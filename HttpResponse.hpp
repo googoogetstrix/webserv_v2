@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 10:41:32 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:15:23 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 # include 	<map>
 # include 	<sys/socket.h>
 # include	<sys/stat.h>
+# include	<sys/wait.h>
 # include	<fstream>
 # include 	<iostream>
 # include 	<vector>
@@ -23,6 +24,7 @@
 # include 	<unistd.h>
 # include	<dirent.h>
 # include	<errno.h>
+# include	<signal.h>
 # include 	"Util.hpp"
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
@@ -69,6 +71,8 @@ class HttpResponse
 		void								debug() const;
 		
 		bool								generateDirectoryListing(const std::string& path);
+
+		void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
 
 };
 #endif 
