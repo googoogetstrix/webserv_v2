@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:29:09 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 13:31:38 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,7 +163,7 @@ std::string	HttpResponse::getDefaultErrorPage(int statusCode)
 {
 	std::string errorText = getStatusText(statusCode);
 	
-	std::ifstream file("errorPages/errorPage.html");
+	std::ifstream file("errors/errorPage.html");
 	if (!file.is_open())
 
         return "<html><body><h1>Error " + Util::toString(statusCode) + "</h1><p>" + errorText + "</p></body></html>";
