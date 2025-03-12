@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:47:33 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 10:41:32 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,6 @@ class HttpResponse
 		static std::string					getErrorPage(int statusCode, ServerConfig server);
 		static std::string					getDefaultErrorPage(int statusCode);
 		static std::string					getMimeType(const std::string & extension);
-		// void								getStaticFile(HttpRequest const &request, ServerConfig &server, RouteConfig *route);
 		bool								getStaticFile(std::string const &localPath);
 
 		bool 								response(int clientSocket);

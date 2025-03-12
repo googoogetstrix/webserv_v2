@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 17:37:00 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:02:59 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -379,15 +379,30 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		Logger::log(LC_NOTE, "Request seems OK so far");	
 		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
-
-
-		if(allowDirectoryBrowsing)
+		
+		std::string requestPathContainFile = Util::extractFileName( httpRequest.getPath(), true);
+		if(requestPathContainFile.empty())
 		{
+			if(!allowDirectoryBrowsing)
+				throw RequestException(403, "Forbidden");
 			httpResponse.generateDirectoryListing(localPath);
 		} 
-		else if(!httpResponse.getStaticFile(localPath))
+		else 
 		{
-			httpResponse.setStatus(599);
+			std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));			
+			if(!cmd.empty())
+			{
+				// is CGI
+				Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
+				Logger::log(LC_DEBUG, " TO BE IMPLEMENTED");
+
+			}
+			else
+			{
+				Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());
+				httpResponse.getStaticFile(localPath);
+			
+			}
 
 		}
 			

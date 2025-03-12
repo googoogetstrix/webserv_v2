@@ -26,7 +26,7 @@ class RouteConfig
 		const std::string& getRoot() const;
 		const std::string& getIndex() const;
 		const std::vector<std::string>& getMethods() const;
-		const std::map<std::string, std::string>& getCGIs() const;
+		const std::map<std::string, std::string>& getCGIs() const;		
 		bool getAutoindex() const;
 		size_t getClientMaxBodySize() const;
 		int getReturnStatus() const;
@@ -41,6 +41,9 @@ class RouteConfig
 		void setClientMaxBodySize(size_t clientMaxBodySize);
 		void setReturnStatus(int status);
 		void setReturnValue(const std::string &value);
+
+
+		std::string getCGI(std::string);
 
 		void debug() const;
 };

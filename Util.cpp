@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:14:22 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:03:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,3 +128,28 @@ bool 	Util::strInContainer(std::string const &str, std::vector<std::string> v)
 	}
 	return false;
 }
+
+
+std::string	Util::replaceAll(std::string str, std::string const &from , std::string const &to)
+{
+    if(from.empty())
+        return str;
+    std::string src = str; 
+   
+    size_t pos = 0;
+    while ((pos = src.find(from, pos)) != std::string::npos) {
+        src.replace(pos, from.length(), to);
+        pos += to.length();
+    }
+    return src;
+}
+
+
+std::string Util::getFileExtension(std::string const &filePath)
+{
+    size_t dotPos = filePath.find_last_of(".");
+	if (dotPos != std::string::npos)
+		return (filePath.substr(dotPos));
+	return "";
+}
+
