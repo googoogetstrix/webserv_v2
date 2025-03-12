@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:15:23 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:33:57 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ class HttpResponse
 
 		void								debug() const;
 		
-		bool								generateDirectoryListing(const std::string& path);
+		bool								generateDirectoryListing(const HttpRequest& request, const std::string& path);
 
 		void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
 
