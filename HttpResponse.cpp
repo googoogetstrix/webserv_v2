@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 16:19:08 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 19:50:13 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -371,7 +371,7 @@ void handle_timeout(int sig)
     exit(1);
 }
 
-void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route)
+void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
 {
 
 	(void)server;
@@ -457,6 +457,12 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		// Parent process
 		close(pipe_stdin[0]);
 		close(pipe_stdout[1]);
+
+
+		int  bytesWritten = write(pipe_stdin[1], rawBytes.data() , rawBytes.size());
+		if(bytesWritten < 0)
+			throw RequestException(500,"Internal Server Error");
+
 
 		signal(SIGALRM, handle_timeout);
 		alarm(5);
