@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:15:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:29:09 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -307,7 +307,7 @@ void HttpResponse::debug() const
 		std::cout << std::endl;
 }
 
-bool HttpResponse::generateDirectoryListing(const std::string& path)
+bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const std::string& path)
 {
 	DIR* dir = opendir(path.c_str());
 	if (dir == NULL)
@@ -317,12 +317,17 @@ bool HttpResponse::generateDirectoryListing(const std::string& path)
 		setStatus(403);
 		return false;
 	}
+	std::string relativePath = request.getPath();
+	if (relativePath.empty() || relativePath[relativePath.size() - 1] != '/')
+    {
+        relativePath += '/';
+    }
 
 	std::ostringstream html;
 	html << "<!DOCTYPE html>" << std::endl;
 	// <link href='css/style.css' rel='stylesheet'>
 	html << "<html><head><title>Directory Listing</title></head><body>" << std::endl;
-	html << "<h1>Directory Listing for " << path << "</h1>" << std::endl;
+	html << "<h1>Directory Listing for " << relativePath << "</h1>" << std::endl;
 	html << "<ul>" << std::endl;
 
 	html << "<li><a href=\"..\">.. (UP)</a></li>" << std::endl;
@@ -339,11 +344,11 @@ bool HttpResponse::generateDirectoryListing(const std::string& path)
             {
                 if (s.st_mode & S_IFDIR)
                 {
-                    html << "<li><a href=\"" << name << "\">📁 " << name << "</a></li>" << std::endl;
+                    html << "<li><a href=\"" << relativePath << name << "\">📁 " << name << "</a></li>" << std::endl;
                 }
                 else
                 {
-                    html << "<li><a href=\"" << name << "\">📄 " << name << "</a></li>" << std::endl;
+                    html << "<li><a href=\"" << relativePath << name << "\">📄 " << name << "</a></li>" << std::endl;
                 }
             }
         }

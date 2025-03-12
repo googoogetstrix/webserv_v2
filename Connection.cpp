@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:02:59 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:30:12 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -385,7 +385,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		{
 			if(!allowDirectoryBrowsing)
 				throw RequestException(403, "Forbidden");
-			httpResponse.generateDirectoryListing(localPath);
+			httpResponse.generateDirectoryListing(httpRequest, localPath);
 		} 
 		else 
 		{
