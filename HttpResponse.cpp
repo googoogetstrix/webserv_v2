@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 11:28:57 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/13 12:04:11 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -344,11 +344,11 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
             {
                 if (s.st_mode & S_IFDIR)
                 {
-                    html << "<li><a href=\"" << relativePath << name << "\">📁 " << name << "</a></li>" << std::endl;
+                    html << "<li><a href=\"" << relativePath << name << "/\">&#128193; " << name << "</a></li>" << std::endl;
                 }
                 else
                 {
-                    html << "<li><a href=\"" << relativePath << name << "\">📄 " << name << "</a></li>" << std::endl;
+                    html << "<li><a href=\"" << relativePath << name << "\">&#128196; " << name << "</a></li>" << std::endl;
                 }
             }
         }
