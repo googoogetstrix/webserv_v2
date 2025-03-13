@@ -128,8 +128,18 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
 
 bool ConfigParser::isValidServerConfig(const ServerConfig& config)
 {
+    if (config.getPort() < 1024 || config.getPort() > 65535)
+    {
+        std::cout << "Invalid configuration: Port number must be within the range 1024 - 65535" << std::endl;
+        return false;
+    }
+    else if (config.getHost().empty())
+    {
+        std::cout << "Invalid configuration: Hostname cannot be empty. Please provide a valid hostname." << std::endl;
+        return false;
+    }
     // return config.getPort() > 0 && !config.getHost().empty() && !config.getRoot().empty();
-    return config.getPort() > 0 && !config.getHost().empty();
+    return true;
 }
 
 std::vector<ServerConfig> ConfigParser::parseAllConfigs(const std::string& configFilePath)
