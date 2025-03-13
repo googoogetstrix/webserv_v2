@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 11:13:08 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:00:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -346,11 +346,11 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
             {
                 if (s.st_mode & S_IFDIR)
                 {
-                    html << "<li><a href=\"" << relativePath << name << "\">📁 " << name << "</a></li>" << std::endl;
+                    html << "<li><a href=\"" << relativePath << name << "/\">&#128193; " << name << "</a></li>" << std::endl;
                 }
                 else
                 {
-                    html << "<li><a href=\"" << relativePath << name << "\">📄 " << name << "</a></li>" << std::endl;
+                    html << "<li><a href=\"" << relativePath << name << "\">&#128196; " << name << "</a></li>" << std::endl;
                 }
             }
         }
@@ -364,13 +364,6 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	setStatus(200);
 	setBody(html.str());
 	return true;
-}
-
-void handle_timeout(int sig)
-{
-	(void)sig;
-    std::cerr << "Error: Child process timed out" << std::endl;
-    exit(1);
 }
 
 void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
@@ -416,25 +409,18 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	if (pipe(pipe_stdin) == -1 || pipe(pipe_stdout) == -1)
 	{
 		std::cerr << "Error creating pipes: " << strerror(errno) << std::endl;
-		setStatus(500);
-		setHeader("Content-Type", "text/html", true);
-		return ;
+		throw RequestException(500,"Internal Server Error");
 	}
-
-	// Fork the process
 	pid_t pid = fork();
 	if (pid == -1)
 	{
 		std::cerr << "Error forking process: " << strerror(errno) << std::endl;
-		setStatus(500);
-		setHeader("Content-Type", "text/html", true);
-		return ;
+		throw RequestException(500,"Internal Server Error");
 	}
-
 	if (pid == 0)
 	{
+		// sleep(10);
 		// Child process
-		// Redirect stdin
 		if (dup2(pipe_stdin[0], STDIN_FILENO) == -1)
 		{
 			std::cerr << "Error redirecting stdin: " << strerror(errno) << std::endl;
@@ -452,8 +438,6 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		}
 		close(pipe_stdout[0]);
 		close(pipe_stdout[1]);
-
-		// Execute the script
 		if (execve(argv[0], argv, envp) == -1)
 		{
 			std::cerr << "Error executing script: " << strerror(errno) << std::endl;
@@ -465,51 +449,81 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		// Parent process
 		close(pipe_stdin[0]);
 		close(pipe_stdout[1]);
-
-
+	
+		fcntl(pipe_stdout[0], F_SETFL, O_NONBLOCK);
 		int  bytesWritten = write(pipe_stdin[1], rawBytes.data() , rawBytes.size());
 		if(bytesWritten < 0)
+		{
+			close(pipe_stdin[1]);
+            close(pipe_stdout[0]);
 			throw RequestException(500,"Internal Server Error");
-
-
-		signal(SIGALRM, handle_timeout);
-		alarm(5);
-		
+		}
 		close(pipe_stdin[1]);
 
 		// Read from the child's stdout
 		char buffer[1024];
-		size_t bytesRead;
 		std::string  output = "";
-		while ((bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1)) > 0)
-		{
-			buffer[bytesRead] = '\0';
-			output += std::string(buffer);
-			std::cout << buffer;
+		bool timed_out = false;
+		int elapsed_time = 0;
+		const int max_timeout = 5;
+
+		while (true)
+        {
+            ssize_t bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
+			if (bytesRead > 0)
+			{
+				buffer[bytesRead] = '\0';
+				output += std::string(buffer);
+			}
+			else if (bytesRead == 0)
+				break;
+			else if (bytesRead < 0 && errno != EAGAIN)
+			{
+				std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
+				close(pipe_stdout[0]);
+				throw RequestException(500,"Internal Server Error");
+			}
+
+			// Wait for the child process to finish
+			int status;
+			pid_t result = waitpid(pid, &status, WNOHANG);
+			if (result == 0)
+			{
+				usleep(100000);
+				elapsed_time += 100;
+				if (elapsed_time >= max_timeout * 1000)
+				{
+					std::cerr << "Error: CGI script timed out" << std::endl;
+					kill(pid, SIGKILL);
+					timed_out = true;
+					break ;
+				}
+			}
+			else if (result == -1)
+			{
+				std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
+				close(pipe_stdout[0]);
+				throw RequestException(500,"Internal Server Error");
+			}
+			else
+			{
+				if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+				{
+					setCGIResponse(output, output.length());
+				}
+				else
+				{
+					std::cerr << "Child process exited with error status: " << WEXITSTATUS(status) << std::endl;
+					setStatus(500);
+					setHeader("Content-Type", "text/html");
+				}
+				break ;
+			}
 		}
 		close(pipe_stdout[0]);
-
-		// Wait for the child process to finish
-		int status;
-		if (waitpid(pid, &status, 0) == -1)
-		{
-			std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
-			setStatus(500);
-			setHeader("Content-Type", "text/html");
-			return ;
-		}
-		alarm(0);
-		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
-		{
-			setCGIResponse(output, output.length());
-		}
-		else
-		{
-			std::cerr << "Child process exited with error status: " << WEXITSTATUS(status) << std::endl;
-			setStatus(500);
-			setHeader("Content-Type", "text/html");
-			return ; 
-		}
+		if (timed_out)
+            throw RequestException(500,"Internal Server Error");
+		
 	}
 }
 
