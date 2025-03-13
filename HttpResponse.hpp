@@ -6,13 +6,14 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:33:57 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 22:16:45 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef 	HTTP_RESPONSE_HPP
 # define	HTTP_RESPONSE_HPP
 # include 	<map>
+# include	<sys/select.h>
 # include 	<sys/socket.h>
 # include	<sys/stat.h>
 # include	<sys/wait.h>
@@ -25,6 +26,7 @@
 # include	<dirent.h>
 # include	<errno.h>
 # include	<signal.h>
+# include	<fcntl.h>
 # include 	"Util.hpp"
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
@@ -72,7 +74,9 @@ class HttpResponse
 		
 		bool								generateDirectoryListing(const HttpRequest& request, const std::string& path);
 
-		void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
-
+		// void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
+		void								processPythonCGI(std::string command, std::string scriptfile, HttpRequest request, ServerConfig server, RouteConfig route , std::vector<char> &vec);
+		size_t								setCGIResponse(std::string &output, size_t length);
+		bool								isRepeatableHeader(std::string const &str);
 };
 #endif 

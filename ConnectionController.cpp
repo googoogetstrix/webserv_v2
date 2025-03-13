@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 09:49:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/12 19:51:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ Connection *ConnectionController::findConnection(int fd)
 }
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
-	Logger::log(LC_MINOR_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+	Logger::log(LC_CONN_LOG, "Closing client socket #%d, unregistererd from epoll", clientSocket);
 
 	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
@@ -75,6 +75,13 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 	Logger::log(LC_RED, "RESTORE ME");
 
 	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
+
+	epoll_event  event; 
+	event.events = EPOLLIN;	
+	event.data.fd = clientSocket;
+	epoll_ctl(epollSocket,  EPOLL_CTL_ADD, clientSocket , &event);
+	Logger::log(LC_CONN_LOG, "Accepting client connection #%d, reigistered into epoll", clientSocket);
+
 	return connections.size();
 
 }
@@ -94,16 +101,37 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 			{
 				int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
 
+
+				Logger:: log(LC_RED, " bytesRead = %d" , bytesRead);
+
 				if(bytesRead == 0)
 				{
-					Logger::log(LC_CON_FAIL, "Connection disconnected from #%d" , conn->getSocket());
+					Logger::log(LC_CON_FAIL, "Connection disconnected from client on socket#%d" , conn->getSocket());
 					closeConnection(conn->getSocket());
 					return (false);
 				}
 					
 				if (bytesRead == -1) {
+					size_t readSize = conn->getRawPostBody().size();
+					std::cout << " CHECK IF ALREADY READ ALL THE REQUIRED BYTES" << std::endl;
+					if( readSize >= conn->getContentLength())
+					{
+						Logger::log(LC_DEBUG, "Done reading post body!");
+
+						HttpRequest httpRequest;
+						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
+						conn->processRequest(httpRequest);
+
+						Logger::log(LC_DEBUG, " EXPECTED - DONE READ POST BODY close connection here");
+						closeConnection(conn->getSocket());						
+						return (true);
+					}
+					else 
+						Logger::log(LC_YELLOW, "NEEDS SOME BYTES TO READ FOR POST BODY");
+						
 					
 		            if (event.events & EAGAIN || event.events & EWOULDBLOCK) {
+						Logger::log(LC_RED, " EAGIAN or EWOULDBLOCK case !!!");
 		                return (true);
 		            }
 		            closeConnection(conn->getSocket());
@@ -117,27 +145,32 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 				if (pos != -1)
 				{
 					int  contentLengthFromHeader = HttpRequest::preprocessContentLength( std::string(buffer, bytesRead)); 
-					size_t	actualContentLength = static_cast<size_t>(contentLengthFromHeader);
+					// size_t	actualContentLength = static_cast<size_t>(contentLengthFromHeader);
+					size_t	actualContentLength = contentLengthFromHeader;
 					conn->setContentLength(contentLengthFromHeader);	
 
 					if(contentLengthFromHeader <= 0)
 					{
+						std::cout << " NO CONTENT LENGTH CASE " << std::endl;
 						conn->appendRequestBuffer( std::string(buffer));
 						// no Post
 						conn->setHeaderIsComplete(true);
 						HttpRequest httpRequest;
 						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
 						conn->processRequest(httpRequest);
-						// needs writing engine here???
+						Logger::log(LC_DEBUG, " EXPECTED NORMAL close connection here");
 						closeConnection(conn->getSocket());
 						return (true);
-					} else if( actualContentLength > conn->getRawPostBody().size())
+					} else  if( actualContentLength > conn->getRawPostBody().size())
 					{
+						std::cout << " WITH CONTENT LENGTH CASE - FIRST SPLIT" << std::endl;
 						// with Post body, splitting between header & post body here, not yet complete
 						conn->appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
-						conn->appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
-					} else {
+						conn->appendRawPostBody(buffer + pos + 4, remainingHeaderLength);
+
+ 					} else {
 						// with Post , complete
+						std::cout << " WITH CONTENT LENGTH CASE - FINAL TOUCH" << std::endl;
 						conn->appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
 					}
 					
@@ -202,6 +235,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
+	Logger::log(LC_DEBUG, " handleWrite closing connection");
 	closeConnection(clientSocket);
 	return (true);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:30:12 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 19:42:31 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -320,7 +320,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		// 414 URI Too Long
 		// 500 Internal Server Error
 
-
+		Logger::log(LC_YELLOW, "Inside processRequest()");
 		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
 		// TODO 
@@ -380,7 +380,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
 
 		
-		std::string requestPathContainFile = Util::extractFileName( httpRequest.getPath(), true);
+		std::string requestPathContainFile = Util::extractFileName( localPath, true);
 		if(requestPathContainFile.empty())
 		{
 			if(!allowDirectoryBrowsing)
@@ -389,25 +389,22 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		} 
 		else 
 		{
-			std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));			
+			std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
+			
 			if(!cmd.empty())
 			{
 				// is CGI
 				Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
-				Logger::log(LC_DEBUG, " TO BE IMPLEMENTED");
-
+				httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
 			}
 			else
 			{
 				Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());
 				httpResponse.getStaticFile(localPath);
-			
+
 			}
 
-		}
-			
-		
-		
+		}	
 		Logger::log(LC_DEBUG, "Response is ready!");
 		ready(httpResponse, true);
 		return (true);
@@ -417,7 +414,7 @@ void 	Connection::setContentLength(int i)
 {
 		contentLength = i;
 }
-int		Connection::getContentLength()
+size_t		Connection::getContentLength()
 {
 		return contentLength; 
 }
@@ -430,4 +427,15 @@ std::vector<char>	&Connection::getRawPostBody()
 bool				Connection::isExpired(time_t comp) const
 {
 	return expiresOn < comp;
+}
+
+void Connection::debugPostBody()
+{
+	size_t  daSize = 0 ;
+	for(std::vector<char>::iterator it = rawPostBody.begin(); it != rawPostBody.end(); ++it)
+	{
+		std::cout << *it;
+		daSize ++; 
+	}
+	std::cout << "\n size=" << daSize << std::endl;
 }

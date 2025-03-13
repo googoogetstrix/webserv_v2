@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 08:03:38 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/12 19:51:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,16 @@ HttpRequest::HttpRequest(HttpRequest const &other)
 HttpRequest &HttpRequest::operator=(HttpRequest const &other)
 {
 	if(this != &other)
-		*this = other;
+	{
+		method = other.method;
+		path = other.path;
+		rawPath = other.rawPath;
+		contentLength = other.contentLength; 
+		rawQueryString =  other.rawQueryString;
+		body = other.body;
+		queryStrings = other.queryStrings;
+		headers = other.headers;
+	}
 	return (*this);
 }
 
@@ -101,9 +110,9 @@ bool HttpRequest::setBody(std::string bodyStr)
 }
 
 
-int HttpRequest::preprocessContentLength(std::string requestString)
+size_t HttpRequest::preprocessContentLength(std::string requestString)
 {
-	int	return_len;
+	size_t	return_len;
 	std::string			line ;
 	std::istringstream 	stream(requestString);
 	int lineCounter = 0;
@@ -127,10 +136,11 @@ int HttpRequest::preprocessContentLength(std::string requestString)
 			std::istringstream len_stream(line.substr(15));
 			if(!(len_stream >> return_len))
 				return -1;
+			// std::cout << "return_len = " << return_len << std::endl;
 			return return_len;
 		 }
 	}
-	return -1; 
+	return 0; 
 
 }
 
@@ -244,3 +254,4 @@ std::string HttpRequest::getHeader(std::string const str) const
 	return headers.at(str);
 
 }
+
