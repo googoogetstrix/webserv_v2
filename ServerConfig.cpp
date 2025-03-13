@@ -3,6 +3,36 @@
 
 ServerConfig::ServerConfig() : port(0), host("0.0.0.0"), clientMaxBodySize(1024 * 1024 * 8) {}
 
+ServerConfig::ServerConfig(ServerConfig const &other)
+{
+	port = other.port;
+    serverName = other.serverName;
+    host = other.host;
+    root = other.root;
+    index = other.index;
+    clientMaxBodySize = other.clientMaxBodySize;
+    errorPages = other.errorPages;
+    routes = other.routes;
+}
+
+ServerConfig &ServerConfig::operator=(ServerConfig const other)
+{
+	if (this != &other)
+    {
+        port = other.port;
+        serverName = other.serverName;
+        host = other.host;
+        root = other.root;
+        index = other.index;
+        clientMaxBodySize = other.clientMaxBodySize;
+        errorPages = other.errorPages;
+        routes = other.routes;
+    }
+    return *this;
+}
+
+ServerConfig::~ServerConfig() {}
+
 int ServerConfig::getPort() const { return port; }
 const std::string& ServerConfig::getServerName() const { return serverName; }
 const std::string& ServerConfig::getHost() const { return host; }
