@@ -28,6 +28,9 @@ class ServerConfig
 
 	public:
 		ServerConfig();
+		ServerConfig(ServerConfig const &other);
+		ServerConfig &operator=(ServerConfig const other);
+		~ServerConfig();
 
 		int getPort() const;
 		const std::string& getServerName() const;
