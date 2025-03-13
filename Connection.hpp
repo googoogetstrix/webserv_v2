@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 09:38:33 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 14:40:01 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ class Connection
 		std::string 		responseBuffer;
 		std::vector<char>	rawPostBody;
 		bool				headerIsCompleted;
+		bool				requestIsCompleted;
 		int					epollSocket;
 		void 				setNonBlock();
 		size_t 				contentLength;
@@ -66,6 +67,9 @@ class Connection
 		int 				getSocket() const;
 		std::string			getRequestBuffer() const;
 		std::string 		getResponseBuffer() const;
+		bool 				getHeaderIsComplete() const;
+		bool 				getRequestIsComplete() const;
+		void 				setRequestIsComplete(bool newValue);
 
 		std::vector<char>	&getRawPostBody();
 

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 11:00:19 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 15:04:45 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,10 +120,14 @@ bool	Connection::isHeaderComplete()
 
 bool	Connection::appendRawPostBody(char *offset, size_t bytesRead)
 {
+	std::cout << " in appendRawPostBody() ... adding:\n================== " << std::endl;
 	for(size_t i = 0; i < bytesRead; ++i)
 	{
 		rawPostBody.push_back( *(offset + i));
+		std::cout << *(offset + i);
+
 	}
+	std::cout << "\n=========\n rawPostBodyDebug = _" << std::string(rawPostBody.data()) << "_" << std::endl;
 	return (true);
 }
 bool	Connection::appendRequestBuffer(std::string str)
@@ -456,4 +460,20 @@ void Connection::debugPostBody()
 		daSize ++; 
 	}
 	std::cout << "\n size=" << daSize << std::endl;
+}
+bool Connection::getHeaderIsComplete(void) const
+{
+	return headerIsCompleted;
+}
+
+
+bool Connection::getRequestIsComplete(void) const
+{
+	return requestIsCompleted;
+}
+
+
+void Connection::setRequestIsComplete(bool newValue)
+{
+	requestIsCompleted = newValue;
 }
