@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:22:46 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 09:38:33 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@
 # include	"Logger.hpp"
 
 # define 	CON_RECV_BUFFER_SIZE 	4001
-# define 	CON_SOC_TIMEOUT_SECS 	1
+# define 	CON_SOC_TIMEOUT_SECS 	5
 # define 	WEBS_MB					1048576 
 # define 	WEBS_DEF_MAX_BOD_SIZE	8
 # define	WEBS_RESP_SEND_SIZE 	4096

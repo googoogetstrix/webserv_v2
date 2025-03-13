@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:51:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 11:27:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ bool HttpRequest::setBody(std::string bodyStr)
 }
 
 
-size_t HttpRequest::preprocessContentLength(std::string requestString)
+size_t HttpRequest::preprocessContentLength(std::string requestString,std::string &methodIn)
 {
 	size_t	return_len;
 	std::string			line ;
@@ -127,6 +127,7 @@ size_t HttpRequest::preprocessContentLength(std::string requestString)
 
 			if(!(reqLine >> method >> path >> version))
 				throw RequestException(400, "Bad Request");
+			methodIn = method;
 			Logger::log(LC_REQ_LOG, "[REQUEST] %s %s" , method.c_str() , path.c_str());
 		}
 
@@ -151,6 +152,7 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 	// std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
+	std::cout << " ***** line = _" << line << "_" << std::endl;
 
 	if (std::getline(requestStream, line))
 	{
@@ -174,6 +176,10 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 			}
 		}
 
+		Logger::log(LC_RED, " ***** rawPathString = " , rawPathStr.c_str());
+		Logger::log(LC_RED, " ***** methodStr = " , methodStr.c_str());
+		Logger::log(LC_RED, " ***** httpVersion = " , httpVersion.c_str());
+
 		setMethod(methodStr);
 		setRawPath(rawPathStr);
 		size_t pos = rawPathStr.find('?');
@@ -181,6 +187,9 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		{
 			setPath(rawPathStr.substr(0, pos));
 			rawQueryString = rawPathStr.substr(pos + 1);
+
+			Logger::log(LC_RED, " ***** rawQueryString = " , rawQueryString.c_str());
+
 			std::istringstream queryStream(rawQueryString);
 			std::string keyValuePair;
 			while (std::getline(queryStream, keyValuePair, '&'))
@@ -238,11 +247,11 @@ void HttpRequest::debug()
 	std::cout << " - contentLength:\t" << contentLength << std::endl;
 	std::cout << " - body:\t\t" << body << std::endl;
 	std::cout << " - header:" << std::endl;
-
 	for(std::map<std::string, std::string>::iterator  it = headers.begin(); it != headers.end() ; ++it)
 	{
 		std::cout << "\t" << it->first << "\t: " << it->second << std::endl;
 	}
+
 
 }
 

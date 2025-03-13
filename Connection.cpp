@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:42:31 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 11:00:19 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,18 @@
 
 Connection::Connection():fd(0),isReady(false)
 {
-	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+	std::cout << " A - expires on " << std::string(buff) << std::endl;
 	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
-	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+	std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
 	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
 }
@@ -78,7 +84,10 @@ int 	Connection::getSocket() const
 
 bool 	Connection::setExpiresOn(time_t t)
 {
-	expiresOn = t + (CON_SOC_TIMEOUT_SECS * 100000);
+	expiresOn = t + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+	std::cout << " C - expires on " << std::string(buff) << std::endl;
 	return true; 
 }
 
@@ -91,7 +100,12 @@ bool 	Connection::setFd(int newFd)
 void	Connection::punchIn(void)
 {
 	// Logger::log(LC_NOTE, "Punch in!");
-	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 1000000);
+
+	
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+//	std::cout << "socket #" << fd << " expires on D - " << std::string(buff) << std::endl;
 }
 
 
@@ -343,16 +357,20 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!Util::strInContainer(method,  allowedMethods))
 			throw RequestException(405, "Method not allowed.");
 
-		// check if is POST , content length is required
-		std::string test = httpRequest.getHeader("Content-Length");
+		// check if is POST , content length is required , this should be handle by handleRead already ?
+		
+		std::string test = httpRequest.getHeader("Content-Length");		
 		if(httpRequest.getMethod() == "POST" && test.empty())
 			throw RequestException(411, "Content-Length is required");
+	
 		// also check for body too large
+		// route->debug();
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
 			maxSize = WEBS_DEF_MAX_BOD_SIZE;
 		maxSize *= WEBS_MB;
-		if(Util::toSizeT(test) > maxSize * WEBS_MB)
+
+		if(!test.empty() && Util::toSizeT(test) > maxSize)
 			throw RequestException(415, "Request too large");	
 
 		// check for redirection (directive return)	

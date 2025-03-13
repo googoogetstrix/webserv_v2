@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:51:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 11:32:33 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,6 +119,8 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 						Logger::log(LC_DEBUG, "Done reading post body!");
 
 						HttpRequest httpRequest;
+						std::cout << " YOU WILL SEEK HERE " << std::endl; 
+						std::cout << "_" << conn->getRequestBuffer() << "_" << std::endl;
 						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
 						conn->processRequest(httpRequest);
 
@@ -144,12 +146,13 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 				if (pos != -1)
 				{
-					int  contentLengthFromHeader = HttpRequest::preprocessContentLength( std::string(buffer, bytesRead)); 
+					std::string method;
+					int  contentLengthFromHeader = HttpRequest::preprocessContentLength( std::string(buffer, bytesRead), method); 
 					// size_t	actualContentLength = static_cast<size_t>(contentLengthFromHeader);
 					size_t	actualContentLength = contentLengthFromHeader;
 					conn->setContentLength(contentLengthFromHeader);	
 
-					if(contentLengthFromHeader <= 0)
+					if(method == "POST" && contentLengthFromHeader <= 0 )
 					{
 						std::cout << " NO CONTENT LENGTH CASE " << std::endl;
 						conn->appendRequestBuffer( std::string(buffer));

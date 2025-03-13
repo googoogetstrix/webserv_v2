@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:50:13 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 11:13:08 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,6 +130,8 @@ std::string HttpResponse::getStatusText(int statusCode)
 			return "Method Not Allowed";
 		case 408:
 			return "Request Timeout";
+		case 411:
+			return "Length required";	
 		case 413:
 			return "Payload Too Large";
 		case 500:
@@ -377,6 +379,9 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	(void)server;
 	(void)route;
 	// const char *scriptPath = "processPlayer.py";
+
+	std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
+	request.debug();
 	
 	char *const argv[] = {
 		const_cast<char *>(command.c_str()), 
@@ -390,6 +395,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	std::string uploadDir = "UPLOAD_DIR=/tmp";
 	std::string fileSize = "HTTP_FILESIZE=" + Util::toString(request.getContentLength());
 	std::string status = "REDIRECT_STATUS=200";
+	std::string scriptFilename = "SCRIPT_FILENAME=" + scriptFile;
 
 	char * envp[] = {
 		const_cast<char *>(method.c_str()),
@@ -399,6 +405,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		const_cast<char *>(uploadDir.c_str()),
 		const_cast<char *>(fileSize.c_str()),
 		const_cast<char *>(status.c_str()),
+		const_cast<char *>(scriptFilename.c_str()),
 		NULL
 	};
 
@@ -437,6 +444,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[1]);
 
 		// Redirect stdout
+		// Logger::log(LC_RED, "RESTORE CGI pipeout HERE");
 		if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1)
 		{
 			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
