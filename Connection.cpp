@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 18:39:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 19:57:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -446,18 +446,28 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 		bool		justSplit = false;
 		if(!headerIsCompleted)
 		{
+			// printing oyt connection log
+			if(requestBuffer.length() == 0)
+			{
+				std::istringstream iss( std::string(buffer, length));
+				std::string			line;
+				std::getline(iss, line);
+
+				std::istringstream lineStream(line);
+				std::string  method , path , httpVer;				
+
+				if(!(lineStream >> method >> path >> httpVer))
+					throw RequestException(400, "Bad Request");	
+				if(httpVer.find("HTTP/1.") == std::string::npos)
+					throw RequestException(400, "Bad Request");	
+				Logger::log(LC_CONN_LOG, "[%s] %s", method.c_str(), path.c_str());
+			}
+
 			requestBuffer += std::string(buffer, length);
 			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
 			if(crlfPos == std::string::npos)
 				return false; 
-			if(!headerIsCompleted)
-			{
-				std::istringstream iss(requestBuffer);
-				std::string			line;
-				std::getline(iss, line);
-				Logger::log(LC_CONN_LOG, "%s", line.c_str());
-				headerIsCompleted = true;
-			}
+			
 				
 				
 			std::istringstream  iss(requestBuffer);

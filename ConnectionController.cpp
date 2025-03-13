@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 19:01:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 19:39:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,6 +98,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 	// Logger::log(LC_RED, " DEL ME , overwriting readBufferSize");
 	// bufferSize = 20;
 	(void)event;
+	HttpRequest httpRequest;
 	
 
 	try {
@@ -107,9 +108,8 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 				try 
 				{
 					int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
-					Logger:: log(LC_RED, " bytesRead = %d" , bytesRead);
+					Logger:: log(LC_RED, " on socket#%d , bytesRead = %d" , conn->getSocket(), bytesRead);
 
-					HttpRequest httpRequest;
 
 					if(bytesRead == 0)
 					{
@@ -158,6 +158,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 					Logger::log(LC_DEBUG, "RequestException was thrown in the main loop");
 					std::cout << e.getCode() << ", " << e.getMessage() << std::endl;
 					handleRequestException(e, *conn);
+					return (false);
 				}
 			}	
 	} 

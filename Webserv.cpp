@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 12:02:20 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 19:23:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,7 +199,7 @@ int Webserv::run(void)
 			{
 				int			active_fd = events[i].data.fd;
 				ServerConfig *server = cc.getServer(events[i].data.fd);
-				Logger::log(LC_MINOR_NOTE, "epoll event on fd#%d!" , active_fd);
+				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerSocket(active_fd))
 				{

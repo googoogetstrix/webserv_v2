@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 18:09:44 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 20:02:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ HttpRequest &HttpRequest::operator=(HttpRequest const &other)
 
 HttpRequest::~HttpRequest()
 {
-
+//	Logger::log(LC_RED, "HttpRequest instance is being destroyed");
 }
 
 const std::string &HttpRequest::getMethod() const { return method; }
@@ -154,10 +154,10 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 {
 
 	std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
-	std::cout << "raw param: " << requestString << std::endl;
+	// std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
-	std::cout << " ***** line = _" << line << "_" << std::endl;
+	// std::cout << " ***** line = _" << line << "_" << std::endl;
 
 	if (std::getline(requestStream, line))
 	{
@@ -182,11 +182,6 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 				return false;
 			}
 		}
-
-		Logger::log(LC_RED, " ***** rawPathString = " , rawPathStr.c_str());
-		Logger::log(LC_RED, " ***** methodStr = " , methodStr.c_str());
-		Logger::log(LC_RED, " ***** httpVersion = " , httpVersion.c_str());
-
 		setMethod(methodStr);
 		setRawPath(rawPathStr);
 		size_t pos = rawPathStr.find('?');
@@ -194,8 +189,6 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		{
 			setPath(rawPathStr.substr(0, pos));
 			rawQueryString = rawPathStr.substr(pos + 1);
-
-			Logger::log(LC_RED, " ***** rawQueryString = " , rawQueryString.c_str());
 
 			std::istringstream queryStream(rawQueryString);
 			std::string keyValuePair;
@@ -227,9 +220,7 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		if (contentLengthVal > server.getClientMaxBodySize())
 		{
 			Logger::log(LC_DEBUG, "contents too large 400");
-			throw RequestException(400, "Content too large");
-			// response.setStatus(413);
-			return false;
+			throw RequestException(413, "Content too large");
 		}
 		setContentLength(contentLengthVal);
 		std::string bodyStr(contentLength, '\0');

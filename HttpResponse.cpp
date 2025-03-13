@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 13:00:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 20:04:03 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ HttpResponse &HttpResponse::operator=(HttpResponse const &other)
 }
 HttpResponse::~HttpResponse()
 {
-
+//	Logger::log(LC_RED, "HttpResponse instance is being destroyed");
 }
 
 std::string HttpResponse::getHeader(std::string name) const
@@ -374,7 +374,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	// const char *scriptPath = "processPlayer.py";
 
 	std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
-	request.debug();
+	// request.debug();
 	
 	char *const argv[] = {
 		const_cast<char *>(command.c_str()), 
