@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 22:05:17 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/13 10:07:16 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -430,7 +430,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 
 	if (pid == 0)
 	{
-		// sleep(10);
+		sleep(10);
 		// Child process
 		// Redirect stdin
 		if (dup2(pipe_stdin[0], STDIN_FILENO) == -1)
@@ -463,29 +463,93 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[0]);
 		close(pipe_stdout[1]);
 
+		fcntl(pipe_stdout[0], F_SETFL, O_NONBLOCK);
+
+        fd_set read_fds;
+        struct timeval timeout;
+        timeout.tv_sec = 5; // 5 seconds timeout
+        timeout.tv_usec = 0;
 
 		int  bytesWritten = write(pipe_stdin[1], rawBytes.data() , rawBytes.size());
 		if(bytesWritten < 0)
+		{
+			close(pipe_stdin[1]);
+            close(pipe_stdout[0]);
 			throw RequestException(500,"Internal Server Error");
+		}
 
-
-		signal(SIGALRM, handle_timeout);
-		alarm(5);
 		
 		close(pipe_stdin[1]);
 
 		// Read from the child's stdout
 		char buffer[1024];
-		size_t bytesRead;
+		// size_t bytesRead;
 		std::string  output = "";
-		while ((bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1)) > 0)
-		{
-			buffer[bytesRead] = '\0';
-			output += std::string(buffer);
-			std::cout << buffer;
-		}
+		bool timed_out = false;
+		// while ((bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1)) > 0)
+		// {
+		// 	buffer[bytesRead] = '\0';
+		// 	output += std::string(buffer);
+		// 	std::cout << buffer;
+		// }
+		while (true)
+        {
+            FD_ZERO(&read_fds);
+            FD_SET(pipe_stdout[0], &read_fds);
+
+            int ret = select(pipe_stdout[0] + 1, &read_fds, NULL, NULL, &timeout);
+            if (ret == -1)
+            {
+                std::cerr << "Error in select: " << strerror(errno) << std::endl;
+                setStatus(500);
+                setHeader("Content-Type", "text/html");
+                close(pipe_stdout[0]);
+                return;
+            }
+            else if (ret == 0)
+            {
+                // Timeout
+                std::cerr << "Error: CGI script timed out" << std::endl;
+                kill(pid, SIGKILL); // Terminate the child process
+                timed_out = true;
+                break;
+            }
+            else
+            {
+                if (FD_ISSET(pipe_stdout[0], &read_fds))
+                {
+                    ssize_t bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
+                    if (bytesRead > 0)
+                    {
+                        buffer[bytesRead] = '\0';
+                        output += std::string(buffer);
+                    }
+                    else if (bytesRead == 0)
+                    {
+                        // End of output
+                        break;
+                    }
+                    else
+                    {
+                        std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
+                        setStatus(500);
+                        setHeader("Content-Type", "text/html");
+                        close(pipe_stdout[0]);
+                        return;
+                    }
+                }
+            }
+        }
+
 		close(pipe_stdout[0]);
 
+		if (timed_out)
+        {
+            setStatus(500);
+            setHeader("Content-Type", "text/html");
+            return;
+        }
+		
 		// Wait for the child process to finish
 		int status;
 		if (waitpid(pid, &status, 0) == -1)
@@ -495,7 +559,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			setHeader("Content-Type", "text/html");
 			return ;
 		}
-		alarm(0);
+		
 		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 		{
 			setCGIResponse(output, output.length());
