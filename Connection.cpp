@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 15:04:45 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 17:16:43 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -476,4 +476,117 @@ bool Connection::getRequestIsComplete(void) const
 void Connection::setRequestIsComplete(bool newValue)
 {
 	requestIsCompleted = newValue;
+}
+
+
+bool	Connection::appendRequestBuffer2(char *buffer, size_t length)
+{
+		std::cout <<  "=== appending ===" << std::endl;
+		bool		justSplit = false;
+		if(!headerIsCompleted)
+		{
+			requestBuffer += std::string(buffer, length);
+			Logger::log(LC_DEBUG, " buffer does not contains CRLF, simply return flase and continue reading");
+			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
+			if(crlfPos == std::string::npos)
+				return false; 
+			if(!headerIsCompleted)
+			{
+				std::istringstream iss(requestBuffer);
+				std::string			line;
+				std::getline(iss, line);
+				Logger::log(LC_CONN_LOG, "%s", line.c_str());
+				headerIsCompleted = true;
+			}
+				
+				
+			std::istringstream  iss(requestBuffer);
+			std::string         line;
+			int					reqContentLength = -1;
+			while( std::getline(iss, line) && line != "\r")
+			{
+				if (line.find("Content-Length:") == 0)
+				{	
+					std::istringstream   line_stream(line.substr(15));
+					if(!(line_stream >> reqContentLength))
+					{
+						Logger::log(LC_RED, "Invalid request content length");
+						throw RequestException(400, "Bad Reqeust");
+					}
+					contentLength = reqContentLength;
+				}
+				if (line.find("Content-Type:") == 0)
+				{	
+					std::istringstream   line_stream(line.substr(15));
+					if(!(line_stream >> reqContentLength))
+					{
+						size_t boundaryPos = line.find("boundary=");
+						if (boundaryPos != std::string::npos)
+							boundary = line.substr(boundaryPos + 9);
+					}
+				}
+			}
+			if (contentLength <= 0)
+				contentLength = 0;
+			
+			std::string temp = requestBuffer.substr(crlfPos + 4, requestBuffer.length());
+			rawPostBody.clear();
+			for(size_t j=0;j<temp.length();j++)
+			{
+				rawPostBody.push_back(temp[j]);
+			}
+			justSplit = true;
+			std::cout << " ***** temp = _" << temp << "_ " <<  std::endl;
+			requestBuffer = requestBuffer.substr(0, crlfPos);
+
+		}
+		
+		
+		if(headerIsCompleted && !justSplit)
+		{
+			// append post body
+			std::cout << " length = " << length << std::endl;
+			std::cout << std::endl << "HeaderIsCompleteee ... pushing: " << std::endl;
+			for(size_t i=0; i<length;i++)
+			{	
+				char c = buffer[i];
+				std::cout << c; 
+				rawPostBody.push_back(c);
+			}
+				
+		}
+		std::cout << "\n" << std::endl; 
+		debug();
+
+		if(contentLength == 0)
+			return (requestIsCompleted = true);
+		else if(contentLength <= rawPostBody.size())
+			return (requestIsCompleted = true);
+
+		
+
+		return (false);
+
+}
+
+void Connection::debug()
+{
+	std::cout << "===========================\n Connection\n===========================" << std::endl;
+
+	std::cout << " - fd :\t" << fd << std::endl;
+	std::cout << " - expiresOn :\t" << expiresOn << std::endl;
+	std::cout << " - headerIsComplete :\t" << headerIsCompleted << std::endl;
+	std::cout << " - requestIsComplete :\t" << requestIsCompleted << std::endl;
+	std::cout << " - isReady :\t" << isReady << std::endl;
+
+	std::cout << " - contentLength :\t" << contentLength << std::endl;
+	std::cout << " - bodyLength :\t" << bodyLength << std::endl;
+	std::cout << " - boundary :\t" << boundary << std::endl;
+	std::cout << " - requestBuffer :\t" << requestBuffer << std::endl;
+	if(rawPostBody.size() == 0)
+		std::cout << " - rawPostBody :\t(empty)" << std::endl;
+	else 
+		std::cout << " - rawPostBody :\t" << std::string(rawPostBody.data()) << std::endl;
+	std::cout << "\n" << std::endl;	
+
 }
