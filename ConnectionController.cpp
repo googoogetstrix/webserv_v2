@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 11:32:33 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 12:56:31 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,9 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
+
+	Logger::log(LC_RED, " DEL ME , overwriting readBufferSize");
+	bufferSize = 20;
 	
 	try {
 
@@ -141,6 +144,8 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 		        }
 				// make sure it's null terminated
 				buffer[bytesRead] = '\0';
+
+				std::cout << " buffer for this loop = " << std::string(buffer) << std::endl;
 				int pos = Util::substrPos(std::string(buffer), std::string("\r\n\r\n"));
 				size_t remainingHeaderLength = bytesRead - pos;		
 
