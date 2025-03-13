@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 17:16:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 18:39:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config)
 	std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
 	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
+
 }
 Connection::~Connection()
 {
@@ -42,6 +43,7 @@ Connection::Connection(Connection const &other)
 	bodyLength = other.bodyLength; 
 	requestBuffer = other.requestBuffer;
 	responseBuffer = other.responseBuffer;
+	rawPostBody.clear();
 	rawPostBody = other.rawPostBody;
 	contentLength = other.contentLength;
 	epollSocket = other.epollSocket; 
@@ -56,6 +58,7 @@ Connection &Connection::operator=(Connection const other)
 	bodyLength = other.bodyLength; 
 	requestBuffer = other.requestBuffer;
 	responseBuffer = other.responseBuffer;
+	rawPostBody.clear();
 	rawPostBody = other.rawPostBody;
 	contentLength = other.contentLength;
 	epollSocket = other.epollSocket; 
@@ -130,56 +133,10 @@ bool	Connection::appendRawPostBody(char *offset, size_t bytesRead)
 	std::cout << "\n=========\n rawPostBodyDebug = _" << std::string(rawPostBody.data()) << "_" << std::endl;
 	return (true);
 }
-bool	Connection::appendRequestBuffer(std::string str)
-{
-	requestBuffer += str;
-	return (true);
-}
 
 
-bool	Connection::processRequestHeader()
-{
-	std::istringstream  headersStream(requestBuffer);
-	std::string 		line;
-	size_t				lineNo = 0;
 
 
-	try 
-	{
-	while(  std::getline(headersStream , line))
-		{
-			lineNo++;
-			if (lineNo == 1)
-			{	
-				std::istringstream  lineStream; 
-				std::string  method , target , version;
-
-
-				if(!(lineStream >> method >> target >> version))
-				{
-
-					throw std::runtime_error("dddd");
-					
-					// httpResponse.setStatus(400);
-					// httpResponse.setBody(httpResponse.getDefaultErrorPage(400));
-					// return false; 
-				}
-				
-			}
-
-			std::cout << "HEADER!!!" << line << std::endl;
-		}
-
-		
-	}
-	catch (std::exception &e)
-	{
-			std::cerr << " ERROR " << e.what() << std::endl;
-	}
-
-	return (true);
-	
-}
 bool 	Connection::ready(HttpResponse &httpResponse, bool sendAsWell)
 {
 	isReady = true; 
@@ -321,9 +278,15 @@ ServerConfig		&Connection::getServerConfig()
 
 bool	Connection::processRequest(HttpRequest &httpRequest)
 {
+		Logger::log(LC_RED, "0 process request");
+		Logger::log(LC_RED, "1# parse header string of %d bytes", requestBuffer.size());
+		Logger::log(LC_YELLOW, "Inside processRequest()");
+		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
+
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
 		HttpResponse httpResponse;
+		Logger::log(LC_YELLOW, "Inside processRequest()");
 	
 
 		// try check all the error could possibly happen
@@ -338,8 +301,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		// 414 URI Too Long
 		// 500 Internal Server Error
 
-		Logger::log(LC_YELLOW, "Inside processRequest()");
-		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
 		// TODO 
 		if(false) 
@@ -429,6 +390,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		}	
 		Logger::log(LC_DEBUG, "Response is ready!");
 		ready(httpResponse, true);
+		
 		return (true);
 }
 
@@ -479,14 +441,12 @@ void Connection::setRequestIsComplete(bool newValue)
 }
 
 
-bool	Connection::appendRequestBuffer2(char *buffer, size_t length)
+bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 {
-		std::cout <<  "=== appending ===" << std::endl;
 		bool		justSplit = false;
 		if(!headerIsCompleted)
 		{
 			requestBuffer += std::string(buffer, length);
-			Logger::log(LC_DEBUG, " buffer does not contains CRLF, simply return flase and continue reading");
 			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
 			if(crlfPos == std::string::npos)
 				return false; 
@@ -536,7 +496,7 @@ bool	Connection::appendRequestBuffer2(char *buffer, size_t length)
 				rawPostBody.push_back(temp[j]);
 			}
 			justSplit = true;
-			std::cout << " ***** temp = _" << temp << "_ " <<  std::endl;
+			//std::cout << " ***** temp = _" << temp << "_ " <<  std::endl;
 			requestBuffer = requestBuffer.substr(0, crlfPos);
 
 		}
@@ -555,8 +515,6 @@ bool	Connection::appendRequestBuffer2(char *buffer, size_t length)
 			}
 				
 		}
-		std::cout << "\n" << std::endl; 
-		debug();
 
 		if(contentLength == 0)
 			return (requestIsCompleted = true);
@@ -589,4 +547,15 @@ void Connection::debug()
 		std::cout << " - rawPostBody :\t" << std::string(rawPostBody.data()) << std::endl;
 	std::cout << "\n" << std::endl;	
 
+}
+
+void Connection::clear()
+{
+	rawPostBody.clear();
+	isReady = false;
+	headerIsCompleted = false;
+	requestIsCompleted = false;
+	responseBuffer = "";
+	contentLength = 0;
+	
 }

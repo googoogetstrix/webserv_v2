@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 14:37:04 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 18:09:44 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,8 +153,8 @@ size_t HttpRequest::preprocessContentLength(std::string requestString,std::strin
 bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestString)
 {
 
-	// std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
-	// std::cout << "raw param: " << requestString << std::endl;
+	std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
+	std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
 	std::cout << " ***** line = _" << line << "_" << std::endl;

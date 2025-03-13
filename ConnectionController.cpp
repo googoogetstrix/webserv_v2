@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 17:14:29 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 19:01:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,8 +95,8 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
 
-	Logger::log(LC_RED, " DEL ME , overwriting readBufferSize");
-	bufferSize = 20;
+	// Logger::log(LC_RED, " DEL ME , overwriting readBufferSize");
+	// bufferSize = 20;
 	(void)event;
 	
 
@@ -108,6 +108,8 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 				{
 					int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
 					Logger:: log(LC_RED, " bytesRead = %d" , bytesRead);
+
+					HttpRequest httpRequest;
 
 					if(bytesRead == 0)
 					{
@@ -128,17 +130,19 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 					}
 
 				    
-					if(conn->appendRequestBuffer2(buffer , bytesRead))
+					if(conn->appendRequestBuffer(buffer , bytesRead))
 					{
 
 						std::cout << " *** DONE *** " << std::endl;
-						conn->debug();
-						HttpRequest httpRequest;
+						std::cout << " ********* REQUEST_BUFFER_LENGTH = " << conn->getRequestBuffer().length() << std::endl;
+						
 						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
-						httpRequest.debug();
+						//httpRequest.debug();
 
 						conn->processRequest(httpRequest);
-						throw RequestException(555, "Done");
+						closeConnection(conn->getSocket());
+						return true;
+						
 					}
 
 					// 
@@ -180,16 +184,16 @@ bool	ConnectionController::handleWrite(int clientSocket )
  		int bytesSent = send( clientSocket , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
-			Logger::log(LC_MINOR_NOTE, " bytesSent = %d" , bytesSent); 
+			Logger::log(LC_NOTE, " bytesSent = %d" , bytesSent); 
 			// ## if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
 			if( bytesSent == -1)
 			{	
-				Logger::log(LC_MINOR_NOTE , " Minor Error: buffer full or would block!");
+				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
 				return (false);
 			}
 			if (bytesSent == 0)
 			{
-				Logger::log(LC_MINOR_NOTE , " Done sending");
+				Logger::log(LC_NOTE , " Done sending");
 				closeConnection(clientSocket);
 				return (true);
 			}
