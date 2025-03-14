@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 10:18:40 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 11:39:54 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -461,7 +461,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[1]);
 
 		// Read from the child's stdout
-		char buffer[1024];
+		char buffer[10240];
 		std::string  output = "";
 		bool timed_out = false;
 		int elapsed_time = 0;
