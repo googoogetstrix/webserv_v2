@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 11:39:54 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 17:06:49 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,6 +436,11 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
 			exit(errno) ;
 		}
+		// if (dup2(pipe_stdout[1], STDERR_FILENO) == -1)
+		// {
+		// 	std::cerr << "Error redirecting stderr: " << strerror(errno) << std::endl;
+		// 	exit(errno) ;
+		// }
 		close(pipe_stdout[0]);
 		close(pipe_stdout[1]);
 		if (execve(argv[0], argv, envp) == -1)
@@ -461,28 +466,55 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[1]);
 
 		// Read from the child's stdout
-		char buffer[10240];
+		char buffer[READ_BUFFER_SIZE];
 		std::string  output = "";
 		bool timed_out = false;
 		int elapsed_time = 0;
-		const int max_timeout = 5;
 
 		while (true)
         {
             ssize_t bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
-			if (bytesRead > 0)
+			// if (bytesRead > 0)
+			// {
+			// 	buffer[bytesRead] = '\0';
+			// 	output += std::string(buffer);
+			// }
+			// else if (bytesRead == 0)
+			// 	break;
+			// else if (bytesRead < 0 && errno != EAGAIN)
+			// {
+			// 	std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
+			// 	close(pipe_stdout[0]);
+			// 	throw RequestException(500,"Internal Server Error");
+			// }
+			while (bytesRead > 0)
 			{
 				buffer[bytesRead] = '\0';
 				output += std::string(buffer);
+				bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
 			}
-			else if (bytesRead == 0)
-				break;
-			else if (bytesRead < 0 && errno != EAGAIN)
-			{
-				std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
-				close(pipe_stdout[0]);
-				throw RequestException(500,"Internal Server Error");
-			}
+			// else if (bytesRead < 0)
+            // {
+            //     if (errno == EAGAIN)
+            //     {
+            //         // No data available, try again later
+            //         usleep(100000); // Sleep for 100 milliseconds
+            //         elapsed_time += 100;
+            //         if (elapsed_time >= CGI_TIMEOUT * 1000)
+            //         {
+            //             std::cerr << "Error: CGI script timed out" << std::endl;
+            //             kill(pid, SIGKILL); // Terminate the child process
+            //             timed_out = true;
+            //             break;
+            //         }
+            //     }
+            //     else
+            //     {
+            //         std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
+            //         close(pipe_stdout[0]);
+            //         throw RequestException(500, "Internal Server Error");
+            //     }
+            // }
 
 			// Wait for the child process to finish
 			int status;
@@ -491,7 +523,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			{
 				usleep(100000);
 				elapsed_time += 100;
-				if (elapsed_time >= max_timeout * 1000)
+				if (elapsed_time >= CGI_TIMEOUT * 1000)
 				{
 					std::cerr << "Error: CGI script timed out" << std::endl;
 					kill(pid, SIGKILL);
