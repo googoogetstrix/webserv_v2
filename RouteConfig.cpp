@@ -11,6 +11,7 @@ bool RouteConfig::getAutoindex() const { return autoindex; }
 size_t RouteConfig::getClientMaxBodySize() const { return clientMaxBodySize; }
 int RouteConfig::getReturnStatus() const { return returnStatus; }
 const std::string& RouteConfig::getReturnValue() const { return returnValue; }
+const std::string& RouteConfig::getUploadStore() const { return uploadStore; }
 
 void RouteConfig::setPath(const std::string& path) { this->path = path; }
 void RouteConfig::setRoot(const std::string& root) { this->root = root; }
@@ -21,6 +22,7 @@ void RouteConfig::setAutoindex(bool autoIndex) { this->autoindex = autoIndex; }
 void RouteConfig::setClientMaxBodySize(size_t clientMaxBodySize) { this->clientMaxBodySize = clientMaxBodySize; }
 void RouteConfig::setReturnStatus(int status) { this->returnStatus = status; }
 void RouteConfig::setReturnValue(const std::string &value) { this->returnValue = value; }
+void RouteConfig::setUploadStore(const std::string &store) { this->uploadStore = store; }
 
 std::string RouteConfig::getCGI(std::string ext)
 {
@@ -65,6 +67,7 @@ void RouteConfig::debug() const
 	std::cout << " - Client Max Body Size: " << clientMaxBodySize << std::endl;
 	std::cout << " - Return Status: " << returnStatus << std::endl;
     std::cout << " - Return Value: " << returnValue << std::endl;
+	std::cout << " - Upload store: " << uploadStore << std::endl;
 	std::cout << "====================\n" << std::endl;
 }
 
