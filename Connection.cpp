@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:42:31 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 11:11:54 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,18 +14,33 @@
 
 Connection::Connection():fd(0),isReady(false)
 {
-	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
+	bodyLength = 0;
+	contentLength = 0;
+	
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+	// std::cout << " A - expires on " << std::string(buff) << std::endl;
 	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
-	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 100000);
+	bodyLength = 0;
+	contentLength = 0;
+
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+	// std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
-	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
+	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
+
 }
 Connection::~Connection()
 {
-	Logger::log(LC_MINOR_NOTE, "connection #%d destroyed", fd);
+
+	Logger::log(LC_NOTE, "connection #%d destroyed", fd);
+
 }
 Connection::Connection(Connection const &other)
 {
@@ -36,6 +51,7 @@ Connection::Connection(Connection const &other)
 	bodyLength = other.bodyLength; 
 	requestBuffer = other.requestBuffer;
 	responseBuffer = other.responseBuffer;
+	rawPostBody.clear();
 	rawPostBody = other.rawPostBody;
 	contentLength = other.contentLength;
 	epollSocket = other.epollSocket; 
@@ -50,6 +66,7 @@ Connection &Connection::operator=(Connection const other)
 	bodyLength = other.bodyLength; 
 	requestBuffer = other.requestBuffer;
 	responseBuffer = other.responseBuffer;
+	rawPostBody.clear();
 	rawPostBody = other.rawPostBody;
 	contentLength = other.contentLength;
 	epollSocket = other.epollSocket; 
@@ -78,7 +95,10 @@ int 	Connection::getSocket() const
 
 bool 	Connection::setExpiresOn(time_t t)
 {
-	expiresOn = t + (CON_SOC_TIMEOUT_SECS * 100000);
+	expiresOn = t + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+	// std::cout << " C - expires on " << std::string(buff) << std::endl;
 	return true; 
 }
 
@@ -91,7 +111,12 @@ bool 	Connection::setFd(int newFd)
 void	Connection::punchIn(void)
 {
 	// Logger::log(LC_NOTE, "Punch in!");
-	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS * 1000000);
+
+	
+	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
+	char buff[24];
+	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
+//	std::cout << "socket #" << fd << " expires on D - " << std::string(buff) << std::endl;
 }
 
 
@@ -106,62 +131,20 @@ bool	Connection::isHeaderComplete()
 
 bool	Connection::appendRawPostBody(char *offset, size_t bytesRead)
 {
+	std::cout << " in appendRawPostBody() ... adding:\n================== " << std::endl;
 	for(size_t i = 0; i < bytesRead; ++i)
 	{
 		rawPostBody.push_back( *(offset + i));
+		std::cout << *(offset + i);
+
 	}
+	std::cout << "\n=========\n rawPostBodyDebug = _" << std::string(rawPostBody.data()) << "_" << std::endl;
 	return (true);
 }
-bool	Connection::appendRequestBuffer(std::string str)
-{
-	requestBuffer += str;
-	return (true);
-}
 
 
-bool	Connection::processRequestHeader()
-{
-	std::istringstream  headersStream(requestBuffer);
-	std::string 		line;
-	size_t				lineNo = 0;
 
 
-	try 
-	{
-	while(  std::getline(headersStream , line))
-		{
-			lineNo++;
-			if (lineNo == 1)
-			{	
-				std::istringstream  lineStream; 
-				std::string  method , target , version;
-
-
-				if(!(lineStream >> method >> target >> version))
-				{
-
-					throw std::runtime_error("dddd");
-					
-					// httpResponse.setStatus(400);
-					// httpResponse.setBody(httpResponse.getDefaultErrorPage(400));
-					// return false; 
-				}
-				
-			}
-
-			std::cout << "HEADER!!!" << line << std::endl;
-		}
-
-		
-	}
-	catch (std::exception &e)
-	{
-			std::cerr << " ERROR " << e.what() << std::endl;
-	}
-
-	return (true);
-	
-}
 bool 	Connection::ready(HttpResponse &httpResponse, bool sendAsWell)
 {
 	isReady = true; 
@@ -303,9 +286,15 @@ ServerConfig		&Connection::getServerConfig()
 
 bool	Connection::processRequest(HttpRequest &httpRequest)
 {
+		Logger::log(LC_RED, "0 process request");
+		Logger::log(LC_RED, "1# parse header string of %d bytes", requestBuffer.size());
+		Logger::log(LC_YELLOW, "Inside processRequest()");
+		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
+
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
 		HttpResponse httpResponse;
+		Logger::log(LC_YELLOW, "Inside processRequest()");
 	
 
 		// try check all the error could possibly happen
@@ -320,8 +309,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		// 414 URI Too Long
 		// 500 Internal Server Error
 
-		Logger::log(LC_YELLOW, "Inside processRequest()");
-		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
 		// TODO 
 		if(false) 
@@ -343,16 +330,20 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!Util::strInContainer(method,  allowedMethods))
 			throw RequestException(405, "Method not allowed.");
 
-		// check if is POST , content length is required
-		std::string test = httpRequest.getHeader("Content-Length");
+		// check if is POST , content length is required , this should be handle by handleRead already ?
+		
+		std::string test = httpRequest.getHeader("Content-Length");		
 		if(httpRequest.getMethod() == "POST" && test.empty())
 			throw RequestException(411, "Content-Length is required");
+	
 		// also check for body too large
+		// route->debug();
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
 			maxSize = WEBS_DEF_MAX_BOD_SIZE;
 		maxSize *= WEBS_MB;
-		if(Util::toSizeT(test) > maxSize * WEBS_MB)
+
+		if(!test.empty() && Util::toSizeT(test) > maxSize)
 			throw RequestException(415, "Request too large");	
 
 		// check for redirection (directive return)	
@@ -396,17 +387,22 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 				// is CGI
 				Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
 				httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
+				Logger::log(LC_RED, "DONE CGI STUFF??");
+				
+				// return true;
 			}
 			else
 			{
 				Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());
 				httpResponse.getStaticFile(localPath);
+				// return true;
 
 			}
 
 		}	
 		Logger::log(LC_DEBUG, "Response is ready!");
 		ready(httpResponse, true);
+		
 		return (true);
 }
 
@@ -438,4 +434,170 @@ void Connection::debugPostBody()
 		daSize ++; 
 	}
 	std::cout << "\n size=" << daSize << std::endl;
+}
+bool Connection::getHeaderIsComplete(void) const
+{
+	return headerIsCompleted;
+}
+
+
+bool Connection::getRequestIsComplete(void) const
+{
+	return requestIsCompleted;
+}
+
+
+void Connection::setRequestIsComplete(bool newValue)
+{
+	requestIsCompleted = newValue;
+}
+
+
+bool	Connection::appendRequestBuffer(char *buffer, size_t length)
+{
+		bool		justSplit = false;
+		if(!headerIsCompleted)
+		{
+			// printing oyt connection log
+			if(requestBuffer.length() == 0)
+			{
+				std::istringstream iss( std::string(buffer, length));
+				std::string			line;
+				std::getline(iss, line);
+
+				std::istringstream lineStream(line);
+				std::string  method , path , httpVer;				
+
+				if(!(lineStream >> method >> path >> httpVer))
+					throw RequestException(400, "Bad Request");	
+				if(httpVer.find("HTTP/1.") == std::string::npos)
+					throw RequestException(400, "Bad Request");	
+				Logger::log(LC_CONN_LOG, "[%s] %s", method.c_str(), path.c_str());
+			}
+
+			requestBuffer += std::string(buffer, length);
+			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
+			if(crlfPos == std::string::npos)
+				return false; 
+			
+				
+				
+			std::istringstream  iss(requestBuffer);
+
+			std::cout << "\n\n\n\n" << iss.str() << "\n\n\n\n";
+
+
+			std::string         line;
+			int					reqContentLength = 0;
+			while( std::getline(iss, line) && line != "\r")
+			{
+				if (line.find("Content-Length:") == 0)
+				{	
+					std::istringstream   line_stream(line.substr(15));
+					if(!(line_stream >> reqContentLength))
+					{
+						Logger::log(LC_RED, "Invalid request content length");
+						throw RequestException(400, "Bad Reqeust");
+					}
+					std::cout << " *** setting content-length " << reqContentLength << std::endl;
+					contentLength = reqContentLength;
+				}
+				if (line.find("Content-Type:") == 0)
+				{	
+					std::istringstream   line_stream(line.substr(15));
+					if(!(line_stream >> reqContentLength))
+					{
+						size_t boundaryPos = line.find("boundary=");
+						if (boundaryPos != std::string::npos)
+						{
+							boundary = line.substr(boundaryPos + 9);
+							std::cout << " *** setting boundary = " << boundary << std::endl;
+						}
+
+					}
+				}
+			}
+			if (contentLength <= 0)
+			{
+				std::cout << " Setting content-length = " << contentLength << std::endl;
+				contentLength = 0;
+			}
+			std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
+				
+			
+			std::string temp = requestBuffer.substr(crlfPos + 4, requestBuffer.length());
+			rawPostBody.clear();
+			for(size_t j=0;j<temp.length();j++)
+			{
+				rawPostBody.push_back(temp[j]);
+			}
+			justSplit = true;
+			//std::cout << " ***** temp = _" << temp << "_ " <<  std::endl;
+			requestBuffer = requestBuffer.substr(0, crlfPos);
+
+		}
+		
+		
+		if(headerIsCompleted && !justSplit)
+		{
+			// append post body
+			std::cout << " length = " << length << std::endl;
+			std::cout << std::endl << "HeaderIsCompleteee ... pushing: " << std::endl;
+			for(size_t i=0; i<length;i++)
+			{	
+				char c = buffer[i];
+				std::cout << c; 
+				rawPostBody.push_back(c);
+			}
+				
+		}
+
+		if(contentLength == 0)
+			return (requestIsCompleted = true);
+		else if(contentLength <= rawPostBody.size())
+		{
+			Logger::log(LC_RED, "REQUEST IS COMPLETE!!!!!");			
+			return (requestIsCompleted = true);
+		}
+			
+
+		
+
+		return (false);
+
+}
+
+void Connection::debug()
+{
+	std::cout << "===========================\n Connection\n===========================" << std::endl;
+
+	std::cout << " - fd :\t" << fd << std::endl;
+	std::cout << " - expiresOn :\t" << expiresOn << std::endl;
+	std::cout << " - headerIsComplete :\t" << headerIsCompleted << std::endl;
+	std::cout << " - requestIsComplete :\t" << requestIsCompleted << std::endl;
+	std::cout << " - isReady :\t" << isReady << std::endl;
+
+	std::cout << " - contentLength :\t" << contentLength << std::endl;
+	std::cout << " - bodyLength :\t" << bodyLength << std::endl;
+	std::cout << " - boundary :\t" << boundary << std::endl;
+	std::cout << " - requestBuffer :\t" << requestBuffer << std::endl;
+	if(rawPostBody.size() == 0)
+		std::cout << " - rawPostBody :\t(empty)" << std::endl;
+	else 
+		std::cout << " - rawPostBody :\t" << std::string(rawPostBody.data()) << std::endl;
+	std::cout << "\n" << std::endl;	
+
+}
+
+void Connection::clear()
+{
+	std::cout << " MAGIC CLEAR!" << std::endl;
+	rawPostBody.clear();
+	isReady = false;
+	headerIsCompleted = false;
+	requestIsCompleted = false;
+	responseBuffer = "";
+	contentLength = 0;
+	bodyLength = 0;
+	
 }

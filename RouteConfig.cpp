@@ -25,7 +25,7 @@ void RouteConfig::setReturnValue(const std::string &value) { this->returnValue =
 std::string RouteConfig::getCGI(std::string ext)
 {
 
-	debug();
+	// debug();
 	for (std::map<std::string, std::string>::const_iterator it = CGIs.begin(); it != CGIs.end(); ++it) {
 		std::cout << "  Extension: " << it->first << " -> Interpreter: " << it->second << std::endl;
 	}

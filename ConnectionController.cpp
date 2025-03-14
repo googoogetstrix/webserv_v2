@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:51:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 11:12:41 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,14 @@ bool	ConnectionController::closeConnection(int clientSocket)
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
 	close(clientSocket);	
 	if(it != connections.end())
-		connections.erase(clientSocket);
+	{	
+		std::cout << " *** DELEETING CONNECTION " << std::endl;
+		connections.erase(clientSocket);		
+	}
+	else {
+		std::cout << " *** CONNECTION IS NOT FOUND!!!!" << std::endl;
+	}
+
 
 	return (true);
 }
@@ -72,10 +79,8 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 		return (-1);
 	}
 
-	Logger::log(LC_RED, "RESTORE ME");
-
 	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
-
+	// register to epoll
 	epoll_event  event; 
 	event.events = EPOLLIN;	
 	event.data.fd = clientSocket;
@@ -92,105 +97,101 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 	Connection *conn = findConnection(clientSocket);
 
 
+	std::cout << " handleRead! , slow down" << std::endl;
+	// sleep(2);
+	
+
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
+
+	std::cout << "complete?" << std::endl;
+	if(conn->getHeaderIsComplete() && conn->getRequestIsComplete())
+		return (true);
 	
+	// std::cout << "\n\n\n\n" << std::endl;
+	// conn->debug();
+	// std::cout << "\n\n\n\n" << std::endl;
+	
+					
+
+	// Logger::log(LC_RED, " DEL ME , overwriting readBufferSize");
+	// bufferSize = 20;
+	(void)event;
+	
+	
+
 	try {
 
 		while(true)
 			{
-				int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
-
-
-				Logger:: log(LC_RED, " bytesRead = %d" , bytesRead);
-
-				if(bytesRead == 0)
+				try 
 				{
-					Logger::log(LC_CON_FAIL, "Connection disconnected from client on socket#%d" , conn->getSocket());
-					closeConnection(conn->getSocket());
+					
+					int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
+					Logger:: log(LC_RED, " on socket#%d , bytesRead = %d" , conn->getSocket(), bytesRead);
+
+
+					if(bytesRead == 0)
+					{
+						Logger::log(LC_CON_FAIL, "Connection disconnected from client on socket#%d" , conn->getSocket());
+						closeConnection(conn->getSocket());
+						return (false);
+					}
+						
+					if (bytesRead == -1) {
+						if(errno != EAGAIN && errno != EWOULDBLOCK)
+						{
+							Logger::log(LC_CON_FAIL, "Error recv() , forcing socket#%d to close." , conn->getSocket());
+							closeConnection(conn->getSocket());
+							return (false);
+						}
+						Logger::log(LC_RED, " EAGAIN or EWOULDBLOCK detected");
+						return (false);	
+					}
+
+				    
+					if(conn->appendRequestBuffer(buffer , bytesRead))
+					{
+
+						std::cout << " *** DONE *** " << std::endl;
+						std::cout << " ********* REQUEST_BUFFER_LENGTH = " << conn->getRequestBuffer().length() << std::endl;
+						HttpRequest httpRequest;
+						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
+						//httpRequest.debug();
+
+						conn->processRequest(httpRequest);
+						Logger::log(LC_YELLOW, "processRequest() is done!");
+						if(handleWrite(conn->getSocket()))
+						{
+							Logger::log(LC_RED, " FRI - DONE RESPONDING");
+							closeConnection(conn->getSocket());
+							return true;
+						}
+						else 
+						{
+							Logger::log(LC_RED, " FRI - *** NOT DONE RESPONDING");
+							
+						}							
+						
+						
+					}
+
+					// 
+					buffer[bytesRead] = '\0';
+					// std::cout << "reading: _" << std::string(buffer) << "_" << std::endl;
+
+					if(bytesRead == -1)
+						throw RequestException(599 , "WTF");
+				}
+				catch(RequestException &e)
+				{
+					Logger::log(LC_DEBUG, "RequestException was thrown in the main loop");
+					std::cout << e.getCode() << ", " << e.getMessage() << std::endl;
+					handleRequestException(e, *conn);
 					return (false);
 				}
-					
-				if (bytesRead == -1) {
-					size_t readSize = conn->getRawPostBody().size();
-					std::cout << " CHECK IF ALREADY READ ALL THE REQUIRED BYTES" << std::endl;
-					if( readSize >= conn->getContentLength())
-					{
-						Logger::log(LC_DEBUG, "Done reading post body!");
-
-						HttpRequest httpRequest;
-						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
-						conn->processRequest(httpRequest);
-
-						Logger::log(LC_DEBUG, " EXPECTED - DONE READ POST BODY close connection here");
-						closeConnection(conn->getSocket());						
-						return (true);
-					}
-					else 
-						Logger::log(LC_YELLOW, "NEEDS SOME BYTES TO READ FOR POST BODY");
-						
-					
-		            if (event.events & EAGAIN || event.events & EWOULDBLOCK) {
-						Logger::log(LC_RED, " EAGIAN or EWOULDBLOCK case !!!");
-		                return (true);
-		            }
-		            closeConnection(conn->getSocket());
-		            return (false);
-		        }
-				// make sure it's null terminated
-				buffer[bytesRead] = '\0';
-				int pos = Util::substrPos(std::string(buffer), std::string("\r\n\r\n"));
-				size_t remainingHeaderLength = bytesRead - pos;		
-
-				if (pos != -1)
-				{
-					int  contentLengthFromHeader = HttpRequest::preprocessContentLength( std::string(buffer, bytesRead)); 
-					// size_t	actualContentLength = static_cast<size_t>(contentLengthFromHeader);
-					size_t	actualContentLength = contentLengthFromHeader;
-					conn->setContentLength(contentLengthFromHeader);	
-
-					if(contentLengthFromHeader <= 0)
-					{
-						std::cout << " NO CONTENT LENGTH CASE " << std::endl;
-						conn->appendRequestBuffer( std::string(buffer));
-						// no Post
-						conn->setHeaderIsComplete(true);
-						HttpRequest httpRequest;
-						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
-						conn->processRequest(httpRequest);
-						Logger::log(LC_DEBUG, " EXPECTED NORMAL close connection here");
-						closeConnection(conn->getSocket());
-						return (true);
-					} else  if( actualContentLength > conn->getRawPostBody().size())
-					{
-						std::cout << " WITH CONTENT LENGTH CASE - FIRST SPLIT" << std::endl;
-						// with Post body, splitting between header & post body here, not yet complete
-						conn->appendRequestBuffer( std::string(buffer).substr(0,remainingHeaderLength));
-						conn->appendRawPostBody(buffer + pos + 4, remainingHeaderLength);
-
- 					} else {
-						// with Post , complete
-						std::cout << " WITH CONTENT LENGTH CASE - FINAL TOUCH" << std::endl;
-						conn->appendRawPostBody(buffer + pos , remainingHeaderLength + 4);
-					}
-					
-				}
-
-				if(!conn->isHeaderComplete())
-					conn->appendRequestBuffer( std::string(buffer));
-				else 
-					conn->appendRawPostBody(buffer , bytesRead);
-			}		
-			// end while true 
-		
+			}	
 	} 
-	catch (RequestException &e) {
-			// This is kinda happen to partially parsed request? 
-			Logger::log(LC_DEBUG, "RequestException was thrown in the main loop");
-			std::cout << e.getCode() << ", " << e.getMessage() << std::endl;
-			handleRequestException(e, *conn);
-
-	}
 	catch (std::exception &e)
 	{
 		std::cout << "EXCEPTION" << e.what() << std::endl;	
@@ -204,7 +205,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 	Connection *conn = findConnection(clientSocket);
 
 	if(!conn->needsToWrite())
-		return (false);
+		return (true);
 
 	size_t sendSize = WEBS_RESP_SEND_SIZE;
 
@@ -214,17 +215,24 @@ bool	ConnectionController::handleWrite(int clientSocket )
  		int bytesSent = send( clientSocket , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
-			Logger::log(LC_MINOR_NOTE, " bytesSent = %d" , bytesSent); 
+			Logger::log(LC_NOTE, " bytesSent = %d" , bytesSent); 
 			// ## if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
 			if( bytesSent == -1)
 			{	
-				Logger::log(LC_MINOR_NOTE , " Minor Error: buffer full or would block!");
+
+				Logger::log(LC_NOTE , " DEL ME -1  ??? WITHOUT CHECKING - !!!! Done sending");
+				closeConnection(clientSocket);
+				
+
+				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
 				return (false);
 			}
 			if (bytesSent == 0)
 			{
-				Logger::log(LC_MINOR_NOTE , " Done sending");
+				Logger::log(LC_NOTE , " Done sending");
 				closeConnection(clientSocket);
+				Logger::log(LC_RED , "Now sleep for 5 secs");
+				sleep(5);
 				return (true);
 			}
 			

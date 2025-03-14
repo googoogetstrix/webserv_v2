@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 12:02:20 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 10:50:23 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,7 +199,7 @@ int Webserv::run(void)
 			{
 				int			active_fd = events[i].data.fd;
 				ServerConfig *server = cc.getServer(events[i].data.fd);
-				Logger::log(LC_MINOR_NOTE, "epoll event on fd#%d!" , active_fd);
+				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerSocket(active_fd))
 				{
@@ -227,8 +227,7 @@ int Webserv::run(void)
 						socklen_t len = sizeof(client_address);
 						// Logger::log(LC_NOTE, "trying to accept new socket ");
 
-						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);
-						Logger::log(LC_RED, "Line after accept()");
+						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);						
 						if(client_socket < 0)
 							throw std::runtime_error("Unable to accept()");
 						// get whatever flag from the clinet socket, and make sure it's set to non-block
@@ -241,9 +240,9 @@ int Webserv::run(void)
 						continue;
 					}
 					// end server fds
-					continue;
+					
 				}
-
+	
 				// Start client Socket checking				
 				{
 
