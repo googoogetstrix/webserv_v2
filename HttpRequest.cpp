@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:51:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 20:02:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ HttpRequest &HttpRequest::operator=(HttpRequest const &other)
 
 HttpRequest::~HttpRequest()
 {
-
+//	Logger::log(LC_RED, "HttpRequest instance is being destroyed");
 }
 
 const std::string &HttpRequest::getMethod() const { return method; }
@@ -110,15 +110,16 @@ bool HttpRequest::setBody(std::string bodyStr)
 }
 
 
-size_t HttpRequest::preprocessContentLength(std::string requestString)
+size_t HttpRequest::preprocessContentLength(std::string requestString,std::string &methodIn)
 {
 	size_t	return_len;
 	std::string			line ;
 	std::istringstream 	stream(requestString);
 	int lineCounter = 0;
+
+	Logger::log(LC_DEBUG, "in preprocessContentLength()" );
 	while ( std::getline(stream , line)  && line != "\r")
 	{
-
 		lineCounter++;
 		if(lineCounter == 1)
 		{
@@ -126,7 +127,12 @@ size_t HttpRequest::preprocessContentLength(std::string requestString)
 			std::string method , path ,version ;
 
 			if(!(reqLine >> method >> path >> version))
+			{
+				Logger::log(LC_DEBUG, "preprocess throws 400");
 				throw RequestException(400, "Bad Request");
+			}
+				
+			methodIn = method;
 			Logger::log(LC_REQ_LOG, "[REQUEST] %s %s" , method.c_str() , path.c_str());
 		}
 
@@ -147,10 +153,11 @@ size_t HttpRequest::preprocessContentLength(std::string requestString)
 bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestString)
 {
 
-	// std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
+	std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
 	// std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
+	// std::cout << " ***** line = _" << line << "_" << std::endl;
 
 	if (std::getline(requestStream, line))
 	{
@@ -160,6 +167,7 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		std::string httpVersion;
 		if (!(lineStream >> methodStr >> rawPathStr >> httpVersion))
 		{
+			Logger::log(LC_DEBUG, "parseRequestHeader throws 400");
 			throw RequestException(400, "Bad Request");
 			// response.setStatus(400);
 			return false;
@@ -168,12 +176,12 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 			size_t dotdotPos = rawPathStr.find("..");
 			if (dotdotPos != std::string::npos)
 			{
+				Logger::log(LC_DEBUG, "malicious throws 400");
 				throw RequestException(400, "Bad Request");
 				// response.setStatus(400);
 				return false;
 			}
 		}
-
 		setMethod(methodStr);
 		setRawPath(rawPathStr);
 		size_t pos = rawPathStr.find('?');
@@ -181,6 +189,7 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		{
 			setPath(rawPathStr.substr(0, pos));
 			rawQueryString = rawPathStr.substr(pos + 1);
+
 			std::istringstream queryStream(rawQueryString);
 			std::string keyValuePair;
 			while (std::getline(queryStream, keyValuePair, '&'))
@@ -210,9 +219,8 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		size_t contentLengthVal = Util::toInt(headers["Content-Length"].c_str());
 		if (contentLengthVal > server.getClientMaxBodySize())
 		{
-			throw RequestException(400, "Content too large");
-			// response.setStatus(413);
-			return false;
+			Logger::log(LC_DEBUG, "contents too large 400");
+			throw RequestException(413, "Content too large");
 		}
 		setContentLength(contentLengthVal);
 		std::string bodyStr(contentLength, '\0');
@@ -238,11 +246,11 @@ void HttpRequest::debug()
 	std::cout << " - contentLength:\t" << contentLength << std::endl;
 	std::cout << " - body:\t\t" << body << std::endl;
 	std::cout << " - header:" << std::endl;
-
 	for(std::map<std::string, std::string>::iterator  it = headers.begin(); it != headers.end() ; ++it)
 	{
 		std::cout << "\t" << it->first << "\t: " << it->second << std::endl;
 	}
+
 
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 12:04:11 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/14 11:39:54 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ HttpResponse &HttpResponse::operator=(HttpResponse const &other)
 }
 HttpResponse::~HttpResponse()
 {
-
+//	Logger::log(LC_RED, "HttpResponse instance is being destroyed");
 }
 
 std::string HttpResponse::getHeader(std::string name) const
@@ -130,6 +130,8 @@ std::string HttpResponse::getStatusText(int statusCode)
 			return "Method Not Allowed";
 		case 408:
 			return "Request Timeout";
+		case 411:
+			return "Length required";	
 		case 413:
 			return "Payload Too Large";
 		case 500:
@@ -370,6 +372,9 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	(void)server;
 	(void)route;
 	// const char *scriptPath = "processPlayer.py";
+
+	std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
+	// request.debug();
 	
 	char *const argv[] = {
 		const_cast<char *>(command.c_str()), 
@@ -383,6 +388,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	std::string uploadDir = "UPLOAD_DIR=/tmp";
 	std::string fileSize = "HTTP_FILESIZE=" + Util::toString(request.getContentLength());
 	std::string status = "REDIRECT_STATUS=200";
+	std::string scriptFilename = "SCRIPT_FILENAME=" + scriptFile;
 
 	char * envp[] = {
 		const_cast<char *>(method.c_str()),
@@ -392,6 +398,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		const_cast<char *>(uploadDir.c_str()),
 		const_cast<char *>(fileSize.c_str()),
 		const_cast<char *>(status.c_str()),
+		const_cast<char *>(scriptFilename.c_str()),
 		NULL
 	};
 
@@ -421,6 +428,9 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		}
 		close(pipe_stdin[0]);
 		close(pipe_stdin[1]);
+
+		// Redirect stdout
+		// Logger::log(LC_RED, "RESTORE CGI pipeout HERE");
 		if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1)
 		{
 			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
@@ -451,7 +461,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[1]);
 
 		// Read from the child's stdout
-		char buffer[1024];
+		char buffer[10240];
 		std::string  output = "";
 		bool timed_out = false;
 		int elapsed_time = 0;

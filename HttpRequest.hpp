@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 19:41:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/13 10:47:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ class HttpRequest
 		// requestString = "HTTP1.1 GET /index.php \n\nn\"
 		// bool 		parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString);
 		bool 		parseRequestHeaders(ServerConfig server, std::string requestString);
-		static size_t preprocessContentLength(std::string requestString);
+		static size_t preprocessContentLength(std::string requestString, std::string &method);
 
 		std::string getHeader(std::string const str) const;
 
