@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 17:32:00 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 19:50:30 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -658,3 +658,41 @@ int 	HttpResponse::autoResponseHeader(HttpRequest &httpRequest)
 	
 }
 
+
+bool	HttpResponse::checkFileAvailibity(std::string &filePath)
+{
+	std::ifstream file(filePath.c_str(), std::ios::binary);
+	if (!file.is_open())
+	{		
+		struct stat fileStat;
+
+		Logger::log(LC_DEBUG, " getStaicFile ==> filePath = %s" , filePath.c_str());
+		if (stat(filePath.c_str(), &fileStat) != 0)
+		{
+			if (errno == ENOENT)
+				throw RequestException(404, "File not found");
+			else if (errno == EACCES)
+				throw RequestException(403, "Forbidden");
+			else
+				throw RequestException(405, "Method not allowed");
+		}
+		return false;
+	}
+	return true; 
+}
+
+
+
+bool	HttpResponse::handleDeleteMethod(std::string &localPath)
+{
+	Logger::log(LC_RED, "ABOUT TO DELETE THE FILE " , localPath.c_str());
+	checkFileAvailibity(localPath);
+
+
+	if (remove(localPath.c_str()) != 0)
+		throw RequestException(403, "Forbidden");
+	
+	setStatus(204);
+	setBody("");
+	return (true);
+}

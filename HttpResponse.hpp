@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 17:32:32 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 19:34:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,5 +82,8 @@ class HttpResponse
 		size_t								setCGIResponse(std::string &output, size_t length);
 		bool								isRepeatableHeader(std::string const &str);
 		int 								autoResponseHeader(HttpRequest &httpRequest);
+
+		bool								handleDeleteMethod(std::string &localPath);
+		static bool							checkFileAvailibity(std::string &filePath);
 };
 #endif 
