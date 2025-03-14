@@ -18,6 +18,7 @@ class RouteConfig
 		size_t clientMaxBodySize;
 		int returnStatus;
 		std::string returnValue;
+		std::string uploadStore;
 
 	public:
 		RouteConfig();
@@ -31,6 +32,7 @@ class RouteConfig
 		size_t getClientMaxBodySize() const;
 		int getReturnStatus() const;
 		const std::string& getReturnValue() const;
+		const std::string& getUploadStore() const;
 
 		void setPath(const std::string& path);
 		void setRoot(const std::string& root);
@@ -41,6 +43,7 @@ class RouteConfig
 		void setClientMaxBodySize(size_t clientMaxBodySize);
 		void setReturnStatus(int status);
 		void setReturnValue(const std::string &value);
+		void setUploadStore(const std::string &store);
 
 
 		std::string getCGI(std::string);
