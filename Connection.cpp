@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 11:11:54 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 17:24:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -381,8 +381,13 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		else 
 		{
 			std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
-			
-			if(!cmd.empty())
+
+			if(httpRequest.getMethod() == "DELETE")
+			{
+				Logger::log(LC_RED, "ABOUT TO DELETE THE FILE " , httpRequest.getPath().c_str());
+				throw RequestException(599, " Fodbidden for now");
+
+			} else if(!cmd.empty())
 			{
 				// is CGI
 				Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());

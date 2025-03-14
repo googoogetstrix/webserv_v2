@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 22:16:45 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/14 16:51:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,5 +78,6 @@ class HttpResponse
 		void								processPythonCGI(std::string command, std::string scriptfile, HttpRequest request, ServerConfig server, RouteConfig route , std::vector<char> &vec);
 		size_t								setCGIResponse(std::string &output, size_t length);
 		bool								isRepeatableHeader(std::string const &str);
+		int 								autoResponseHeader(HttpRequest &httpRequest);
 };
 #endif 

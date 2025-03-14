@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 11:39:54 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 17:13:09 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -385,12 +385,19 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	std::string query = "QUERY_STRING=" + request.getRawQueryString();
 	std::string contentType = "CONTENT_TYPE=" + request.getHeader("Content-Type");
 	std::string contentLength = "CONTENT_LENGTH=" + Util::toString(request.getContentLength());
-	std::string uploadDir = "UPLOAD_DIR=/tmp";
 	std::string fileSize = "HTTP_FILESIZE=" + Util::toString(request.getContentLength());
-	std::string status = "REDIRECT_STATUS=200";
 	std::string scriptFilename = "SCRIPT_FILENAME=" + scriptFile;
 
-	char * envp[] = {
+	std::string path = "PATH=/usr/local/bin:/usr/bin:/bin";
+	std::string serverSoftware = "SERVER_SOFTWARE=" + std::string(WEBS_APP_NAME);
+	std::string envCGI = "GATEWAY_INTERFACE=CGI/1.1"; 
+	std::string cookie = "HTTP_COOKIE=" + request.getHeader("Cookie");
+	std::string accept = "HTTP_ACCEPT=" + request.getHeader("Accept");
+	std::string status = "REDIRECT_STATUS=200";
+	std::string uploadDir = "UPLOAD_DIR=/tmp";
+	
+
+	char * envp[] = {	
 		const_cast<char *>(method.c_str()),
 		const_cast<char *>(query.c_str()),
 		const_cast<char *>(contentType.c_str()),
@@ -399,6 +406,14 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		const_cast<char *>(fileSize.c_str()),
 		const_cast<char *>(status.c_str()),
 		const_cast<char *>(scriptFilename.c_str()),
+
+		const_cast<char *>(path.c_str()), 
+		const_cast<char *>(serverSoftware.c_str()), 
+		const_cast<char *>(envCGI.c_str()), 
+		const_cast<char *>(cookie.c_str()), 
+		const_cast<char *>(accept.c_str()), 
+
+
 		NULL
 	};
 
@@ -529,7 +544,9 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 
 bool	HttpResponse::isRepeatableHeader(std::string const &str)
 {
-	if(str == "Set-Cookie" || str == ("User-Agent"))
+	if(str.find("Set-Cookie") != std::string::npos)
+		return true;
+	if(str == "Cookie" || str == ("User-Agent"))
 		return (true);
 	return (false);
 }
@@ -569,7 +586,10 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 			headerName = headerName.substr(0 , headerName.length() - 1);
 			std::cout << " _" << headerName << "_ , _" << headerValue << "_ " << std::endl;
 
-			if(isRepeatableHeader(headerName))
+			if(headerName == "Status")
+			{
+				setStatus(Util::toInt(headerValue));
+			} else if(isRepeatableHeader(headerName))
 				setHeader(headerName, headerValue, false);
 			else 
 				setHeader(headerName, headerValue, true);
@@ -584,4 +604,25 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 
 }
 
+
+int 	HttpResponse::autoResponseHeader(HttpRequest &httpRequest)
+{
+		int	effected = 0;
+		Logger::log(LC_YELLOW, " Inside autoResponseHeader ... ");
+		for(std::map<std::string,std::string>::const_iterator it = httpRequest.getHeader().begin(); it != httpRequest.getHeader().end(); ++it)
+		{
+			if(Util::trim(it->first) == "Cookie")
+			{
+				setHeader("Set-Cookie" , it->second, false);
+				Logger::log(LC_YELLOW, "\t - setting %s ", it->second.c_str());
+				effected++;
+			}
+
+				
+		}
+		Logger::log(LC_YELLOW, "%d headers added", effected);
+		return effected;
+
+	
+}
 
