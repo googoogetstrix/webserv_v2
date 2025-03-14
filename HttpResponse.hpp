@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 16:51:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 17:32:32 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,9 @@
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
 # include	"RouteConfig.hpp"
+
+# define	READ_BUFFER_SIZE 1024
+# define	CGI_TIMEOUT 10
 
 class ServerConfig;
 
