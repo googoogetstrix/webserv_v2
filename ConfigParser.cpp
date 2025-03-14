@@ -70,6 +70,8 @@ RouteConfig ConfigParser::parseRouteConfig(std::ifstream& file, const std::strin
             else
                 routeConfig.setReturnValue("");
         }
+        else if (line.find("upload_store") == 0 && line.length() > 13)
+            routeConfig.setUploadStore(line.substr(13));
     }
     return routeConfig;
 }
