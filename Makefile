@@ -6,7 +6,8 @@ CXXFLAGS 				= -Wall -Wextra -Werror -std=c++98 -pedantic -g3 -O0
 
 HEAD					= HttpRequest.hpp HttpResponse.hpp ServerConfig.hpp Webserv.hpp Logger.hpp Util.hpp \
 						RouteConfig.hpp RequestException.hpp ResponseOkException.hpp \
-						Connection.hpp ConnectionController.hpp ConfigParser.hpp
+						Connection.hpp ConnectionController.hpp ConfigParser.hpp \
+						settings.hpp
 
 SRC 					= HttpRequest.cpp HttpResponse.cpp ServerConfig.cpp Webserv.cpp Logger.cpp Util.cpp \
 						RouteConfig.cpp RequestException.cpp ResponseOkException.cpp \

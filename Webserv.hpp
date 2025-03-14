@@ -6,12 +6,13 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 10:18:29 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 13:48:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef		WEBSERV_HPP
 # define	WEBSERV_HPP
+
 # include 	<iostream>
 # include 	<vector>
 # include 	<algorithm>
@@ -23,6 +24,7 @@
 # include 	<unistd.h>
 # include 	<cstring>
 # include 	<cerrno>
+# include	"settings.hpp"
 # include 	"ServerConfig.hpp"
 # include 	"HttpRequest.hpp"
 # include 	"HttpResponse.hpp"
@@ -31,13 +33,6 @@
 # include 	"ConnectionController.hpp"
 # include 	"ConfigParser.hpp"
 
-# define 	WEBS_MAX_FDS			10240
-# define 	WEBS_MAX_CONNS			100
-# define 	WEBS_MAX_EVENTS			1024  // should be change!
-# define	WEBS_SCK_TIMEOUT		1000
-
-# define	WEBS_DEBUG_RESPONSE		true
-# define 	WEBS_APP_NAME			"Webserv42/1.0"
 
 
 class ServerConfig; 

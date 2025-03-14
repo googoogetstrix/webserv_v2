@@ -1,4 +1,38 @@
 <?php
+session_start();
+
+if(!empty($_GET['reset']))
+{
+    $_SESSION['counter'] = 0;
+    header("Location: index.php");
+    exit; 
+}
+if(!empty($_GET['init_cookie']))
+{
+    SetCookie("cookie_counter", 1);
+    header("Location: index.php");
+    exit; 
+}
+    
+
+if(empty($_SESSION['counter']))
+    $_SESSION['counter'] = 0;
+$_SESSION['counter'] ++;
+
+
+if(empty($_COOKIE['cookie_counter']))
+{
+    $cookieValue = "(none have been set yet)";
+}
+else
+{
+    $cookieValue = $_COOKIE['cookie_counter'];
+    SetCookie("cookie_counter", $_COOKIE['cookie_counter'] + 1);
+
+
+    
+}
+
 
 ?>
 <!DOCTYPE html>
@@ -9,7 +43,17 @@
     <title>Document</title>
 </head>
 <body>
+<div class="container" style="text-align:right">
+    session counter = <?php echo $_SESSION['counter'];?>
+    <button value="Reset Session" onclick="document.location.assign('index.php?reset=1')" >Reset Counter</button>
+</div>
+<div class="container" style="text-align:right">
+    cookie counter = <?php echo $cookieValue;?>
+    <button value="Reset Session" onclick="document.location.assign('index.php?init_cookie=1')" >Start / Reset counter cookie</button>
+</div>
+
 <div class="container">
+
     <h1>PHP Stuff</h1> 
     <form method="post" action="index.php?key=check" enctype="multipart/form-data">
         <div>name : <input type="text" name="name" value="<?php echo empty($_POST['name']) ? "Random Dude": $_POST['name'];?>"> </div>
@@ -42,6 +86,10 @@ if(count($_POST)>0)
     echo "</pre>";
 
     echo "<pre>";
+    print_r($_SERVER);
+    echo "</pre>";
+
+    echo "<pre>";
     print_r($_COOKIE);
     echo "</pre>";
 
@@ -52,5 +100,6 @@ if(count($_POST)>0)
 }
 ?>
 </div>
+
 </body>
 </html>
