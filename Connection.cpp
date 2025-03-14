@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 19:57:57 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 11:11:54 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,25 +14,33 @@
 
 Connection::Connection():fd(0),isReady(false)
 {
+	bodyLength = 0;
+	contentLength = 0;
+	
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
 	char buff[24];
 	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	std::cout << " A - expires on " << std::string(buff) << std::endl;
+	// std::cout << " A - expires on " << std::string(buff) << std::endl;
 	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
+	bodyLength = 0;
+	contentLength = 0;
+
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
 	char buff[24];
 	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	std::cout << " B - expires on " << std::string(buff) << std::endl;
+	// std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
-	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
+	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
 
 }
 Connection::~Connection()
 {
-	Logger::log(LC_MINOR_NOTE, "connection #%d destroyed", fd);
+
+	Logger::log(LC_NOTE, "connection #%d destroyed", fd);
+
 }
 Connection::Connection(Connection const &other)
 {
@@ -90,7 +98,7 @@ bool 	Connection::setExpiresOn(time_t t)
 	expiresOn = t + (CON_SOC_TIMEOUT_SECS);
 	char buff[24];
 	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	std::cout << " C - expires on " << std::string(buff) << std::endl;
+	// std::cout << " C - expires on " << std::string(buff) << std::endl;
 	return true; 
 }
 
@@ -379,11 +387,15 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 				// is CGI
 				Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
 				httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
+				Logger::log(LC_RED, "DONE CGI STUFF??");
+				
+				// return true;
 			}
 			else
 			{
 				Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());
 				httpResponse.getStaticFile(localPath);
+				// return true;
 
 			}
 
@@ -471,8 +483,12 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 				
 				
 			std::istringstream  iss(requestBuffer);
+
+			std::cout << "\n\n\n\n" << iss.str() << "\n\n\n\n";
+
+
 			std::string         line;
-			int					reqContentLength = -1;
+			int					reqContentLength = 0;
 			while( std::getline(iss, line) && line != "\r")
 			{
 				if (line.find("Content-Length:") == 0)
@@ -483,6 +499,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 						Logger::log(LC_RED, "Invalid request content length");
 						throw RequestException(400, "Bad Reqeust");
 					}
+					std::cout << " *** setting content-length " << reqContentLength << std::endl;
 					contentLength = reqContentLength;
 				}
 				if (line.find("Content-Type:") == 0)
@@ -492,12 +509,21 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 					{
 						size_t boundaryPos = line.find("boundary=");
 						if (boundaryPos != std::string::npos)
+						{
 							boundary = line.substr(boundaryPos + 9);
+							std::cout << " *** setting boundary = " << boundary << std::endl;
+						}
+
 					}
 				}
 			}
 			if (contentLength <= 0)
+			{
+				std::cout << " Setting content-length = " << contentLength << std::endl;
 				contentLength = 0;
+			}
+			std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
+				
 			
 			std::string temp = requestBuffer.substr(crlfPos + 4, requestBuffer.length());
 			rawPostBody.clear();
@@ -529,7 +555,11 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 		if(contentLength == 0)
 			return (requestIsCompleted = true);
 		else if(contentLength <= rawPostBody.size())
+		{
+			Logger::log(LC_RED, "REQUEST IS COMPLETE!!!!!");			
 			return (requestIsCompleted = true);
+		}
+			
 
 		
 
@@ -561,11 +591,13 @@ void Connection::debug()
 
 void Connection::clear()
 {
+	std::cout << " MAGIC CLEAR!" << std::endl;
 	rawPostBody.clear();
 	isReady = false;
 	headerIsCompleted = false;
 	requestIsCompleted = false;
 	responseBuffer = "";
 	contentLength = 0;
+	bodyLength = 0;
 	
 }
