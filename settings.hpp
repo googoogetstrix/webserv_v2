@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/14 13:46:55 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 19:37:22 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 20:38:26 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # define 	WEBS_MAX_EVENTS			1024  // should be change!
 # define	WEBS_SCK_TIMEOUT		1000
 
-# define	WEBS_DEBUG_RESPONSE		true
+# define	WEBS_DEBUG_RESPONSE		false
 # define 	WEBS_APP_NAME			"Webserv42/1.0"
 
 #endif
