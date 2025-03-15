@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 19:59:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 14:36:56 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,30 +16,34 @@ Connection::Connection():fd(0),isReady(false)
 {
 	bodyLength = 0;
 	contentLength = 0;
+	connID = 0 ; 
 	
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
 	char buff[24];
 	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
 	// std::cout << " A - expires on " << std::string(buff) << std::endl;
+	rawPostBody.clear();
 	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
 	bodyLength = 0;
 	contentLength = 0;
+	connID = 0;
 
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
 	char buff[24];
 	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
 	// std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
+	rawPostBody.clear();
 	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
 
 }
 Connection::~Connection()
 {
 
-	Logger::log(LC_NOTE, "connection #%d destroyed", fd);
+	Logger::log(LC_NOTE, "connection fd#%d ,  connID#%d destroyed", fd , connID);
 
 }
 Connection::Connection(Connection const &other)
@@ -372,12 +376,26 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 		
 		std::string requestPathContainFile = Util::extractFileName( localPath, true);
-	
 		std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
+
+
+		bool		isUploadRequest = false;
+		if(!route->getUploadStore().empty())
+		{
+			// the request URL must be exactly match to the route path
+			if(httpRequest.getPath() == route->getPath() && httpRequest.getMethod() == "POST")
+			{
+				isUploadRequest = true; 
+			}
+		}
 
 		if(httpRequest.getMethod() == "DELETE")
 		{			
 			httpResponse.handleDeleteMethod(localPath);
+		}
+		else if(isUploadRequest) 
+		{
+			httpResponse.handleUploadedFiles( this , route, httpRequest);
 		} 
 		else if(!cmd.empty())
 		{
@@ -457,6 +475,7 @@ void Connection::setRequestIsComplete(bool newValue)
 
 bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 {
+
 		bool		justSplit = false;
 		if(!headerIsCompleted)
 		{
@@ -480,15 +499,16 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 			requestBuffer += std::string(buffer, length);
 			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
 			if(crlfPos == std::string::npos)
+			{
+				Logger::log(LC_DEBUG, " 888 appendReq() return false #1 ");
 				return false; 
-			
-				
-				
+			}
+			else
+			{
+				headerIsCompleted = true;
+			}
+
 			std::istringstream  iss(requestBuffer);
-
-			std::cout << "\n\n\n\n" << iss.str() << "\n\n\n\n";
-
-
 			std::string         line;
 			int					reqContentLength = 0;
 			while( std::getline(iss, line) && line != "\r")
@@ -525,10 +545,16 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 				contentLength = 0;
 			}
 			std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
-				
+			std::cout << " ******** rawPostBody.size() ??? " << rawPostBody.size() << std::endl;
+
+			if(contentLength <= rawPostBody.size())
+			{
+				Logger::log(LC_RED, "REQUEST IS COMPLETE ### 2 !!!!!");			
+				return (requestIsCompleted = true);
+			}	
 			
 			std::string temp = requestBuffer.substr(crlfPos + 4, requestBuffer.length());
-			rawPostBody.clear();
+			// rawPostBody.clear();
 			for(size_t j=0;j<temp.length();j++)
 			{
 				rawPostBody.push_back(temp[j]);
@@ -539,9 +565,10 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 
 		}
 		
-		
-		if(headerIsCompleted && !justSplit)
+ 		if(headerIsCompleted && !justSplit)
 		{
+
+			std::cout << " **************** REACH THE SMALL CHUNK of appending ***************" << std::endl;
 			// append post body
 			std::cout << " length = " << length << std::endl;
 			std::cout << std::endl << "HeaderIsCompleteee ... pushing: " << std::endl;
@@ -555,16 +582,20 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 		}
 
 		if(contentLength == 0)
+		{
+			Logger::log(LC_RED, "888 appendReq() NO CONTENT LENGTH , returning true");			
 			return (requestIsCompleted = true);
+		}
+			
 		else if(contentLength <= rawPostBody.size())
 		{
-			Logger::log(LC_RED, "REQUEST IS COMPLETE!!!!!");			
+			Logger::log(LC_RED, "888 appendReq() REQUEST IS COMPLETE!!!!! #1, conLength < rawSize , returning true");			
 			return (requestIsCompleted = true);
 		}
 			
 
-		
-
+		std::cout << " IN THIS LOOP, contentLength = " << contentLength << " , rawPostBody = " <<  rawPostBody.size() << std::endl;
+		Logger::log(LC_DEBUG, " 888 appendReq() return DEFAULT false #2 ");
 		return (false);
 
 }
@@ -602,4 +633,9 @@ void Connection::clear()
 	contentLength = 0;
 	bodyLength = 0;
 	
+}
+
+std::string Connection::getBoundary()
+{
+	return (boundary);
 }

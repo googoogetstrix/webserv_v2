@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 11:12:41 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 13:46:46 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,10 @@ bool	ConnectionController::closeConnection(int clientSocket)
 }
 int		ConnectionController::openConnection(int clientSocket, ServerConfig serverConfig)
 {
+	static  		int ctr = 0;
+
+
+	ctr++;
 	int flags = fcntl(clientSocket, F_GETFL, 0);
 	if (flags < 0 || fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK) < 0) {
 		close(clientSocket);
@@ -80,12 +84,15 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 	}
 
 	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
+	connections[ clientSocket ].clear();
+	connections[ clientSocket ].connID = ctr;
 	// register to epoll
 	epoll_event  event; 
 	event.events = EPOLLIN;	
 	event.data.fd = clientSocket;
 	epoll_ctl(epollSocket,  EPOLL_CTL_ADD, clientSocket , &event);
 	Logger::log(LC_CONN_LOG, "Accepting client connection #%d, reigistered into epoll", clientSocket);
+	
 
 	return connections.size();
 
@@ -95,6 +102,7 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &event)
 {
 	Connection *conn = findConnection(clientSocket);
+	std::cout << " CHECK ME =====> In handleRead() connID = " << conn->connID << std::endl;
 
 
 	std::cout << " handleRead! , slow down" << std::endl;
@@ -175,6 +183,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 						
 						
 					}
+					
 
 					// 
 					buffer[bytesRead] = '\0';

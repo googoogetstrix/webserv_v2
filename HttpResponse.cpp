@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 10:13:48 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 14:37:20 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -722,4 +722,47 @@ bool	HttpResponse::handleDeleteMethod(std::string &localPath)
 	setStatus(204);
 	setBody("");
 	return (true);
+}
+
+bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , HttpRequest &httpRequest)
+{
+
+	Logger::log(LC_RED, " Inside handleUploadedFiles()");
+	httpRequest.debug();
+	route->debug();
+	
+	std::string boundary = conn->getBoundary();
+	if (boundary.empty())
+		throw RequestException(400, "Bad Request");
+	size_t	bLength = boundary.length();
+	std::string content;
+	content.reserve(conn->getRawPostBody().size() + 1);
+	for( std::vector<char>::const_iterator it = conn->getRawPostBody().begin(); it != conn->getRawPostBody().end(); ++it)
+		content.push_back( *it);
+	size_t start = content.find(boundary);
+	int safeCount = 0;
+	while( start != std::string::npos)
+	{
+		std::string next = content.substr(start + bLength + 1 );
+
+		
+		start = content.find(boundary , start + bLength + 1);
+
+		safeCount ++;
+		if(safeCount > 15)
+		{
+			
+			std::cout << " SAFETY BREAK " << std::endl;
+			break;
+		}
+			
+	}
+
+	
+
+
+	
+
+	
+	throw RequestException(599 , "ME Error");
 }

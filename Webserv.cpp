@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 10:50:23 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 14:11:24 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,6 +183,33 @@ int Webserv::run(void)
 
 	HttpResponse 	httpResponse; 
 	HttpRequest 	httpRequest;
+
+
+	// cc.openConnection(3, serverConfigs[0]);
+	// cc.openConnection(4, serverConfigs[0]);
+	// cc.openConnection(5, serverConfigs[0]);
+
+	// Connection *conn = cc.findConnection(3);
+	// conn->debugText = "";
+
+	// char  buff[100];
+	// buff[0] = '1';
+	// buff[1] = '2';
+	// buff[2] = '3';
+
+	// for(int i =0; i <=5;i++)
+	// {
+	// 	Connection *conn = cc.findConnection(3);
+	// 	conn->debugText += "XXXX";
+	// 	conn->appendRawPostBody(buff , 3);
+	// }
+
+	// conn = cc.findConnection(3);
+	// std::cout << "out of loop: " << conn->debugText << std::endl;
+	// std::cout << "rawPostBody = " << std::string(conn->getRawPostBody().data()) << std::endl;
+	// std::cout << " DIE ME! " << std::endl;
+	// _exit(1);
+
 	while (true) 
 	{
 		
