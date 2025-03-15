@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:24:58 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/09 10:59:46 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 10:11:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,17 @@ int main(int argc, char **argv)
 	// int  pos = Util::substrPos(haystack , needle);
 	// std::cout << "pos = " << pos << std::endl ;
 	// return (0);
+
+	// std::string str = std::string("./wwwroot/www1/uploads/del_me");
+	// bool out = HttpResponse::checkFileAvailibity( str );
+	// std::cout << " out = " << out << std::endl;
+
+	// str = std::string("./wwwroot/www1/uploads/s2.txt");
+	// out = HttpResponse::checkFileAvailibity( str );
+	// std::cout << " out = " << out << std::endl;
+
+	// return 0;
+
 
 	try {
 		if (argc > 2)

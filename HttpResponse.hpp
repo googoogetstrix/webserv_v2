@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 19:34:39 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/14 20:13:47 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,6 @@ class HttpResponse
 		int 								autoResponseHeader(HttpRequest &httpRequest);
 
 		bool								handleDeleteMethod(std::string &localPath);
-		static bool							checkFileAvailibity(std::string &filePath);
+		static bool							checkFileAvailibity(std::string &filePath, bool isFileOnly=true);
 };
 #endif 
