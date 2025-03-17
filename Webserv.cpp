@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 13:12:50 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 13:24:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -339,8 +339,6 @@ ConnectionController &Webserv::getConnectionController()
 static  void debugConfig(ServerConfig server)
 {
 	Logger::log(LC_DEBUG, "REMOVE ME!!!!");
-
-	server.debug(); 
 	return ;
 
 	HttpRequest req;
