@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:18:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 17:14:16 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -527,6 +527,20 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 
 					}
 				}
+
+
+				Logger::log(LC_RED, "Host checking!!!");
+				if (line.find("Host:") == 0)
+				{
+					std::istringstream   line_stream(line.substr(5));
+					std::string hostName;
+
+					if((line_stream >> hostName))
+					{	
+						Logger::log(LC_RED, " HOSTNAME = %s ", hostName.c_str());
+					}
+				}
+
 			}
 			if (contentLength <= 0)
 			{
