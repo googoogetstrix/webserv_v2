@@ -154,6 +154,20 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		return (true);
 }
 
+std::map<std::string,std::string>  ServerConfig::getAllRouteCGIs()
+{
+	std::map<std::string, std::string> cgiRoutes;
+
+	for( std::map<std::string, RouteConfig>::const_iterator it = routes.begin(); it != routes.end(); ++it)
+	{
+		it->second.getCGIs().begin();
+		for( std::map<std::string, std::string>::const_iterator jit = it->second.getCGIs().begin(); jit != it->second.getCGIs().end(); ++jit)
+		cgiRoutes[ jit->first ] = jit->second;
+
+	}
+	return (cgiRoutes);
+
+}
 
 
 void ServerConfig::debug() const

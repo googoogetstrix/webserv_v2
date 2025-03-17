@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 10:13:48 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:31:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,9 @@ std::string HttpResponse::getStatusText(int statusCode)
 			return "Length required";	
 		case 413:
 			return "Payload Too Large";
+		case 415:
+			return "Unsupported Media Type";
+		
 		case 500:
 			return "Internal Server Error";
 		case 503:
@@ -722,4 +725,130 @@ bool	HttpResponse::handleDeleteMethod(std::string &localPath)
 	setStatus(204);
 	setBody("");
 	return (true);
+}
+
+bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , HttpRequest &httpRequest)
+{
+
+	Logger::log(LC_RED, " Inside handleUploadedFiles()");
+	httpRequest.debug();
+	route->debug();
+	
+	std::string boundary = conn->getBoundary();
+	if (boundary.empty())
+		throw RequestException(400, "Bad Request");
+	std::string content = Util::vectorCharToString(conn->getRawPostBody());
+	size_t	fileCount = 0; // indicate number of actual files received via the form
+	size_t	success = 0;
+
+	
+	std::vector<std::string> tokens = Util::split(content, boundary);
+
+	for(size_t i = 0; i < tokens.size(); ++i)
+	{
+		std::cout  << LC_GREEN << tokens[i] << "\n" << LC_RESET << std::endl;
+
+		std::istringstream		streamLine (tokens[i]);
+		std::string				str; 
+
+
+		//std::cout << "clien max size = " <<  route->getClientMaxBodySize() * WEBS_MB << std::endl;
+
+		std::string		fileName = "";
+		while(std::getline(streamLine, str))
+		{
+			size_t	fileNamePos = str.find("filename=\"");
+			if(str.find("Content-Disposition") == 0 &&  fileNamePos != std::string::npos)
+			{
+				fileNamePos += 10; 
+				size_t len = str.find_last_of("\"");
+				// std::cout << " *** fileNamePos =  " << fileNamePos  << std::endl;
+				// std::cout << " *** len =  " << len  << std::endl;
+				if (len != std::string::npos)
+				{
+					len -= fileNamePos;
+					fileName = str.substr( fileNamePos ,  len); 
+//					std::cout << LC_RED << " *** fileName = " << fileName << LC_RESET << std::endl;
+				}
+			}
+		}
+		if(fileName.empty())
+		{
+			std::cout << LC_YELLOW << " ^ SKIPPING THIS ONE SINCE IT IS NOT attachment" << LC_RESET << std::endl;
+		}
+		else
+		{
+			std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
+			fileCount ++; 
+			std::string	targetFile = route->getRoot() + "/" + fileName;
+			if(Util::fileExists(targetFile))
+			{
+				Logger::log(LC_NOTE, " filename %s is already exists", targetFile.c_str());
+				throw RequestException(403, "Forbidden");
+
+			}
+
+			std::string ext = Util::getFileExtension(fileName);
+			std::cout << " ext = " << ext  << std::endl;
+			// std::map<std::string, std::string> cgis = route->getCGIs();
+			std::map<std::string, std::string> cgis = conn->getServerConfig().getAllRouteCGIs();
+
+
+			for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
+			{
+				std::cout << " - server cgi = " << it->first << std::endl;
+			}
+
+
+			if( cgis.find(ext) !=  cgis.end())
+			{
+				// is one of the CGIs, skip 
+				Logger::log(LC_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
+				throw RequestException(415, "Unsupported Media Type");
+			}
+			else
+			{
+				Logger::log(LC_GREEN, "SEEMS OK, proceed to create the file");
+				
+				// do create file 
+				// if success counter++
+
+				size_t contentStart = tokens[i].find("\r\n\r\n");
+				if(contentStart != std::string::npos)
+				{
+					size_t 	actualSize = tokens[i].size() - contentStart - 4;
+					if(actualSize > route->getClientMaxBodySize() * WEBS_MB)
+						throw RequestException(413, "Payload Too Large");
+
+					contentStart += 4; 
+					std::string	targetFile = route->getRoot() + "/" + fileName;
+
+					if( Util::createFile(targetFile, tokens[i].begin() + contentStart , tokens[i].length() - contentStart - 4))
+					{
+						success ++;
+					}
+				}
+
+				
+
+
+				
+			}
+
+
+		}
+	}
+	// if success > 0 && success != token count  return HTTP 207 , multiple status
+	
+	// "Content-Disposition: form-data; name=\"file1\"; filename=\"s1.txt\""
+	(void)fileCount;
+	
+	Logger::log(LC_RED, "Total File count = %d" , fileCount);
+	if(fileCount == 0)
+		throw RequestException(400, "Bad Request");
+	if(fileCount != success)
+		throw RequestException(207, "Multi-status");
+
+	
+	throw RequestException(201 , "Seems OK!");
 }

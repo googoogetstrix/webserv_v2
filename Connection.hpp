@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 18:15:29 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 14:55:23 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,9 @@ class Connection
 		int					epollSocket;
 		void 				setNonBlock();
 		size_t 				contentLength;
+
+		
+
 
 
 	
@@ -103,13 +106,13 @@ class Connection
 
 		void 	setContentLength(int i);
 		size_t				getContentLength();
+		std::string			getBoundary();
 
 		void				debugPostBody();
 		void 				debug();
 		void 				clear();
 
-
-				
+		std::string			debugText;
 
 		class ParseRequestException: public std::exception
 		{

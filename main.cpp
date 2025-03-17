@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:24:58 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 10:11:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 17:59:58 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,15 @@ int main(int argc, char **argv)
 	// std::cout << " out = " << out << std::endl;
 
 	// return 0;
+
+	
+	// std::string		content = "<html><head><title>Only head is there</title></head></html>";
+	// size_t 		len = content.length() - 6;
+	// std::string::iterator it = content.begin() + 6;
+
+	// bool  result = Util::createFile("./wwwroot/www1/uploadsXX/write_me.txt", it, len);
+	// std::cout << "result = " << result << std::endl; 
+	// _exit(1);
 
 
 	try {

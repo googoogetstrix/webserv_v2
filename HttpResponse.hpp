@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 20:13:47 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 11:31:28 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 # include	"ServerConfig.hpp"
 # include	"RouteConfig.hpp"
 
+
 # define	READ_BUFFER_SIZE 1024
 # define	CGI_TIMEOUT 10
 
@@ -39,6 +40,7 @@ class ServerConfig;
 
 class HttpRequest;
 
+class Connection;
 class HttpResponse
 {
 	private:
@@ -85,5 +87,6 @@ class HttpResponse
 
 		bool								handleDeleteMethod(std::string &localPath);
 		static bool							checkFileAvailibity(std::string &filePath, bool isFileOnly=true);
+		bool								handleUploadedFiles(Connection *conn, RouteConfig *route , HttpRequest &httpRequest);
 };
 #endif 

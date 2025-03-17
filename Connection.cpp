@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/14 19:59:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:18:01 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,28 +18,22 @@ Connection::Connection():fd(0),isReady(false)
 	contentLength = 0;
 	
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
-	char buff[24];
-	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	// std::cout << " A - expires on " << std::string(buff) << std::endl;
+	rawPostBody.clear();
 	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
 Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config),isReady(false)
 {
 	bodyLength = 0;
 	contentLength = 0;
-
+	
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
-	char buff[24];
-	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	// std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
+	rawPostBody.clear();
 	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
 
 }
 Connection::~Connection()
 {
-
-	Logger::log(LC_NOTE, "connection #%d destroyed", fd);
 
 }
 Connection::Connection(Connection const &other)
@@ -344,7 +338,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		maxSize *= WEBS_MB;
 
 		if(!test.empty() && Util::toSizeT(test) > maxSize)
-			throw RequestException(415, "Request too large");	
+			throw RequestException(413, "Request too large");	
 
 		// check for redirection (directive return)	
 		if(route->getReturnStatus() != 0)
@@ -372,12 +366,26 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 		
 		std::string requestPathContainFile = Util::extractFileName( localPath, true);
-	
 		std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
+
+
+		bool		isUploadRequest = false;
+		if(!route->getUploadStore().empty())
+		{
+			// the request URL must be exactly match to the route path
+			if(httpRequest.getPath() == route->getPath() && httpRequest.getMethod() == "POST")
+			{
+				isUploadRequest = true; 
+			}
+		}
 
 		if(httpRequest.getMethod() == "DELETE")
 		{			
 			httpResponse.handleDeleteMethod(localPath);
+		}
+		else if(isUploadRequest) 
+		{
+			httpResponse.handleUploadedFiles( this , route, httpRequest);
 		} 
 		else if(!cmd.empty())
 		{
@@ -457,10 +465,11 @@ void Connection::setRequestIsComplete(bool newValue)
 
 bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 {
+
 		bool		justSplit = false;
 		if(!headerIsCompleted)
 		{
-			// printing oyt connection log
+			
 			if(requestBuffer.length() == 0)
 			{
 				std::istringstream iss( std::string(buffer, length));
@@ -480,15 +489,15 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 			requestBuffer += std::string(buffer, length);
 			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
 			if(crlfPos == std::string::npos)
+			{
 				return false; 
-			
-				
-				
+			}
+			else
+			{
+				headerIsCompleted = true;
+			}
+
 			std::istringstream  iss(requestBuffer);
-
-			std::cout << "\n\n\n\n" << iss.str() << "\n\n\n\n";
-
-
 			std::string         line;
 			int					reqContentLength = 0;
 			while( std::getline(iss, line) && line != "\r")
@@ -501,7 +510,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 						Logger::log(LC_RED, "Invalid request content length");
 						throw RequestException(400, "Bad Reqeust");
 					}
-					std::cout << " *** setting content-length " << reqContentLength << std::endl;
+					// std::cout << " *** setting content-length " << reqContentLength << std::endl;
 					contentLength = reqContentLength;
 				}
 				if (line.find("Content-Type:") == 0)
@@ -513,7 +522,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 						if (boundaryPos != std::string::npos)
 						{
 							boundary = line.substr(boundaryPos + 9);
-							std::cout << " *** setting boundary = " << boundary << std::endl;
+							// std::cout << " *** setting boundary = " << boundary << std::endl;
 						}
 
 					}
@@ -521,14 +530,18 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 			}
 			if (contentLength <= 0)
 			{
-				std::cout << " Setting content-length = " << contentLength << std::endl;
 				contentLength = 0;
 			}
-			std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
-				
+			// std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
+			// std::cout << " ******** rawPostBody.size() ??? " << rawPostBody.size() << std::endl;
+
+			if(contentLength <= rawPostBody.size())
+			{
+				return (requestIsCompleted = true);
+			}	
 			
 			std::string temp = requestBuffer.substr(crlfPos + 4, requestBuffer.length());
-			rawPostBody.clear();
+			// rawPostBody.clear();
 			for(size_t j=0;j<temp.length();j++)
 			{
 				rawPostBody.push_back(temp[j]);
@@ -539,31 +552,29 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 
 		}
 		
-		
-		if(headerIsCompleted && !justSplit)
+ 		if(headerIsCompleted && !justSplit)
 		{
 			// append post body
-			std::cout << " length = " << length << std::endl;
-			std::cout << std::endl << "HeaderIsCompleteee ... pushing: " << std::endl;
 			for(size_t i=0; i<length;i++)
 			{	
 				char c = buffer[i];
-				std::cout << c; 
 				rawPostBody.push_back(c);
 			}
 				
 		}
 
 		if(contentLength == 0)
+		{
 			return (requestIsCompleted = true);
+		}
+			
 		else if(contentLength <= rawPostBody.size())
 		{
-			Logger::log(LC_RED, "REQUEST IS COMPLETE!!!!!");			
 			return (requestIsCompleted = true);
 		}
 			
 
-		
+		// std::cout << " IN THIS LOOP, contentLength = " << contentLength << " , rawPostBody = " <<  rawPostBody.size() << std::endl;
 
 		return (false);
 
@@ -602,4 +613,9 @@ void Connection::clear()
 	contentLength = 0;
 	bodyLength = 0;
 	
+}
+
+std::string Connection::getBoundary()
+{
+	return (boundary);
 }
