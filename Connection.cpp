@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 16:01:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 19:43:51 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -468,7 +468,7 @@ void Connection::setRequestIsComplete(bool newValue)
 }
 
 
-bool	Connection::appendRequestBuffer(char *buffer, size_t length)
+bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<ServerConfig> servers)
 {
 
 		bool		justSplit = false;
@@ -532,6 +532,32 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 
 					}
 				}
+
+
+				if (line.find("Host:") == 0)
+				{
+					std::istringstream   line_stream(line.substr(5));
+					std::string hostName;
+
+					if((line_stream >> hostName))
+					{	
+						Logger::log(LC_RED, " HOSTNAME = %s ", hostName.c_str());
+
+						for( std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
+						{
+							// std::cout << " second getServerName() = " << it->getServerName() << std::endl; 
+							std::string serverNamePort = it->getServerName() + ":" + Util::toString( it->getPort());
+							if (serverNamePort.find(hostName) != std::string::npos)
+							{
+								Logger::log (LC_RED,"OVERWRITING SERVER CONFIG WITH %s" , it->getServerName().c_str());
+								serverConfig = *it; 
+
+							}
+						}
+						
+					}
+				}
+
 			}
 			if (contentLength <= 0)
 			{
@@ -623,4 +649,14 @@ void Connection::clear()
 std::string Connection::getBoundary()
 {
 	return (boundary);
+}
+
+bool	Connection::adjustServerConfig(std::string hostName)
+{
+
+	int		currentPort = serverConfig.getPort();
+	(void) hostName;
+	(void) currentPort;
+	return false;
+
 }
