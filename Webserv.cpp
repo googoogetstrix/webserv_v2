@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 11:31:56 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 13:12:50 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,8 @@ bool Webserv::setupSockets(ConnectionController& cc)
 			Logger::log(LC_YELLOW, " port#%d is already bound",  current_port);
 			continue;
 		} 
+
+		it->debug();
 		
 		
 		
@@ -165,7 +167,7 @@ int Webserv::run(void)
 	// reset the epoll_events array
 	memset( events, 0 , sizeof(events));
 
-	debugConfig( serverConfigs[0]);
+	debugConfig( serverConfigs[2]);
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
@@ -215,8 +217,6 @@ int Webserv::run(void)
 	while (true) 
 	{
 
-			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
-				break; 
 		
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
 			// no effected fds, but happens from timeout
@@ -314,6 +314,10 @@ int Webserv::run(void)
 				}
 			}
 			connectionController.purgeExpiredConnections();
+
+			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
+				break; 
+
 	}
 	// this won't be reached anyway 
 	close(epoll_fd);
@@ -335,6 +339,8 @@ ConnectionController &Webserv::getConnectionController()
 static  void debugConfig(ServerConfig server)
 {
 	Logger::log(LC_DEBUG, "REMOVE ME!!!!");
+
+	server.debug(); 
 	return ;
 
 	HttpRequest req;
