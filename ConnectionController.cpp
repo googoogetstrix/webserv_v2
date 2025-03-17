@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 11:27:42 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 19:40:08 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 					}
 
 				    
-					if(conn->appendRequestBuffer(buffer , bytesRead))
+					if(conn->appendRequestBuffer(buffer , bytesRead, rawServers))
 					{
 
 						std::cout << " *** DONE *** " << std::endl;
@@ -321,4 +321,29 @@ bool ConnectionController::handleRequestException(RequestException &e, Connectio
 	handleWrite(conn.getSocket());
 	return (true);
 }
+
+
+
+void ConnectionController::debug()
+{
+	std::cout << "\n==========================\nConnectionController\n==========================" << std::endl;
+	std::cout << " -rawServers " << std::endl;
+	for( std::vector<ServerConfig>::iterator it = rawServers.begin(); it != rawServers.end(); ++it)
+	{
+		std::cout << " server port " << it->getPort() << std::endl; 
+		std::cout << " server name " << it->getServerName() << std::endl; 
+	}
+}
+
+
+int	ConnectionController::addRawServer(ServerConfig server)
+{
+	rawServers.push_back(server);
+	return rawServers.size();
+}
+std::vector<ServerConfig>  ConnectionController::getRawServers()
+{
+	return rawServers;
+}
+
 

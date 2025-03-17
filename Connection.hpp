@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 14:55:23 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 19:24:27 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ class Connection
 		bool				isHeaderComplete(); 
 
 		bool				appendRawPostBody(char *, size_t bytesRead);
-		bool				appendRequestBuffer(char *buffer, size_t length);
+		bool				appendRequestBuffer(char *buffer, size_t length, std::vector<ServerConfig> servers);
 
 		bool				processRequest(HttpRequest &httpRequest);
 
@@ -111,6 +111,9 @@ class Connection
 		void				debugPostBody();
 		void 				debug();
 		void 				clear();
+
+
+		bool				adjustServerConfig(std::string hostName);
 
 		std::string			debugText;
 

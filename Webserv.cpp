@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 11:31:56 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 19:29:33 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,11 +87,16 @@ bool Webserv::setupSockets(ConnectionController& cc)
 	for( std::vector<ServerConfig>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); ++it)
 	{
 		int	current_port = it->getPort();
+
+		std::cout << "XXXXX " << it->getServerName() << "XXXXX" << std::endl; 
+		cc.addRawServer(*it);
 		if (used_ports.find(current_port) != used_ports.end())
 		{
-			Logger::log(LC_YELLOW, " port#%d is already bound",  current_port);
+			Logger::log(LC_YELLOW, "NOTE port#%d is already bound",  current_port);
 			continue;
 		} 
+
+		
 		
 		
 		
