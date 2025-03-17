@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 13:46:46 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 14:55:47 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,10 +72,7 @@ bool	ConnectionController::closeConnection(int clientSocket)
 }
 int		ConnectionController::openConnection(int clientSocket, ServerConfig serverConfig)
 {
-	static  		int ctr = 0;
 
-
-	ctr++;
 	int flags = fcntl(clientSocket, F_GETFL, 0);
 	if (flags < 0 || fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK) < 0) {
 		close(clientSocket);
@@ -85,7 +82,7 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 
 	connections[ clientSocket ] = Connection(clientSocket, serverConfig);
 	connections[ clientSocket ].clear();
-	connections[ clientSocket ].connID = ctr;
+
 	// register to epoll
 	epoll_event  event; 
 	event.events = EPOLLIN;	
@@ -102,17 +99,10 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &event)
 {
 	Connection *conn = findConnection(clientSocket);
-	std::cout << " CHECK ME =====> In handleRead() connID = " << conn->connID << std::endl;
-
-
-	std::cout << " handleRead! , slow down" << std::endl;
-	// sleep(2);
-	
-
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
 
-	std::cout << "complete?" << std::endl;
+	
 	if(conn->getHeaderIsComplete() && conn->getRequestIsComplete())
 		return (true);
 	

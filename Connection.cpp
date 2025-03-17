@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 14:36:56 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 15:11:21 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,8 @@ Connection::Connection():fd(0),isReady(false)
 {
 	bodyLength = 0;
 	contentLength = 0;
-	connID = 0 ; 
 	
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
-	char buff[24];
-	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	// std::cout << " A - expires on " << std::string(buff) << std::endl;
 	rawPostBody.clear();
 	Logger::log(LC_MINOR_NOTE, "new connection created");
 }
@@ -29,12 +25,8 @@ Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config)
 {
 	bodyLength = 0;
 	contentLength = 0;
-	connID = 0;
-
+	
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
-	char buff[24];
-	strftime(buff, sizeof(buff) , "[%Y-%m-%d %H:%M:%S] " , localtime(&expiresOn));
-	// std::cout << " B - expires on " << std::string(buff) << std::endl;
 	setNonBlock();
 	rawPostBody.clear();
 	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
@@ -42,8 +34,6 @@ Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config)
 }
 Connection::~Connection()
 {
-
-	Logger::log(LC_NOTE, "connection fd#%d ,  connID#%d destroyed", fd , connID);
 
 }
 Connection::Connection(Connection const &other)
@@ -479,7 +469,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 		bool		justSplit = false;
 		if(!headerIsCompleted)
 		{
-			// printing oyt connection log
+			
 			if(requestBuffer.length() == 0)
 			{
 				std::istringstream iss( std::string(buffer, length));
@@ -500,7 +490,6 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
 			if(crlfPos == std::string::npos)
 			{
-				Logger::log(LC_DEBUG, " 888 appendReq() return false #1 ");
 				return false; 
 			}
 			else
@@ -521,7 +510,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 						Logger::log(LC_RED, "Invalid request content length");
 						throw RequestException(400, "Bad Reqeust");
 					}
-					std::cout << " *** setting content-length " << reqContentLength << std::endl;
+					// std::cout << " *** setting content-length " << reqContentLength << std::endl;
 					contentLength = reqContentLength;
 				}
 				if (line.find("Content-Type:") == 0)
@@ -533,7 +522,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 						if (boundaryPos != std::string::npos)
 						{
 							boundary = line.substr(boundaryPos + 9);
-							std::cout << " *** setting boundary = " << boundary << std::endl;
+							// std::cout << " *** setting boundary = " << boundary << std::endl;
 						}
 
 					}
@@ -541,15 +530,13 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 			}
 			if (contentLength <= 0)
 			{
-				std::cout << " Setting content-length = " << contentLength << std::endl;
 				contentLength = 0;
 			}
-			std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
-			std::cout << " ******** rawPostBody.size() ??? " << rawPostBody.size() << std::endl;
+			// std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
+			// std::cout << " ******** rawPostBody.size() ??? " << rawPostBody.size() << std::endl;
 
 			if(contentLength <= rawPostBody.size())
 			{
-				Logger::log(LC_RED, "REQUEST IS COMPLETE ### 2 !!!!!");			
 				return (requestIsCompleted = true);
 			}	
 			
@@ -567,15 +554,10 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 		
  		if(headerIsCompleted && !justSplit)
 		{
-
-			std::cout << " **************** REACH THE SMALL CHUNK of appending ***************" << std::endl;
 			// append post body
-			std::cout << " length = " << length << std::endl;
-			std::cout << std::endl << "HeaderIsCompleteee ... pushing: " << std::endl;
 			for(size_t i=0; i<length;i++)
 			{	
 				char c = buffer[i];
-				std::cout << c; 
 				rawPostBody.push_back(c);
 			}
 				
@@ -583,19 +565,17 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 
 		if(contentLength == 0)
 		{
-			Logger::log(LC_RED, "888 appendReq() NO CONTENT LENGTH , returning true");			
 			return (requestIsCompleted = true);
 		}
 			
 		else if(contentLength <= rawPostBody.size())
 		{
-			Logger::log(LC_RED, "888 appendReq() REQUEST IS COMPLETE!!!!! #1, conLength < rawSize , returning true");			
 			return (requestIsCompleted = true);
 		}
 			
 
-		std::cout << " IN THIS LOOP, contentLength = " << contentLength << " , rawPostBody = " <<  rawPostBody.size() << std::endl;
-		Logger::log(LC_DEBUG, " 888 appendReq() return DEFAULT false #2 ");
+		// std::cout << " IN THIS LOOP, contentLength = " << contentLength << " , rawPostBody = " <<  rawPostBody.size() << std::endl;
+
 		return (false);
 
 }

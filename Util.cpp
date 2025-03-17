@@ -6,12 +6,13 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:03:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 17:51:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include 	"Util.hpp"
 #include 	<iostream>
+#include 	<fstream>
 #include 	<sstream>
 
 std::string Util::trim(std::string& str)
@@ -147,9 +148,48 @@ std::string	Util::replaceAll(std::string str, std::string const &from , std::str
 
 std::string Util::getFileExtension(std::string const &filePath)
 {
-    size_t dotPos = filePath.find_last_of(".");
+	size_t dotPos = filePath.find_last_of(".");
 	if (dotPos != std::string::npos)
 		return (filePath.substr(dotPos));
 	return "";
 }
 
+
+std::vector<std::string> Util::split(std::string& str, std::string& delimiter) 
+{
+	std::vector<std::string> tokens;
+	size_t prev = 0, pos = 0;
+	while ((pos = str.find(delimiter, prev)) != std::string::npos) 
+	{
+
+		tokens.push_back(str.substr(prev, pos - prev));
+		prev = pos + delimiter.length(); // Move past the delimiter
+	}
+
+	tokens.push_back(str.substr(prev));
+
+	return tokens;
+}
+
+std::string		Util::vectorCharToString(std::vector<char> &v)
+{
+		std::string 	content;
+		content.reserve(v.size());
+		for( std::vector<char>::const_iterator it = v.begin(); it != v.end(); ++it)
+			content.push_back( *it);
+		return (content);
+
+}
+bool	Util::createFile(std::string fullPath , std::string::iterator it, size_t len)
+{
+	std::ofstream outFile(fullPath.c_str(), std::ios::binary);
+	if(!outFile)
+	{
+		return false;
+	}
+	
+	outFile.write( &(*it), len);
+	outFile.close();
+	return (true);
+		
+}

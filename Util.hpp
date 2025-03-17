@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:35:29 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/12 11:03:15 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 17:44:57 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,13 @@ class Util
 
 
 		static  bool 	 strInContainer(std::string const &str, std::vector<std::string> v);
+		static  std::vector<std::string> 	split(std::string &string, std::string &del);
+
+		static  std::string					vectorCharToString(std::vector<char> &v);	
+
+		//static	bool	createFile(std::string fullPath , std::string content, size_t length);			
+		static 		bool	createFile(std::string fullPath , std::string::iterator it, size_t len);
+		//static 		bool	createFile(std::string fullPath , char * const data, size_t len);
 };
 
 #endif

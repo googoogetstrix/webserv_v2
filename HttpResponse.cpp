@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 14:37:20 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 18:07:21 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -734,35 +734,89 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 	std::string boundary = conn->getBoundary();
 	if (boundary.empty())
 		throw RequestException(400, "Bad Request");
-	size_t	bLength = boundary.length();
-	std::string content;
-	content.reserve(conn->getRawPostBody().size() + 1);
-	for( std::vector<char>::const_iterator it = conn->getRawPostBody().begin(); it != conn->getRawPostBody().end(); ++it)
-		content.push_back( *it);
-	size_t start = content.find(boundary);
-	int safeCount = 0;
-	while( start != std::string::npos)
+	std::string content = Util::vectorCharToString(conn->getRawPostBody());
+	size_t	fileCount = 0; // indicate number of actual files received via the form
+	size_t	success = 0;
+
+	
+	std::vector<std::string> tokens = Util::split(content, boundary);
+
+	for(size_t i = 0; i < tokens.size(); ++i)
 	{
-		std::string next = content.substr(start + bLength + 1 );
+		std::cout  << LC_GREEN << tokens[i] << "\n" << LC_RESET << std::endl;
 
-		
-		start = content.find(boundary , start + bLength + 1);
+		std::istringstream		streamLine (tokens[i]);
+		std::string				str; 
 
-		safeCount ++;
-		if(safeCount > 15)
+		std::string		fileName = "";
+		while(std::getline(streamLine, str))
 		{
-			
-			std::cout << " SAFETY BREAK " << std::endl;
-			break;
+			size_t	fileNamePos = str.find("filename=\"");
+			if(str.find("Content-Disposition") == 0 &&  fileNamePos != std::string::npos)
+			{
+				fileNamePos += 10; 
+				size_t len = str.find_last_of("\"");
+				// std::cout << " *** fileNamePos =  " << fileNamePos  << std::endl;
+				// std::cout << " *** len =  " << len  << std::endl;
+				if (len != std::string::npos)
+				{
+					len -= fileNamePos;
+					fileName = str.substr( fileNamePos ,  len); 
+//					std::cout << LC_RED << " *** fileName = " << fileName << LC_RESET << std::endl;
+				}
+			}
 		}
-			
+		if(fileName.empty())
+		{
+			std::cout << LC_YELLOW << " ^ SKIPPING THIS ONE SINCE IT IS NOT attachment" << LC_RESET << std::endl;
+		}
+		else
+		{
+			std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
+			fileCount ++; 
+			std::string ext = Util::extractFileName(fileName);
+			std::map<std::string, std::string> cgis = route->getCGIs();
+			if( cgis.find(ext) !=  cgis.end())
+			{
+				// is one of the CGIs, skip 
+				Logger::log(LC_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
+			}
+			else
+			{
+				Logger::log(LC_GREEN, "SEEMS OK, proceed to create the file");
+				// do create file 
+				// if success counter++
+
+				size_t contentStart = tokens[i].find("\r\n\r\n");
+				if(contentStart != std::string::npos)
+				{
+					contentStart += 4; 
+					std::string	targetFile = route->getRoot() + "/" + fileName;
+
+					if( Util::createFile(targetFile, tokens[i].begin() + contentStart , tokens[i].length() - contentStart - 4))
+					{
+						success ++;
+					}
+				}
+
+				
+
+
+				
+			}
+
+
+		}
 	}
+	// if success > 0 && success != token count  return HTTP 207 , multiple status
+	
+	// "Content-Disposition: form-data; name=\"file1\"; filename=\"s1.txt\""
+	(void)fileCount;
+	
+	Logger::log(LC_RED, "Total File count = %d" , fileCount);
+	if(fileCount != success)
+		throw RequestException(207, "Multi-status");
 
 	
-
-
-	
-
-	
-	throw RequestException(599 , "ME Error");
+	throw RequestException(599 , "Seems OK!");
 }

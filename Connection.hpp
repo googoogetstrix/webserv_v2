@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 14:03:49 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/15 14:55:23 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,8 +112,6 @@ class Connection
 		void 				debug();
 		void 				clear();
 
-
-		int					connID;		
 		std::string			debugText;
 
 		class ParseRequestException: public std::exception
