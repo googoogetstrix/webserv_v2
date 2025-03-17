@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:29:33 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 19:44:19 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,7 +170,7 @@ int Webserv::run(void)
 	// reset the epoll_events array
 	memset( events, 0 , sizeof(events));
 
-	debugConfig( serverConfigs[0]);
+	debugConfig( serverConfigs[2]);
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
@@ -220,8 +220,6 @@ int Webserv::run(void)
 	while (true) 
 	{
 
-			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
-				break; 
 		
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
 			// no effected fds, but happens from timeout
@@ -319,6 +317,10 @@ int Webserv::run(void)
 				}
 			}
 			connectionController.purgeExpiredConnections();
+
+			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
+				break; 
+
 	}
 	// this won't be reached anyway 
 	close(epoll_fd);

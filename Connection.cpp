@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:35:44 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 19:43:51 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -289,8 +289,11 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 		HttpResponse httpResponse;
 		Logger::log(LC_YELLOW, "Inside processRequest()");
-	
+		std::cout << "========================" <<std::endl;
 
+		route->debug();
+		std::cout << "========================" <<std::endl;
+		
 		// try check all the error could possibly happen
 
 		// 400 Bad request
@@ -314,10 +317,26 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		
 		std::string path = httpRequest.getPath();		
 		std::string method = httpRequest.getMethod();
+		
 		// check for malicious request, contains .. which could lead to exposing
 		if (path.find("..") != std::string::npos )		
 			throw RequestException(400, "Bad Request");
-		
+
+		// check for redirection (directive return)	
+		if(route->getReturnStatus() != 0)
+		{
+			int statusCode = route->getReturnStatus();
+			// is one of the redirections
+			if(statusCode >= 300 and statusCode <= 399)
+			{
+				if(!route->getReturnValue().empty())
+					throw RequestException(statusCode , route->getReturnValue());
+			}
+			throw RequestException(statusCode , "");
+
+		}
+
+
 		// check for allowed methods
 		std::vector<std::string> allowedMethods = route->getMethods();		
 		Logger::log(LC_MINOR_NOTE, " method from header = %s" , method.c_str());
@@ -339,20 +358,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 		if(!test.empty() && Util::toSizeT(test) > maxSize)
 			throw RequestException(413, "Request too large");	
-
-		// check for redirection (directive return)	
-		if(route->getReturnStatus() != 0)
-		{
-			int statusCode = route->getReturnStatus();
-			// is one of the redirections
-			if(statusCode >= 300 and statusCode <= 399)
-			{
-				if(!route->getReturnValue().empty())
-					throw RequestException(statusCode , route->getReturnValue());
-			}
-			throw RequestException(statusCode , "");
-
-		}
 
 
 

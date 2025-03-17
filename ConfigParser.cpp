@@ -81,7 +81,7 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
     ServerConfig currentServerConfig;
     std::string line;
     std::string currentLocation;
-
+ 
     while (std::getline(file, line))
     {
 		line = trim(line);
@@ -89,7 +89,7 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
             continue ;
         if (line == "}")
             return currentServerConfig;
-        if (line.find("server") == 0 && line.find("server_name") != 0)
+        if (line.find("server_name") != 0 && line.find("server") == 0)
             continue ;
         else if (line.find("listen") == 0 && line.length() > 7)
             currentServerConfig.setPort(stringToInt(line.substr(7)));
