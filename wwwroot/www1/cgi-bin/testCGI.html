@@ -3,22 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Registration</title>
+    <title>CGI test</title>
     <link rel="stylesheet" href="CGI-style.css">
-	<script>
-        function handleAvatarSelection(event) {
-            const selectedAvatar = event.target.value;
-            console.log("Selected avatar:", selectedAvatar);
-            // Perform any additional actions when an avatar is selected
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const avatarRadios = document.querySelectorAll('input[name="avatar"]');
-            avatarRadios.forEach(function(radio) {
-                radio.addEventListener("change", handleAvatarSelection);
-            });
-        });
-    </script>
+	
 </head>
 <body>
     <div class="form-container">
@@ -56,7 +43,7 @@
     <div class="form-container">
         <h1>GET method</h1>
         <h1>Table Generator Form</h1>
-        <form action="/cgi-bin/generateTable.py" method="GET">
+        <form action="generateTable.py" method="GET">
             <label for="rows">Number of Rows:</label>
             <input type="number" id="rows" name="rows" min="1" required><br><br>
 
@@ -69,5 +56,29 @@
             <input type="submit" value="Generate Table">
         </form>
     </div>
+    <script>
+        
+        let isColorPickerOpen = false;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const colorPicker = document.getElementById('color');
+            const allSubmitButtons = document.querySelectorAll('input[type="submit"]');
+
+            colorPicker.addEventListener("mousedown", function() {
+                isColorPickerOpen = true;
+                allSubmitButtons.forEach(button => {
+                    button.disabled = true;
+                });
+                console.log("Dialog opened");
+            });
+
+            colorPicker.addEventListener("change", function() {
+                isColorPickerOpen = false;
+                allSubmitButtons.forEach(button => {
+                    button.disabled = false;
+                });
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,22 +3,16 @@
 import cgi
 import cgitb
 
-# Enable error reporting
 cgitb.enable()
-
-# Get form data
 form = cgi.FieldStorage()
 
-# Get the number of rows, columns, and cell color from the form data
 rows = int(form.getvalue("rows", 5))
 columns = int(form.getvalue("columns", 5))
-color = form.getvalue("color", "#FF0000")  # Default to white if no color is provided
+color = form.getvalue("color", "#FF0000")
 
-# Generate HTTP response headers
-print("Content-Type: text/html")
-print()
+print("Content-Type: text/html\n")
 
-# Generate HTML content
+print("<!DOCTYPE html>")
 print("<html>")
 print("<head>")
 print("<title>Generated Table</title>")
@@ -36,7 +30,7 @@ print("</head>")
 print("<body>")
 print("<h1>Generated Table</h1>")
 
-# Generate the table
+
 print("<table>")
 for r in range(rows):
     if r % 2 == 1:
