@@ -81,6 +81,15 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 	size_t		max = 0;
 	RouteConfig *returnRoute = NULL;
 
+	// find the exact match and return if found first, 
+	// DO NOT USE find() here!
+	for( std::map<std::string,RouteConfig>::iterator  it = routes.begin(); it != routes.end(); ++it)
+	{
+		if(it->first == path)
+			return &(it->second);
+	}
+		
+
 	for(std::map<std::string,RouteConfig>::iterator it = routes.begin(); it != routes.end(); ++it)
 	{
 		// set default matching to first route found , WHICH requires to be /
@@ -92,12 +101,13 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 			return &(it->second);
 
 		std::string loc = it->first;
-		if ( loc[loc.size() - 1] != '/')
-			loc += "/";
+		// if ( loc[loc.size() - 1] != '/')
+		// 	loc += "/";
 		
-		if (path.find(loc) != std::string::npos)
+		if (path.find(loc) == 0)
 		{
 			size_t matchedLength = Util::charactersMatched(path, loc);
+			// std::cout <<  "for path " << path << ", loc " << loc << "  matchedLength  " << matchedLength << std::endl;
 			
 			if(matchedLength > max)
 			{
@@ -107,6 +117,11 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 		}
 	}
 	// std::cout << "returning << _" << returnRoute << "_" << std::endl;
+	// Logger::log(LC_RED, " SOMEWHAT MATCH, returning %s" , path.c_str());
+	// Logger::log(LC_YELLOW, " INSIDE ME");
+	// returnRoute->debug();
+	// Logger::log(LC_YELLOW, " INSIDE ME");
+
 	return returnRoute;
 }
 
@@ -132,8 +147,12 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		std::string lastClose = "/";
 		// std::cout << " filename _" << filename << "_" << std::endl;
 		// std::cout << " hasTrailingSlash() _" <<  (Util::hasTrailingSlash(original) ? "TRUE":"FALSE") << "_" << std::endl;
-		if (original != "/" && Util::hasTrailingSlash(original) && filename.empty())
-			lastClose = "";
+		
+		
+		// if (original != "/" && Util::hasTrailingSlash(original) && filename.empty())
+		// 	lastClose = "";
+
+
 		// std::cout << " lastClose _" << lastClose << "_" << std::endl;
 		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + lastClose);	
 		// std::cout << " AFTER REPLACE = " << localPath << std::endl;
