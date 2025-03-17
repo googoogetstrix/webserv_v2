@@ -89,9 +89,8 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
             continue ;
         if (line == "}")
             return currentServerConfig;
-        if (line.find("server") == 0)
-            continue ;
-        else if (line.find("listen") == 0 && line.length() > 7)
+        
+        if (line.find("listen") == 0 && line.length() > 7)
             currentServerConfig.setPort(stringToInt(line.substr(7)));
         else if (line.find("server_name") == 0 && line.length() > 12)
             currentServerConfig.setServerName(line.substr(12));
@@ -124,6 +123,8 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
            // routeConfig.debug();
             currentServerConfig.addRoute(routeConfig);
         }
+        else if (line.find("server") == 0)
+            continue ;
     }
     return currentServerConfig;
 }
@@ -168,6 +169,7 @@ std::vector<ServerConfig> ConfigParser::parseAllConfigs(const std::string& confi
                 // throw std::runtime_error("Invalid server configuration");
                 continue ;
             }
+            serverConfig.debug();
             serverConfigs.push_back(serverConfig);
         }
     }
