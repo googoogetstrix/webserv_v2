@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 15:11:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:18:01 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -338,7 +338,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		maxSize *= WEBS_MB;
 
 		if(!test.empty() && Util::toSizeT(test) > maxSize)
-			throw RequestException(415, "Request too large");	
+			throw RequestException(413, "Request too large");	
 
 		// check for redirection (directive return)	
 		if(route->getReturnStatus() != 0)

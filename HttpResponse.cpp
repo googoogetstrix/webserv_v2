@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 18:07:21 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:31:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,9 @@ std::string HttpResponse::getStatusText(int statusCode)
 			return "Length required";	
 		case 413:
 			return "Payload Too Large";
+		case 415:
+			return "Unsupported Media Type";
+		
 		case 500:
 			return "Internal Server Error";
 		case 503:
@@ -748,6 +751,9 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 		std::istringstream		streamLine (tokens[i]);
 		std::string				str; 
 
+
+		//std::cout << "clien max size = " <<  route->getClientMaxBodySize() * WEBS_MB << std::endl;
+
 		std::string		fileName = "";
 		while(std::getline(streamLine, str))
 		{
@@ -774,22 +780,46 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 		{
 			std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
 			fileCount ++; 
-			std::string ext = Util::extractFileName(fileName);
-			std::map<std::string, std::string> cgis = route->getCGIs();
+			std::string	targetFile = route->getRoot() + "/" + fileName;
+			if(Util::fileExists(targetFile))
+			{
+				Logger::log(LC_NOTE, " filename %s is already exists", targetFile.c_str());
+				throw RequestException(403, "Forbidden");
+
+			}
+
+			std::string ext = Util::getFileExtension(fileName);
+			std::cout << " ext = " << ext  << std::endl;
+			// std::map<std::string, std::string> cgis = route->getCGIs();
+			std::map<std::string, std::string> cgis = conn->getServerConfig().getAllRouteCGIs();
+
+
+			for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
+			{
+				std::cout << " - server cgi = " << it->first << std::endl;
+			}
+
+
 			if( cgis.find(ext) !=  cgis.end())
 			{
 				// is one of the CGIs, skip 
 				Logger::log(LC_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
+				throw RequestException(415, "Unsupported Media Type");
 			}
 			else
 			{
 				Logger::log(LC_GREEN, "SEEMS OK, proceed to create the file");
+				
 				// do create file 
 				// if success counter++
 
 				size_t contentStart = tokens[i].find("\r\n\r\n");
 				if(contentStart != std::string::npos)
 				{
+					size_t 	actualSize = tokens[i].size() - contentStart - 4;
+					if(actualSize > route->getClientMaxBodySize() * WEBS_MB)
+						throw RequestException(413, "Payload Too Large");
+
 					contentStart += 4; 
 					std::string	targetFile = route->getRoot() + "/" + fileName;
 
@@ -814,9 +844,11 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 	(void)fileCount;
 	
 	Logger::log(LC_RED, "Total File count = %d" , fileCount);
+	if(fileCount == 0)
+		throw RequestException(400, "Bad Request");
 	if(fileCount != success)
 		throw RequestException(207, "Multi-status");
 
 	
-	throw RequestException(599 , "Seems OK!");
+	throw RequestException(201 , "Seems OK!");
 }

@@ -57,7 +57,7 @@ class ServerConfig
 		std::string getNick();
 		RouteConfig 	*findRoute(std::string path);
 		bool			resolveRoute(HttpRequest &httpRequest, RouteConfig &route, std::string &localPath , bool &allowDirectoryListing);
-
+		std::map<std::string,std::string>  getAllRouteCGIs(); 
 
 		void debug() const;
 

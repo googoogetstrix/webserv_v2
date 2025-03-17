@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:35:29 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 17:44:57 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:17:19 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # define 	UTIL_HPP 
 # include 	<iostream>
 # include 	<vector>
-
+# include	<sys/stat.h>
 class Util
 {
 	public: 
@@ -42,6 +42,7 @@ class Util
 
 		//static	bool	createFile(std::string fullPath , std::string content, size_t length);			
 		static 		bool	createFile(std::string fullPath , std::string::iterator it, size_t len);
+		static		bool	fileExists(std::string const &fullPath);
 		//static 		bool	createFile(std::string fullPath , char * const data, size_t len);
 };
 

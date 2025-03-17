@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 17:51:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:17:25 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,6 +180,15 @@ std::string		Util::vectorCharToString(std::vector<char> &v)
 		return (content);
 
 }
+
+bool Util::fileExists(std::string const &fullPath)
+{
+	 struct stat buffer;
+	 return (stat(fullPath.c_str(), &buffer) == 0);
+	
+}
+
+
 bool	Util::createFile(std::string fullPath , std::string::iterator it, size_t len)
 {
 	std::ofstream outFile(fullPath.c_str(), std::ios::binary);
