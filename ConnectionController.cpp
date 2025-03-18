@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:40:08 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/18 13:04:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,14 +111,6 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 	if(conn->getHeaderIsComplete() && conn->getRequestIsComplete())
 		return (true);
 	
-	// std::cout << "\n\n\n\n" << std::endl;
-	// conn->debug();
-	// std::cout << "\n\n\n\n" << std::endl;
-	
-					
-
-	// Logger::log(LC_RED, " DEL ME , overwriting readBufferSize");
-	// bufferSize = 20;
 	(void)event;
 	
 	
@@ -131,7 +123,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 				{
 					
 					int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
-					Logger:: log(LC_RED, " on socket#%d , bytesRead = %d" , conn->getSocket(), bytesRead);
+					Logger:: log(LC_NOTE, " on socket#%d , bytesRead = %d" , conn->getSocket(), bytesRead);
 
 
 					if(bytesRead == 0)
@@ -148,7 +140,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 							closeConnection(conn->getSocket());
 							return (false);
 						}
-						Logger::log(LC_RED, " EAGAIN or EWOULDBLOCK detected");
+						Logger::log(LC_MINOR_NOTE, " EAGAIN or EWOULDBLOCK detected");
 						return (false);	
 					}
 
@@ -156,25 +148,17 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 					if(conn->appendRequestBuffer(buffer , bytesRead, rawServers))
 					{
 
-						std::cout << " *** DONE *** " << std::endl;
-						std::cout << " ********* REQUEST_BUFFER_LENGTH = " << conn->getRequestBuffer().length() << std::endl;
 						HttpRequest httpRequest;
 						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
-						//httpRequest.debug();
-
 						conn->processRequest(httpRequest);
 						Logger::log(LC_YELLOW, "processRequest() is done!");
 						if(handleWrite(conn->getSocket()))
 						{
-							Logger::log(LC_RED, " FRI - DONE RESPONDING");
+							Logger::log(LC_MINOR_NOTE, " FRI - DONE RESPONDING");
 							closeConnection(conn->getSocket());
 							return true;
 						}
-						else 
-						{
-							Logger::log(LC_RED, " FRI - *** NOT DONE RESPONDING");
-							
-						}							
+						
 						
 						
 					}
