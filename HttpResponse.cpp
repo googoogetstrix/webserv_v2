@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:31:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/18 11:02:16 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -731,6 +731,7 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 {
 
 	Logger::log(LC_RED, " Inside handleUploadedFiles()");
+
 	httpRequest.debug();
 	route->debug();
 	
@@ -780,7 +781,8 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 		{
 			std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
 			fileCount ++; 
-			std::string	targetFile = route->getRoot() + "/" + fileName;
+			std::string	targetFile = route->getUploadStore() + "/" + fileName;
+			std::cout << " targetFile = " << targetFile << std::endl;
 			if(Util::fileExists(targetFile))
 			{
 				Logger::log(LC_NOTE, " filename %s is already exists", targetFile.c_str());
@@ -821,7 +823,7 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 						throw RequestException(413, "Payload Too Large");
 
 					contentStart += 4; 
-					std::string	targetFile = route->getRoot() + "/" + fileName;
+					std::string	targetFile = route->getUploadStore() + "/" + fileName;
 
 					if( Util::createFile(targetFile, tokens[i].begin() + contentStart , tokens[i].length() - contentStart - 4))
 					{
@@ -847,7 +849,7 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 	if(fileCount == 0)
 		throw RequestException(400, "Bad Request");
 	if(fileCount != success)
-		throw RequestException(207, "Multi-status");
+		throw RequestException(201, "Created");
 
 	
 	throw RequestException(201 , "Seems OK!");
