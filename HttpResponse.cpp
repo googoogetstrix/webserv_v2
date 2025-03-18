@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:31:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/18 10:08:15 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -330,8 +330,20 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 
 	std::ostringstream html;
 	html << "<!DOCTYPE html>" << std::endl;
-	// <link href='css/style.css' rel='stylesheet'>
-	html << "<html><head><title>Directory Listing</title></head><body>" << std::endl;
+	html << "<html><head><title>Directory Listing</title>" << std::endl;
+    html << "<style>" << std::endl;
+    html << "body { font-family: Arial, sans-serif; background-color: #121212; color: #f5f5f5; margin: 0; padding: 0; }" << std::endl;
+    html << ".container { max-width: 800px; margin: 2rem auto; padding: 1rem; background-color: #1e1e1e; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }" << std::endl;
+    html << "h1 { font-size: 2rem; text-align: center; margin-bottom: 1rem; color: #f5f5f5; }" << std::endl;
+    html << "ul { list-style: none; padding: 0; }" << std::endl;
+    html << "ul li { padding: 0.5rem 1rem; border-bottom: 1px solid #333; transition: background-color 0.3s ease; }" << std::endl;
+    html << "ul li:last-child { border-bottom: none; }" << std::endl;
+    html << "ul li a { text-decoration: none; color: #4dabf7; font-weight: bold; transition: color 0.3s ease; }" << std::endl;
+    html << "ul li a:hover { color: #82caff; }" << std::endl;
+    html << "ul li:hover { background-color: #2a2a2a; }" << std::endl;
+    html << "</style>" << std::endl;
+    html << "</head><body>" << std::endl;
+    html << "<div class=\"container\">" << std::endl;
 	html << "<h1>Directory Listing for " << relativePath << "</h1>" << std::endl;
 	html << "<ul>" << std::endl;
 
@@ -360,7 +372,7 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
     }
 
 	html << "</ul>" << std::endl;
-	html << "</body></html>" << std::endl;
+	html << "</div></body></html>" << std::endl;
 
 	closedir(dir);
 
