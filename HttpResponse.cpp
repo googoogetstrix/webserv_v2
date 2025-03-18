@@ -6,7 +6,7 @@
 /*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/18 10:08:15 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/18 10:50:01 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,26 +350,40 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	html << "<li><a href=\"..\">.. (UP)</a></li>" << std::endl;
 	
 	struct dirent* entry;
+	rewinddir(dir);
 	while ((entry = readdir(dir)) != NULL)
-    {
-        std::string name = entry->d_name;
-        if (name != "." && name != "..")
-        {
-            std::string fullPath = path + "/" + name;
-            struct stat s;
-            if (stat(fullPath.c_str(), &s) == 0)
-            {
-                if (s.st_mode & S_IFDIR)
-                {
-                    html << "<li><a href=\"" << relativePath << name << "/\">&#128193; " << name << "</a></li>" << std::endl;
-                }
-                else
-                {
-                    html << "<li><a href=\"" << relativePath << name << "\">&#128196; " << name << "</a></li>" << std::endl;
-                }
-            }
-        }
-    }
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+		{
+			std::string fullPath = path + "/" + name;
+			struct stat s;
+			if (stat(fullPath.c_str(), &s) == 0)
+			{
+				if (s.st_mode & S_IFDIR)
+				{
+					html << "<li><a href=\"" << relativePath << name << "/\">&#128193; " << name << "</a></li>" << std::endl;
+				}
+			}
+		}
+	}
+	rewinddir(dir);
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+		{
+			std::string fullPath = path + "/" + name;
+			struct stat s;
+			if (stat(fullPath.c_str(), &s) == 0)
+			{
+				if (!(s.st_mode & S_IFDIR))
+				{
+					html << "<li><a href=\"" << relativePath << name << "\">&#128196; " << name << "</a></li>" << std::endl;
+				}
+			}
+		}
+	}
 
 	html << "</ul>" << std::endl;
 	html << "</div></body></html>" << std::endl;
