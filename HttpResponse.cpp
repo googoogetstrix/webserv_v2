@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:31:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/18 17:04:04 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -398,7 +398,6 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	std::string accept = "HTTP_ACCEPT=" + request.getHeader("Accept");
 	std::string status = "REDIRECT_STATUS=200";
 	std::string uploadDir = "UPLOAD_DIR=/tmp";
-	
 
 	char * envp[] = {	
 		const_cast<char *>(method.c_str()),
