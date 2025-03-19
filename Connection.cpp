@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 16:29:16 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 17:36:16 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config)
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
 	setNonBlock();
 	rawPostBody.clear();
-	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
+	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
 
 }
 Connection::~Connection()
@@ -235,19 +235,14 @@ ServerConfig		&Connection::getServerConfig()
 
 bool	Connection::processRequest(HttpRequest &httpRequest)
 {
-		Logger::log(LC_RED, "0 process request");
-		Logger::log(LC_RED, "1# parse header string of %d bytes", requestBuffer.size());
-		Logger::log(LC_YELLOW, "Inside processRequest()");
+		Logger::log(LC_MINOR_NOTE, " processRequest ");
+		
 		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
 		HttpResponse httpResponse;
-		Logger::log(LC_YELLOW, "Inside processRequest()");
-		std::cout << "========================" <<std::endl;
 
-		route->debug();
-		std::cout << "========================" <<std::endl;
 		
 		// try check all the error could possibly happen
 
@@ -321,9 +316,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!serverConfig.resolveRoute(httpRequest, *route, localPath , allowDirectoryBrowsing))
 			throw RequestException(403, "Forbidden");
 
-		Logger::log(LC_NOTE, "Request seems OK so far");	
-		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
-
+		Logger::log(LC_MINOR_NOTE, "Request seems OK so far");	
 		
 		std::string requestPathContainFile = Util::extractFileName( localPath, true);
 		std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
@@ -350,13 +343,13 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		else if(!cmd.empty())
 		{
 			// is CGI
-			Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
+			Logger::log(LC_MINOR_NOTE, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
 			httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
-			Logger::log(LC_RED, "DONE CGI STUFF??");
+			Logger::log(LC_MINOR_NOTE, "DONE CGI STUFF??");
 		}
 		else if(!requestPathContainFile.empty())
 		{
-			Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());				
+			Logger::log(LC_MINOR_NOTE, "%s is static file ", localPath.c_str());				
 			httpResponse.getStaticFile(localPath);
 		}
 		else if(allowDirectoryBrowsing)
@@ -370,7 +363,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 
 			
-		Logger::log(LC_DEBUG, "Response is ready!");
+		Logger::log(LC_MINOR_NOTE, "Response is ready!");
 		ready(httpResponse, true);
 		
 		return (true);
@@ -496,7 +489,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 
 					if((line_stream >> hostName))
 					{	
-						Logger::log(LC_RED, " HOSTNAME = %s ", hostName.c_str());
+						Logger::log(LC_MINOR_NOTE, " HOSTNAME = %s ", hostName.c_str());
 
 						for( std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
 						{
@@ -504,7 +497,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 							std::string serverNamePort = it->getServerName() + ":" + Util::toString( it->getPort());
 							if (serverNamePort.find(hostName) != std::string::npos)
 							{
-								Logger::log (LC_RED,"OVERWRITING SERVER CONFIG WITH %s" , it->getServerName().c_str());
+								Logger::log (LC_MINOR_NOTE,"OVERWRITING SERVER CONFIG WITH %s" , it->getServerName().c_str());
 								serverConfig = *it; 
 
 							}
@@ -590,7 +583,7 @@ void Connection::debug()
 
 void Connection::clear()
 {
-	std::cout << " MAGIC CLEAR!" << std::endl;
+	// std::cout << " MAGIC CLEAR!" << std::endl;
 	rawPostBody.clear();
 	isReady = false;
 	headerIsCompleted = false;
