@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:17:47 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:45:18 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -535,7 +535,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 				elapsed_time += 100;
 				if (elapsed_time >= CGI_TIMEOUT * 1000)
 				{
-					std::cerr << "Error: CGI script timed out" << std::endl;
+					// std::cerr << "Error: CGI script timed out" << std::endl;
 					kill(pid, SIGKILL);
 					timed_out = true;
 					break ;
@@ -543,7 +543,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			}
 			else if (result == -1)
 			{
-				std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
+				// std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
 				close(pipe_stdout[0]);
 				throw RequestException(500,"Internal Server Error");
 			}
