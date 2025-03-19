@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 20:02:57 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 17:44:14 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,12 +153,8 @@ size_t HttpRequest::preprocessContentLength(std::string requestString,std::strin
 bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestString)
 {
 
-	std::cout << "CALLING httpRequest::parseRequestHeaders() " << std::endl;
-	// std::cout << "raw param: " << requestString << std::endl;
 	std::istringstream requestStream(requestString);
 	std::string line;
-	// std::cout << " ***** line = _" << line << "_" << std::endl;
-
 	if (std::getline(requestStream, line))
 	{
 		std::istringstream lineStream(line);
@@ -169,8 +165,6 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		{
 			Logger::log(LC_DEBUG, "parseRequestHeader throws 400");
 			throw RequestException(400, "Bad Request");
-			// response.setStatus(400);
-			return false;
 		}
 		{	// prevent url injection with ".." which allows the web server to go further back than webroots
 			size_t dotdotPos = rawPathStr.find("..");
@@ -178,8 +172,6 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 			{
 				Logger::log(LC_DEBUG, "malicious throws 400");
 				throw RequestException(400, "Bad Request");
-				// response.setStatus(400);
-				return false;
 			}
 		}
 		setMethod(methodStr);

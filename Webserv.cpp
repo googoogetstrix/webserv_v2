@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:44:19 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:16:22 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,6 @@
 #include "Logger.hpp"
 
 class Logger; 
-
-static void debugConfig(ServerConfig server);
 
 Webserv::Webserv()
 {
@@ -88,18 +86,13 @@ bool Webserv::setupSockets(ConnectionController& cc)
 	{
 		int	current_port = it->getPort();
 
-		std::cout << "XXXXX " << it->getServerName() << "XXXXX" << std::endl; 
 		cc.addRawServer(*it);
 		if (used_ports.find(current_port) != used_ports.end())
 		{
-			Logger::log(LC_YELLOW, "NOTE port#%d is already bound",  current_port);
+			Logger::log(LC_MINOR_NOTE, "NOTE port#%d is already bound",  current_port);
 			continue;
 		} 
 
-		
-		
-		
-		
 		try 
 		{
 			// setting sockets
@@ -158,7 +151,7 @@ int Webserv::run(void)
 {
 	ConnectionController cc;
 
-	Logger::log(LC_GREEN, "Booting up webserv...");
+	Logger::log(LC_INFO, "Booting up webserv...");
 	setupSockets(cc);
 
 	// setting up epoll
@@ -169,8 +162,6 @@ int Webserv::run(void)
 	struct epoll_event		events[WEBS_MAX_EVENTS];
 	// reset the epoll_events array
 	memset( events, 0 , sizeof(events));
-
-	debugConfig( serverConfigs[2]);
 	
 	// adding the server fds into the epoll_events
 	int ctr = 0; 
@@ -183,40 +174,14 @@ int Webserv::run(void)
 		ctr ++;
 
 	}
-	Logger::log(LC_GREEN, "Webserv booted succesfully...");
+	Logger::log(LC_INFO, "Webserv booted succesfully...");
+	Logger::log(LC_INFO, "Pending for incoming request...");
 
 
 	HttpResponse 	httpResponse; 
 	HttpRequest 	httpRequest;
 
-
-	// cc.openConnection(3, serverConfigs[0]);
-	// cc.openConnection(4, serverConfigs[0]);
-	// cc.openConnection(5, serverConfigs[0]);
-
-	// Connection *conn = cc.findConnection(3);
-	// conn->debugText = "";
-
-	// char  buff[100];
-	// buff[0] = '1';
-	// buff[1] = '2';
-	// buff[2] = '3';
-
-	// for(int i =0; i <=5;i++)
-	// {
-	// 	Connection *conn = cc.findConnection(3);
-	// 	conn->debugText += "XXXX";
-	// 	conn->appendRawPostBody(buff , 3);
-	// }
-
-	// conn = cc.findConnection(3);
-	// std::cout << "out of loop: " << conn->debugText << std::endl;
-	// std::cout << "rawPostBody = " << std::string(conn->getRawPostBody().data()) << std::endl;
-	// std::cout << " DIE ME! " << std::endl;
-	// _exit(1);
-
 	time_t serviceExpires = time(0) + 10;
-
 	while (true) 
 	{
 
@@ -229,12 +194,11 @@ int Webserv::run(void)
 			if(nfds == -1)
 				throw std::runtime_error("epoll_wait error");
 
-			// Logger::log(LC_GREEN, " *** nfds effected from epoll_wait = %d" , nfds);
 			for (int i=0;i<nfds;i++)
 			{
 				int			active_fd = events[i].data.fd;
 				ServerConfig *server = cc.getServer(events[i].data.fd);
-				Logger::log(LC_NOTE, "epoll event on fd#%d!" , active_fd);
+				Logger::log(LC_MINOR_NOTE, "epoll event on fd#%d!" , active_fd);
 				
 				if (isServerSocket(active_fd))
 				{
@@ -270,8 +234,6 @@ int Webserv::run(void)
 						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
 							throw std::runtime_error("Unable to set client socket into non-blocking mode");
 						cc.openConnection(client_socket, *server);
-						
-						
 						continue;
 					}
 					// end server fds
@@ -317,7 +279,6 @@ int Webserv::run(void)
 				}
 			}
 			connectionController.purgeExpiredConnections();
-
 			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
 				break; 
 
@@ -339,41 +300,3 @@ ConnectionController &Webserv::getConnectionController()
 	return connectionController;
 }
 
-static  void debugConfig(ServerConfig server)
-{
-	Logger::log(LC_DEBUG, "REMOVE ME!!!!");
-	return ;
-
-	HttpRequest req;
-	req.setMethod("GET");
-
-	server.debug();
-	RouteConfig *route;
-	
-
-	std::vector<std::string> tests;
-	tests.push_back("/");
-	tests.push_back("/uploads");
-	tests.push_back("/uploads/");
-
-
-	for(size_t i = 0 ; i < tests.size(); i ++)
-	{
-		route = server.findRoute(req.getPath());
-		// route->debug();
-		req.setPath( tests[i] );
-
-		bool allowDirectoryListing = false;
-		std::string localPath = "";
-
-		std::cout << "input path = " << tests[i] << "\n" << std::endl; 
-		
-		server.resolveRoute(req, *route, localPath, allowDirectoryListing );
-		std::cout << "localPath = " << localPath << std::endl;
-		std::cout << "allowDirectoryListing = " << allowDirectoryListing << std::endl;
-		std::cout << "===========================\n" << std::endl;
-	}
-
-	_exit(1);
-
-}

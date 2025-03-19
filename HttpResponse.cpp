@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 17:16:51 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:45:18 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,7 +206,7 @@ std::string HttpResponse::serialize()
 	oss << "\r\n" << body ;
 
 	std::string color = (status >= 400) ? LC_RES_NOK_LOG : LC_RES_OK_LOG;
-	Logger::log(color, "[RESPOND] %d - %s " , status, getStatusText(status).c_str() );
+	Logger::log(color, "[RESPOND]\t%d - %s " , status, getStatusText(status).c_str() );
 
 	if (WEBS_DEBUG_RESPONSE)
 	{
@@ -263,14 +263,14 @@ std::string HttpResponse::getMimeType(const std::string & extension)
 
 bool	HttpResponse::getStaticFile(std::string const &filePath )
 {
-	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
+	Logger::log(LC_MINOR_NOTE, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{		
 		struct stat fileStat;
 
-		Logger::log(LC_DEBUG, " getStaicFile ==> filePath = %s" , filePath.c_str());
+		Logger::log(LC_MINOR_NOTE, " getStaticFile ==> filePath = %s" , filePath.c_str());
 		if (stat(filePath.c_str(), &fileStat) != 0)
 		{
 			if (errno == ENOENT)
@@ -403,7 +403,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	(void)route;
 	// const char *scriptPath = "processPlayer.py";
 
-	std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
+	// std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
 
 	if(!Util::fileExists(scriptFile))
 		throw RequestException(404, "File not found");
@@ -486,11 +486,6 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
 			exit(errno) ;
 		}
-		// if (dup2(pipe_stdout[1], STDERR_FILENO) == -1)
-		// {
-		// 	std::cerr << "Error redirecting stderr: " << strerror(errno) << std::endl;
-		// 	exit(errno) ;
-		// }
 		close(pipe_stdout[0]);
 		close(pipe_stdout[1]);
 		if (execve(argv[0], argv, envp) == -1)
@@ -524,47 +519,12 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		while (true)
         {
             ssize_t bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
-			// if (bytesRead > 0)
-			// {
-			// 	buffer[bytesRead] = '\0';
-			// 	output += std::string(buffer);
-			// }
-			// else if (bytesRead == 0)
-			// 	break;
-			// else if (bytesRead < 0 && errno != EAGAIN)
-			// {
-			// 	std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
-			// 	close(pipe_stdout[0]);
-			// 	throw RequestException(500,"Internal Server Error");
-			// }
 			while (bytesRead > 0)
 			{
 				buffer[bytesRead] = '\0';
 				output += std::string(buffer);
 				bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
 			}
-			// else if (bytesRead < 0)
-            // {
-            //     if (errno == EAGAIN)
-            //     {
-            //         // No data available, try again later
-            //         usleep(100000); // Sleep for 100 milliseconds
-            //         elapsed_time += 100;
-            //         if (elapsed_time >= CGI_TIMEOUT * 1000)
-            //         {
-            //             std::cerr << "Error: CGI script timed out" << std::endl;
-            //             kill(pid, SIGKILL); // Terminate the child process
-            //             timed_out = true;
-            //             break;
-            //         }
-            //     }
-            //     else
-            //     {
-            //         std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
-            //         close(pipe_stdout[0]);
-            //         throw RequestException(500, "Internal Server Error");
-            //     }
-            // }
 
 			// Wait for the child process to finish
 			int status;
@@ -575,7 +535,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 				elapsed_time += 100;
 				if (elapsed_time >= CGI_TIMEOUT * 1000)
 				{
-					std::cerr << "Error: CGI script timed out" << std::endl;
+					// std::cerr << "Error: CGI script timed out" << std::endl;
 					kill(pid, SIGKILL);
 					timed_out = true;
 					break ;
@@ -583,7 +543,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			}
 			else if (result == -1)
 			{
-				std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
+				// std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
 				close(pipe_stdout[0]);
 				throw RequestException(500,"Internal Server Error");
 			}
@@ -651,8 +611,7 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 		if( token >> headerName >> headerValue) 
 		{
 			headerName = headerName.substr(0 , headerName.length() - 1);
-			std::cout << " _" << headerName << "_ , _" << headerValue << "_ " << std::endl;
-
+			// std::cout << " _" << headerName << "_ , _" << headerValue << "_ " << std::endl;
 			if(headerName == "Status")
 			{
 				setStatus(Util::toInt(headerValue));
@@ -660,67 +619,33 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 				setHeader(headerName, headerValue, false);
 			else 
 				setHeader(headerName, headerValue, true);
-			
-
 		}
 	}
-
-
 	setBody( output.substr(splitPos + sepLength, length - (splitPos + sepLength)));
 	return 200; 	
-
 }
 
 
 int 	HttpResponse::autoResponseHeader(HttpRequest &httpRequest)
 {
 		int	effected = 0;
-		Logger::log(LC_YELLOW, " Inside autoResponseHeader ... ");
+		Logger::log(LC_MINOR_NOTE, " Inside autoResponseHeader ... ");
 		for(std::map<std::string,std::string>::const_iterator it = httpRequest.getHeader().begin(); it != httpRequest.getHeader().end(); ++it)
 		{
 			if(Util::trim(it->first) == "Cookie")
 			{
 				setHeader("Set-Cookie" , it->second, false);
-				Logger::log(LC_YELLOW, "\t - setting %s ", it->second.c_str());
+				Logger::log(LC_MINOR_NOTE, "\t - setting %s ", it->second.c_str());
 				effected++;
 			}
-
-				
 		}
-		Logger::log(LC_YELLOW, "%d headers added", effected);
+		Logger::log(LC_MINOR_NOTE, "%d headers added", effected);
 		return effected;
 
 	
 }
 
 
-// bool	HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
-// {
-// 	std::ifstream file(filePath.c_str());
-// 	struct stat fileStat;
-// 	if (!file.is_open())
-// 	{		
-// 		if (stat(filePath.c_str(), &fileStat) != 0)
-// 		{
-// 			if (errno == ENOENT)
-// 				throw RequestException(404, "File not found");
-// 			else if (errno == EACCES)
-// 				throw RequestException(403, "Forbidden");
-// 			else
-// 				throw RequestException(405, "Method not allowed");
-// 		}
-// 		return false;
-// 	}
-
-// 	if (isFileOnly)
-// 	{
-// 		std::cout << " IS FILE ONLY " << std::endl;
-// 	    return S_ISREG(fileStat.st_mode);
-// 	}
-		
-
-// 	return true; 
-// }
 
 bool HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
 {
@@ -736,18 +661,13 @@ bool HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
     }
 
     if (isFileOnly)
-    {
         return S_ISREG(fileStat.st_mode);
-    }
-
     return true;
 }
 
 bool	HttpResponse::handleDeleteMethod(std::string &localPath)
 {
-	Logger::log(LC_RED, "ABOUT TO DELETE THE FILE " , localPath.c_str());
-
-
+	Logger::log(LC_MINOR_NOTE, "ABOUT TO DELETE THE FILE " , localPath.c_str());
 	if(!checkFileAvailibity(localPath, true))
 		throw RequestException(403, "Forbidden");	
 
@@ -762,10 +682,11 @@ bool	HttpResponse::handleDeleteMethod(std::string &localPath)
 bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , HttpRequest &httpRequest)
 {
 
-	Logger::log(LC_RED, " Inside handleUploadedFiles()");
+	Logger::log(LC_MINOR_NOTE, " Inside handleUploadedFiles()");
+	(void) httpRequest;
 
-	httpRequest.debug();
-	route->debug();
+	// httpRequest.debug();
+	// route->debug();
 	
 	std::string boundary = conn->getBoundary();
 	if (boundary.empty())
@@ -776,18 +697,11 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 
 	
 	std::vector<std::string> tokens = Util::split(content, boundary);
-
 	for(size_t i = 0; i < tokens.size(); ++i)
 	{
-		std::cout  << LC_GREEN << tokens[i] << "\n" << LC_RESET << std::endl;
-
 		std::istringstream		streamLine (tokens[i]);
 		std::string				str; 
-
-
-		//std::cout << "clien max size = " <<  route->getClientMaxBodySize() * WEBS_MB << std::endl;
-
-		std::string		fileName = "";
+		std::string				fileName = "";
 		while(std::getline(streamLine, str))
 		{
 			size_t	fileNamePos = str.find("filename=\"");
@@ -795,57 +709,46 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 			{
 				fileNamePos += 10; 
 				size_t len = str.find_last_of("\"");
-				// std::cout << " *** fileNamePos =  " << fileNamePos  << std::endl;
-				// std::cout << " *** len =  " << len  << std::endl;
 				if (len != std::string::npos)
 				{
 					len -= fileNamePos;
 					fileName = str.substr( fileNamePos ,  len); 
-//					std::cout << LC_RED << " *** fileName = " << fileName << LC_RESET << std::endl;
 				}
 			}
 		}
 		if(fileName.empty())
 		{
-			std::cout << LC_YELLOW << " ^ SKIPPING THIS ONE SINCE IT IS NOT attachment" << LC_RESET << std::endl;
+			// std::cout << LC_YELLOW << " ^ SKIPPING THIS ONE SINCE IT IS NOT attachment" << LC_RESET << std::endl;
 		}
 		else
 		{
-			std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
+			// std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
 			fileCount ++; 
 			std::string	targetFile = route->getUploadStore() + "/" + fileName;
 			std::cout << " targetFile = " << targetFile << std::endl;
 			if(Util::fileExists(targetFile))
 			{
-				Logger::log(LC_NOTE, " filename %s is already exists", targetFile.c_str());
+				Logger::log(LC_MINOR_NOTE, " filename %s is already exists", targetFile.c_str());
 				throw RequestException(403, "Forbidden");
 
 			}
-
 			std::string ext = Util::getFileExtension(fileName);
 			std::cout << " ext = " << ext  << std::endl;
-			// std::map<std::string, std::string> cgis = route->getCGIs();
 			std::map<std::string, std::string> cgis = conn->getServerConfig().getAllRouteCGIs();
-
-
-			for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
-			{
-				std::cout << " - server cgi = " << it->first << std::endl;
-			}
-
-
+			
+			// for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
+			// {
+			// 	std::cout << " - server cgi = " << it->first << std::endl;
+			// }
 			if( cgis.find(ext) !=  cgis.end())
 			{
 				// is one of the CGIs, skip 
-				Logger::log(LC_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
+				Logger::log(LC_MINOR_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
 				throw RequestException(415, "Unsupported Media Type");
 			}
 			else
 			{
-				Logger::log(LC_GREEN, "SEEMS OK, proceed to create the file");
-				
-				// do create file 
-				// if success counter++
+				Logger::log(LC_MINOR_NOTE, "SEEMS OK, proceed to create the file");
 
 				size_t contentStart = tokens[i].find("\r\n\r\n");
 				if(contentStart != std::string::npos)
@@ -856,33 +759,21 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 
 					contentStart += 4; 
 					std::string	targetFile = route->getUploadStore() + "/" + fileName;
-
 					if( Util::createFile(targetFile, tokens[i].begin() + contentStart , tokens[i].length() - contentStart - 4))
 					{
 						success ++;
 					}
 				}
-
-				
-
-
-				
 			}
-
-
 		}
 	}
 	// if success > 0 && success != token count  return HTTP 207 , multiple status
 	
 	// "Content-Disposition: form-data; name=\"file1\"; filename=\"s1.txt\""
-	(void)fileCount;
-	
-	Logger::log(LC_RED, "Total File count = %d" , fileCount);
+	Logger::log(LC_MINOR_NOTE, "Total File count = %d" , fileCount);
 	if(fileCount == 0)
 		throw RequestException(400, "Bad Request");
 	if(fileCount != success)
 		throw RequestException(201, "Created");
-
-	
 	throw RequestException(201 , "Seems OK!");
 }

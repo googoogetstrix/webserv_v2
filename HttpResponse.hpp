@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 11:31:28 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:42:00 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,14 +27,13 @@
 # include	<errno.h>
 # include	<signal.h>
 # include	<fcntl.h>
+# include	"settings.hpp"
 # include 	"Util.hpp"
 # include	"HttpRequest.hpp"
 # include	"ServerConfig.hpp"
 # include	"RouteConfig.hpp"
 
 
-# define	READ_BUFFER_SIZE 1024
-# define	CGI_TIMEOUT 10
 
 class ServerConfig;
 

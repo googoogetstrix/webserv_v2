@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:19:59 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:41:03 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,10 @@
 # include	<unistd.h>
 # include	<string.h>
 # include	<cstring>
+# include 	"settings.hpp"
 # include 	"Connection.hpp"
 # include 	"ServerConfig.hpp"
-# define	CC_DEF_TIMEOUT_IN_SEC 5
+
 
 class Connection;
 

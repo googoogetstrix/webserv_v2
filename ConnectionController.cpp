@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/18 13:04:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:10:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ ConnectionController::~ConnectionController()
 	Logger::log(LC_NOTE, "ConnectionController destructor has been called");
 	for(std::map<int, Connection>::iterator it = connections.begin(); it!= connections.end(); ++it )
 	{
-		Logger::log(LC_NOTE, " closoing socket#%d", it->first);
+		Logger::log(LC_NOTE, " closing (if opened) socket#%d", it->first);
 		close(it->first);
 	}
 }
@@ -58,21 +58,13 @@ Connection *ConnectionController::findConnection(int fd)
 }
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
-	Logger::log(LC_CONN_LOG, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+	Logger::log(LC_MINOR_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
 
 	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
 	close(clientSocket);	
 	if(it != connections.end())
-	{	
-		std::cout << " *** DELEETING CONNECTION " << std::endl;
 		connections.erase(clientSocket);		
-	}
-	else {
-		std::cout << " *** CONNECTION IS NOT FOUND!!!!" << std::endl;
-	}
-
-
 	return (true);
 }
 int		ConnectionController::openConnection(int clientSocket, ServerConfig serverConfig)
@@ -93,7 +85,7 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 	event.events = EPOLLIN;	
 	event.data.fd = clientSocket;
 	epoll_ctl(epollSocket,  EPOLL_CTL_ADD, clientSocket , &event);
-	Logger::log(LC_CONN_LOG, "Accepting client connection #%d, reigistered into epoll", clientSocket);
+	Logger::log(LC_MINOR_NOTE, "Accepting client connection #%d, reigistered into epoll", clientSocket);
 	
 
 	return connections.size();
@@ -123,58 +115,44 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 				{
 					
 					int  bytesRead = recv(conn->getSocket(), &buffer, bufferSize, 0 );
-					Logger:: log(LC_NOTE, " on socket#%d , bytesRead = %d" , conn->getSocket(), bytesRead);
+					Logger:: log(LC_MINOR_NOTE, " on socket#%d , bytesRead = %d" , conn->getSocket(), bytesRead);
 
 
 					if(bytesRead == 0)
 					{
-						Logger::log(LC_CON_FAIL, "Connection disconnected from client on socket#%d" , conn->getSocket());
+						Logger::log(LC_MINOR_NOTE, "Connection disconnected from client on socket#%d" , conn->getSocket());
 						closeConnection(conn->getSocket());
 						return (false);
 					}
 						
 					if (bytesRead == -1) {
-						if(errno != EAGAIN && errno != EWOULDBLOCK)
+						if(conn->shouldRetry())
 						{
-							Logger::log(LC_CON_FAIL, "Error recv() , forcing socket#%d to close." , conn->getSocket());
-							closeConnection(conn->getSocket());
-							return (false);
+							Logger::log(LC_MINOR_NOTE, " EAGAIN or EWOULDBLOCK detected");
+							return (false);	
 						}
-						Logger::log(LC_MINOR_NOTE, " EAGAIN or EWOULDBLOCK detected");
-						return (false);	
+						Logger::log(LC_CON_FAIL, "Error recv() , forcing socket#%d to close." , conn->getSocket());
+						closeConnection(conn->getSocket());
+						return (false);
 					}
 
 				    
 					if(conn->appendRequestBuffer(buffer , bytesRead, rawServers))
 					{
-
-						HttpRequest httpRequest;
-						httpRequest.parseRequestHeaders(conn->getServerConfig(), conn->getRequestBuffer());
+						HttpRequest httpRequest;						
 						conn->processRequest(httpRequest);
-						Logger::log(LC_YELLOW, "processRequest() is done!");
+						Logger::log(LC_MINOR_NOTE, "processRequest() is done!");
 						if(handleWrite(conn->getSocket()))
 						{
 							Logger::log(LC_MINOR_NOTE, " FRI - DONE RESPONDING");
 							closeConnection(conn->getSocket());
 							return true;
 						}
-						
-						
-						
 					}
-					
-
-					// 
-					buffer[bytesRead] = '\0';
-					// std::cout << "reading: _" << std::string(buffer) << "_" << std::endl;
-
-					if(bytesRead == -1)
-						throw RequestException(599 , "WTF");
 				}
 				catch(RequestException &e)
 				{
-					Logger::log(LC_DEBUG, "RequestException was thrown in the main loop");
-					std::cout << e.getCode() << ", " << e.getMessage() << std::endl;
+					Logger::log(LC_MINOR_NOTE, "RequestException was thrown in the main loop");
 					handleRequestException(e, *conn);
 					return (false);
 				}
@@ -203,24 +181,23 @@ bool	ConnectionController::handleWrite(int clientSocket )
  		int bytesSent = send( clientSocket , conn->getResponseBuffer().c_str() ,sendSize , MSG_DONTWAIT);
 		if (bytesSent <= 0)
 		{
-			Logger::log(LC_NOTE, " bytesSent = %d" , bytesSent); 
-			// ## if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
+			Logger::log(LC_MINOR_NOTE, " bytesSent = %d" , bytesSent); 
 			if( bytesSent == -1)
 			{	
-
-				Logger::log(LC_NOTE , " DEL ME -1  ??? WITHOUT CHECKING - !!!! Done sending");
-				closeConnection(clientSocket);
 				
+				if(conn->shouldRetry())
+				{
+					Logger::log(LC_MINOR_NOTE , "Minor Error: buffer full or would block!");
+					return (false);
+				}
+				Logger::log(LC_MINOR_NOTE , "Done sending");
+				closeConnection(clientSocket);
 
-				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
-				return (false);
 			}
 			if (bytesSent == 0)
 			{
-				Logger::log(LC_NOTE , " Done sending");
+				Logger::log(LC_MINOR_NOTE , " Done sending");
 				closeConnection(clientSocket);
-				Logger::log(LC_RED , "Now sleep for 5 secs");
-				sleep(5);
 				return (true);
 			}
 			
@@ -231,7 +208,7 @@ bool	ConnectionController::handleWrite(int clientSocket )
 		conn->truncateResponseBuffer(static_cast<size_t>(bytesSent));
 		
 	}
-	Logger::log(LC_DEBUG, " handleWrite closing connection");
+	Logger::log(LC_MINOR_NOTE, " handleWrite closing connection");
 	closeConnection(clientSocket);
 	return (true);
 
@@ -278,7 +255,7 @@ size_t	ConnectionController::purgeExpiredConnections()
 	{
 		if(it->second.isExpired(now) )
 		{
-			Logger::log(LC_NOTE, "Connection #%d timeout, closing connection and remove from epoll", it->second.getSocket());
+			Logger::log(LC_MINOR_NOTE, "Connection #%d timeout, closing connection and remove from epoll", it->second.getSocket());
 			closeConnection(it->second.getSocket());
 			count ++;
 		}
