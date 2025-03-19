@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 16:34:12 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:16:22 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,7 +151,7 @@ int Webserv::run(void)
 {
 	ConnectionController cc;
 
-	Logger::log(LC_GREEN, "Booting up webserv...");
+	Logger::log(LC_INFO, "Booting up webserv...");
 	setupSockets(cc);
 
 	// setting up epoll
@@ -174,7 +174,8 @@ int Webserv::run(void)
 		ctr ++;
 
 	}
-	Logger::log(LC_GREEN, "Webserv booted succesfully...");
+	Logger::log(LC_INFO, "Webserv booted succesfully...");
+	Logger::log(LC_INFO, "Pending for incoming request...");
 
 
 	HttpResponse 	httpResponse; 

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 17:58:07 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:10:17 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ Connection *ConnectionController::findConnection(int fd)
 }
 bool	ConnectionController::closeConnection(int clientSocket)
 {		
-	Logger::log(LC_CONN_LOG, "Closing client socket #%d, unregistererd from epoll", clientSocket);
+	Logger::log(LC_MINOR_NOTE, "Closing client socket #%d, unregistererd from epoll", clientSocket);
 
 	std::map<int,Connection>::iterator it = connections.find(clientSocket);
 	epoll_ctl(epollSocket , EPOLL_CTL_DEL , clientSocket, NULL);
@@ -120,7 +120,7 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 
 					if(bytesRead == 0)
 					{
-						Logger::log(LC_CON_FAIL, "Connection disconnected from client on socket#%d" , conn->getSocket());
+						Logger::log(LC_MINOR_NOTE, "Connection disconnected from client on socket#%d" , conn->getSocket());
 						closeConnection(conn->getSocket());
 						return (false);
 					}

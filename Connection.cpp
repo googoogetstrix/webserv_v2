@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 17:36:16 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:12:50 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,7 +436,8 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 					throw RequestException(400, "Bad Request");	
 				if(httpVer.find("HTTP/1.") == std::string::npos)
 					throw RequestException(400, "Bad Request");	
-				Logger::log(LC_CONN_LOG, "[%s] %s", method.c_str(), path.c_str());
+				// [REQUEST]
+				Logger::log(LC_REQ_LOG, "[%s]\t%s", method.c_str(), path.c_str());
 			}
 
 			requestBuffer += std::string(buffer, length);

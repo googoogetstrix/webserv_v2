@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 17:58:26 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:17:47 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,7 +206,7 @@ std::string HttpResponse::serialize()
 	oss << "\r\n" << body ;
 
 	std::string color = (status >= 400) ? LC_RES_NOK_LOG : LC_RES_OK_LOG;
-	Logger::log(color, "[RESPOND] %d - %s " , status, getStatusText(status).c_str() );
+	Logger::log(color, "[RESPOND]\t%d - %s " , status, getStatusText(status).c_str() );
 
 	if (WEBS_DEBUG_RESPONSE)
 	{
@@ -263,14 +263,14 @@ std::string HttpResponse::getMimeType(const std::string & extension)
 
 bool	HttpResponse::getStaticFile(std::string const &filePath )
 {
-	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
+	Logger::log(LC_MINOR_NOTE, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{		
 		struct stat fileStat;
 
-		Logger::log(LC_DEBUG, " getStaicFile ==> filePath = %s" , filePath.c_str());
+		Logger::log(LC_MINOR_NOTE, " getStaticFile ==> filePath = %s" , filePath.c_str());
 		if (stat(filePath.c_str(), &fileStat) != 0)
 		{
 			if (errno == ENOENT)
