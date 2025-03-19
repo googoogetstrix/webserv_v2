@@ -18,8 +18,25 @@ form = cgi.FieldStorage()
 player_name = form.getvalue("playerName", None)
 avatar = form.getvalue("avatar", None)
 
+if player_name == "" and avatar == "":
+    # Delete cookies by setting their expiration date to the past
+    expire_time = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+    cookies["player_name"] = ""
+    cookies["player_name"]["path"] = "/"
+    cookies["player_name"]["expires"] = expire_time
+
+    cookies["avatar"] = ""
+    cookies["avatar"]["path"] = "/"
+    cookies["avatar"]["expires"] = expire_time
+
+    print(f"Debug: Deleting cookies - player_name and avatar")
+    print(cookies.output())  # Set cookies in the HTTP response header
+
+    # Reset player_name and avatar to empty
+    player_name = ""
+    avatar = ""
 # Set cookies if the form is submitted
-if player_name and avatar:
+elif player_name and avatar:
     expire_time = (datetime.now(timezone.utc) + timedelta(minutes=5)).strftime("%a, %d %b %Y %H:%M:%S GMT")
     cookies["player_name"] = player_name
     cookies["player_name"]["path"] = "/"
@@ -31,11 +48,16 @@ if player_name and avatar:
     print(f"Debug: Setting cookies - player_name={player_name}, avatar={avatar}")
     print(cookies.output()) 
 
-# Retrieve values from cookies if available
-player_name = player_name_cookie.value if player_name_cookie else ""
-avatar = avatar_cookie.value if avatar_cookie else ""
+# Use form data if available, otherwise fall back to cookies
+if not player_name:
+    player_name = player_name_cookie.value if player_name_cookie else ""
+if not avatar:
+    avatar = avatar_cookie.value if avatar_cookie else ""
 
-is_session_active = player_name != "" and avatar != ""
+# is_session_active = player_name and avatar
+is_session_active = bool(player_name) and bool(avatar)
+if player_name == "" and avatar == "":
+    is_session_active = False
 
 print("Content-Type: text/html\n")
 print(f"""
