@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 14:37:19 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:17:25 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 17:23:43 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -185,6 +185,16 @@ bool Util::fileExists(std::string const &fullPath)
 {
 	 struct stat buffer;
 	 return (stat(fullPath.c_str(), &buffer) == 0);
+	
+}
+bool Util::fileHasPermission(std::string const &fullPath)
+{
+	 struct stat buffer;
+	 if(stat(fullPath.c_str(), &buffer) != 0)
+		return false;
+	 if (buffer.st_mode & S_IRUSR) 
+        	return (true);
+	 return false;
 	
 }
 
