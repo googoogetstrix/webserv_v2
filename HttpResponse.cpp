@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 16:18:43 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 17:16:51 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -404,7 +404,13 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	// const char *scriptPath = "processPlayer.py";
 
 	std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
-	// request.debug();
+
+	if(!Util::fileExists(scriptFile))
+		throw RequestException(404, "File not found");
+	if(!Util::fileHasPermission(scriptFile))
+		throw RequestException(403, "Forbidden");
+
+
 	
 	char *const argv[] = {
 		const_cast<char *>(command.c_str()), 
