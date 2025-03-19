@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:24:27 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:28:32 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,6 +116,8 @@ class Connection
 		bool				adjustServerConfig(std::string hostName);
 
 		std::string			debugText;
+
+		bool				shouldRetry();
 
 		class ParseRequestException: public std::exception
 		{

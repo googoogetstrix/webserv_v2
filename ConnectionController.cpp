@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/18 13:04:37 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:30:46 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,14 +134,14 @@ bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &even
 					}
 						
 					if (bytesRead == -1) {
-						if(errno != EAGAIN && errno != EWOULDBLOCK)
+						if(conn->shouldRetry())
 						{
-							Logger::log(LC_CON_FAIL, "Error recv() , forcing socket#%d to close." , conn->getSocket());
-							closeConnection(conn->getSocket());
-							return (false);
+							Logger::log(LC_MINOR_NOTE, " EAGAIN or EWOULDBLOCK detected");
+							return (false);	
 						}
-						Logger::log(LC_MINOR_NOTE, " EAGAIN or EWOULDBLOCK detected");
-						return (false);	
+						Logger::log(LC_CON_FAIL, "Error recv() , forcing socket#%d to close." , conn->getSocket());
+						closeConnection(conn->getSocket());
+						return (false);
 					}
 
 				    
@@ -204,16 +204,17 @@ bool	ConnectionController::handleWrite(int clientSocket )
 		if (bytesSent <= 0)
 		{
 			Logger::log(LC_NOTE, " bytesSent = %d" , bytesSent); 
-			// ## if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
 			if( bytesSent == -1)
 			{	
-
+				
+				if(conn->shouldRetry())
+				{
+					Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
+					return (false);
+				}
 				Logger::log(LC_NOTE , " DEL ME -1  ??? WITHOUT CHECKING - !!!! Done sending");
 				closeConnection(clientSocket);
-				
 
-				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
-				return (false);
 			}
 			if (bytesSent == 0)
 			{

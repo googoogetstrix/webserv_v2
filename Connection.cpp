@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 19:43:51 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:29:16 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -201,51 +201,6 @@ bool	Connection::needsToWrite()
 	return (!responseBuffer.empty());
 }
 
-
-// bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
-// {
-// 	Logger::log(LC_RED, "Moved to COnnectionController->handleRead");
-// 	return false;
-
-// 	(void) epoll_fd;
-// 	if(!needsToWrite())
-// 		return (false);
-
-// 	size_t sendSize = responseBuffer.length();	
-// 	while( responseBuffer.length() > 0 )
-// 	{
-// 		punchIn();
-// 		// if(sendSize < responseBuffer.length())
-// 		// 	sendSize = responseBuffer.length();
-//  		int bytesSent = send( event.data.fd , responseBuffer.c_str() ,sendSize , MSG_DONTWAIT);
-// 		if (bytesSent <= 0)
-// 		{
-// 			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
-// 			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
-// 			{	
-// 				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
-// 				return (false);
-// 			}
-// 			if (bytesSent == 0)
-// 			{
-// 				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
-// 				ConnectionController::closeConnection(event.data.fd);
-// 				return (true);
-// 			}
-			
-// 			// catch all other errors
-// 			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
-// 			ConnectionController::closeConnection(fd);
-// 		}
-// 		size_t compareSize = static_cast<size_t>(bytesSent);
-// 		compareSize = compareSize < responseBuffer.length() ? compareSize : responseBuffer.length();
-// 		responseBuffer =  responseBuffer.substr(compareSize); 
-		
-// 	}
-// 	ConnectionController::closeConnection(event.data.fd);
-// 	return (true);
-	
-// }
 
 
 size_t	Connection::truncateResponseBuffer(size_t bytesSent)
@@ -659,4 +614,17 @@ bool	Connection::adjustServerConfig(std::string hostName)
 	(void) currentPort;
 	return false;
 
+}
+bool	Connection::shouldRetry()
+{
+	int 		errorCode = 0;
+	socklen_t	len = sizeof(errorCode);
+
+	if(getsockopt( fd, SOL_SOCKET, SO_ERROR, &errorCode , &len) == 0)
+	{
+		return (errorCode == EAGAIN || errorCode == EWOULDBLOCK);
+	}
+
+
+	return (false);
 }
