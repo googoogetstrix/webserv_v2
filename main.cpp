@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:24:58 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/15 17:59:58 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:18:29 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,61 +26,17 @@
 
 
 
-void sigpipe_handler(int signo)
-{
-	(void)signo;
-}
-
 
 int main(int argc, char **argv)
 {
-	// std::string haystack = "Hello World";
-	// std::string needle = "XWor";
-	// int  pos = Util::substrPos(haystack , needle);
-	// std::cout << "pos = " << pos << std::endl ;
-	// return (0);
-
-	// std::string str = std::string("./wwwroot/www1/uploads/del_me");
-	// bool out = HttpResponse::checkFileAvailibity( str );
-	// std::cout << " out = " << out << std::endl;
-
-	// str = std::string("./wwwroot/www1/uploads/s2.txt");
-	// out = HttpResponse::checkFileAvailibity( str );
-	// std::cout << " out = " << out << std::endl;
-
-	// return 0;
-
-	
-	// std::string		content = "<html><head><title>Only head is there</title></head></html>";
-	// size_t 		len = content.length() - 6;
-	// std::string::iterator it = content.begin() + 6;
-
-	// bool  result = Util::createFile("./wwwroot/www1/uploadsXX/write_me.txt", it, len);
-	// std::cout << "result = " << result << std::endl; 
-	// _exit(1);
-
-
 	try {
 		if (argc > 2)
 			throw std::invalid_argument("Invalid arguments, use webserv [configuration_file]");
 		std::string config = (argc == 1) ? WS_DEF_CONFIG_FILE : std::string(argv[1]);
-
+		signal(SIGPIPE, SIG_IGN);
 		Webserv webserv(config);
 
-
-		// /*** TEST CODES ***/
-		// std::vector<ServerConfig> servers = webserv.getServerConfigs();
-		// ServerConfig  server = servers[0];
-		// RouteConfig *route = server.findRoute("/");
-		// std::cout << " RETURNED ROUTE = " << route->getPath() << std::endl;
-		// Logger::log(LC_RED, " EXIT IN MAIN" );
-		// throw std::runtime_error("ME FAIL");
-		// /*** TEST CODES ***/
-
-
 		webserv.run();
-		signal(SIGPIPE, sigpipe_handler);
-		
 	}
 	catch(std::exception &e)
 	{
