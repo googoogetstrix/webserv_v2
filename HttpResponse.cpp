@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 00:04:23 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:18:43 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,10 @@ std::string HttpResponse::getHeader(std::string name) const
 bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
 {
 	std::map<std::string, std::string>::const_iterator pos = headers.find(name);
+	// if (pos != headers.end() && !overwriteExisting)
+	// 	return false;
+	// else 
 	if (pos != headers.end() && !overwriteExisting)
-		return false;
-	else if (pos != headers.end() && !overwriteExisting)
 	{
 		while (pos != headers.end())
 		{
