@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:31:05 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:45:18 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,10 @@ std::string HttpResponse::getHeader(std::string name) const
 bool HttpResponse::setHeader(std::string name, std::string value , bool overwriteExisting)
 {
 	std::map<std::string, std::string>::const_iterator pos = headers.find(name);
+	// if (pos != headers.end() && !overwriteExisting)
+	// 	return false;
+	// else 
 	if (pos != headers.end() && !overwriteExisting)
-		return false;
-	else if (pos != headers.end() && !overwriteExisting)
 	{
 		while (pos != headers.end())
 		{
@@ -205,7 +206,7 @@ std::string HttpResponse::serialize()
 	oss << "\r\n" << body ;
 
 	std::string color = (status >= 400) ? LC_RES_NOK_LOG : LC_RES_OK_LOG;
-	Logger::log(color, "[RESPOND] %d - %s " , status, getStatusText(status).c_str() );
+	Logger::log(color, "[RESPOND]\t%d - %s " , status, getStatusText(status).c_str() );
 
 	if (WEBS_DEBUG_RESPONSE)
 	{
@@ -262,14 +263,14 @@ std::string HttpResponse::getMimeType(const std::string & extension)
 
 bool	HttpResponse::getStaticFile(std::string const &filePath )
 {
-	Logger::log(LC_YELLOW, " in getStaticFile() , filePath = " , filePath.c_str());
+	Logger::log(LC_MINOR_NOTE, " in getStaticFile() , filePath = " , filePath.c_str());
 
 	std::ifstream file(filePath.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{		
 		struct stat fileStat;
 
-		Logger::log(LC_DEBUG, " getStaicFile ==> filePath = %s" , filePath.c_str());
+		Logger::log(LC_MINOR_NOTE, " getStaticFile ==> filePath = %s" , filePath.c_str());
 		if (stat(filePath.c_str(), &fileStat) != 0)
 		{
 			if (errno == ENOENT)
@@ -330,37 +331,63 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 
 	std::ostringstream html;
 	html << "<!DOCTYPE html>" << std::endl;
-	// <link href='css/style.css' rel='stylesheet'>
-	html << "<html><head><title>Directory Listing</title></head><body>" << std::endl;
+	html << "<html><head><title>Directory Listing</title>" << std::endl;
+    html << "<style>" << std::endl;
+    html << "body { font-family: Arial, sans-serif; background-color: #121212; color: #f5f5f5; margin: 0; padding: 0; }" << std::endl;
+    html << ".container { max-width: 800px; margin: 2rem auto; padding: 1rem; background-color: #1e1e1e; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }" << std::endl;
+    html << "h1 { font-size: 2rem; text-align: center; margin-bottom: 1rem; color: #f5f5f5; }" << std::endl;
+    html << "ul { list-style: none; padding: 0; }" << std::endl;
+    html << "ul li { padding: 0.5rem 1rem; border-bottom: 1px solid #333; transition: background-color 0.3s ease; }" << std::endl;
+    html << "ul li:last-child { border-bottom: none; }" << std::endl;
+    html << "ul li a { text-decoration: none; color: #4dabf7; font-weight: bold; transition: color 0.3s ease; }" << std::endl;
+    html << "ul li a:hover { color: #82caff; }" << std::endl;
+    html << "ul li:hover { background-color: #2a2a2a; }" << std::endl;
+    html << "</style>" << std::endl;
+    html << "</head><body>" << std::endl;
+    html << "<div class=\"container\">" << std::endl;
 	html << "<h1>Directory Listing for " << relativePath << "</h1>" << std::endl;
 	html << "<ul>" << std::endl;
 
 	html << "<li><a href=\"..\">.. (UP)</a></li>" << std::endl;
 	
 	struct dirent* entry;
+	rewinddir(dir);
 	while ((entry = readdir(dir)) != NULL)
-    {
-        std::string name = entry->d_name;
-        if (name != "." && name != "..")
-        {
-            std::string fullPath = path + "/" + name;
-            struct stat s;
-            if (stat(fullPath.c_str(), &s) == 0)
-            {
-                if (s.st_mode & S_IFDIR)
-                {
-                    html << "<li><a href=\"" << relativePath << name << "/\">&#128193; " << name << "</a></li>" << std::endl;
-                }
-                else
-                {
-                    html << "<li><a href=\"" << relativePath << name << "\">&#128196; " << name << "</a></li>" << std::endl;
-                }
-            }
-        }
-    }
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+		{
+			std::string fullPath = path + "/" + name;
+			struct stat s;
+			if (stat(fullPath.c_str(), &s) == 0)
+			{
+				if (s.st_mode & S_IFDIR)
+				{
+					html << "<li><a href=\"" << relativePath << name << "/\">&#128193; " << name << "</a></li>" << std::endl;
+				}
+			}
+		}
+	}
+	rewinddir(dir);
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+		{
+			std::string fullPath = path + "/" + name;
+			struct stat s;
+			if (stat(fullPath.c_str(), &s) == 0)
+			{
+				if (!(s.st_mode & S_IFDIR))
+				{
+					html << "<li><a href=\"" << relativePath << name << "\">&#128196; " << name << "</a></li>" << std::endl;
+				}
+			}
+		}
+	}
 
 	html << "</ul>" << std::endl;
-	html << "</body></html>" << std::endl;
+	html << "</div></body></html>" << std::endl;
 
 	closedir(dir);
 
@@ -376,8 +403,14 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	(void)route;
 	// const char *scriptPath = "processPlayer.py";
 
-	std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
-	// request.debug();
+	// std::cout << " ****  scriptFile = _" << scriptFile << "_" << std::endl; 
+
+	if(!Util::fileExists(scriptFile))
+		throw RequestException(404, "File not found");
+	if(!Util::fileHasPermission(scriptFile))
+		throw RequestException(403, "Forbidden");
+
+
 	
 	char *const argv[] = {
 		const_cast<char *>(command.c_str()), 
@@ -398,7 +431,6 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 	std::string accept = "HTTP_ACCEPT=" + request.getHeader("Accept");
 	std::string status = "REDIRECT_STATUS=200";
 	std::string uploadDir = "UPLOAD_DIR=/tmp";
-	
 
 	char * envp[] = {	
 		const_cast<char *>(method.c_str()),
@@ -454,11 +486,6 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
 			exit(errno) ;
 		}
-		// if (dup2(pipe_stdout[1], STDERR_FILENO) == -1)
-		// {
-		// 	std::cerr << "Error redirecting stderr: " << strerror(errno) << std::endl;
-		// 	exit(errno) ;
-		// }
 		close(pipe_stdout[0]);
 		close(pipe_stdout[1]);
 		if (execve(argv[0], argv, envp) == -1)
@@ -492,47 +519,12 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		while (true)
         {
             ssize_t bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
-			// if (bytesRead > 0)
-			// {
-			// 	buffer[bytesRead] = '\0';
-			// 	output += std::string(buffer);
-			// }
-			// else if (bytesRead == 0)
-			// 	break;
-			// else if (bytesRead < 0 && errno != EAGAIN)
-			// {
-			// 	std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
-			// 	close(pipe_stdout[0]);
-			// 	throw RequestException(500,"Internal Server Error");
-			// }
 			while (bytesRead > 0)
 			{
 				buffer[bytesRead] = '\0';
 				output += std::string(buffer);
 				bytesRead = read(pipe_stdout[0], buffer, sizeof(buffer) - 1);
 			}
-			// else if (bytesRead < 0)
-            // {
-            //     if (errno == EAGAIN)
-            //     {
-            //         // No data available, try again later
-            //         usleep(100000); // Sleep for 100 milliseconds
-            //         elapsed_time += 100;
-            //         if (elapsed_time >= CGI_TIMEOUT * 1000)
-            //         {
-            //             std::cerr << "Error: CGI script timed out" << std::endl;
-            //             kill(pid, SIGKILL); // Terminate the child process
-            //             timed_out = true;
-            //             break;
-            //         }
-            //     }
-            //     else
-            //     {
-            //         std::cerr << "Error reading from pipe: " << strerror(errno) << std::endl;
-            //         close(pipe_stdout[0]);
-            //         throw RequestException(500, "Internal Server Error");
-            //     }
-            // }
 
 			// Wait for the child process to finish
 			int status;
@@ -543,7 +535,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 				elapsed_time += 100;
 				if (elapsed_time >= CGI_TIMEOUT * 1000)
 				{
-					std::cerr << "Error: CGI script timed out" << std::endl;
+					// std::cerr << "Error: CGI script timed out" << std::endl;
 					kill(pid, SIGKILL);
 					timed_out = true;
 					break ;
@@ -551,7 +543,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			}
 			else if (result == -1)
 			{
-				std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
+				// std::cerr << "Error waiting for child process: " << strerror(errno) << std::endl;
 				close(pipe_stdout[0]);
 				throw RequestException(500,"Internal Server Error");
 			}
@@ -619,8 +611,7 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 		if( token >> headerName >> headerValue) 
 		{
 			headerName = headerName.substr(0 , headerName.length() - 1);
-			std::cout << " _" << headerName << "_ , _" << headerValue << "_ " << std::endl;
-
+			// std::cout << " _" << headerName << "_ , _" << headerValue << "_ " << std::endl;
 			if(headerName == "Status")
 			{
 				setStatus(Util::toInt(headerValue));
@@ -628,67 +619,33 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 				setHeader(headerName, headerValue, false);
 			else 
 				setHeader(headerName, headerValue, true);
-			
-
 		}
 	}
-
-
 	setBody( output.substr(splitPos + sepLength, length - (splitPos + sepLength)));
 	return 200; 	
-
 }
 
 
 int 	HttpResponse::autoResponseHeader(HttpRequest &httpRequest)
 {
 		int	effected = 0;
-		Logger::log(LC_YELLOW, " Inside autoResponseHeader ... ");
+		Logger::log(LC_MINOR_NOTE, " Inside autoResponseHeader ... ");
 		for(std::map<std::string,std::string>::const_iterator it = httpRequest.getHeader().begin(); it != httpRequest.getHeader().end(); ++it)
 		{
 			if(Util::trim(it->first) == "Cookie")
 			{
 				setHeader("Set-Cookie" , it->second, false);
-				Logger::log(LC_YELLOW, "\t - setting %s ", it->second.c_str());
+				Logger::log(LC_MINOR_NOTE, "\t - setting %s ", it->second.c_str());
 				effected++;
 			}
-
-				
 		}
-		Logger::log(LC_YELLOW, "%d headers added", effected);
+		Logger::log(LC_MINOR_NOTE, "%d headers added", effected);
 		return effected;
 
 	
 }
 
 
-// bool	HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
-// {
-// 	std::ifstream file(filePath.c_str());
-// 	struct stat fileStat;
-// 	if (!file.is_open())
-// 	{		
-// 		if (stat(filePath.c_str(), &fileStat) != 0)
-// 		{
-// 			if (errno == ENOENT)
-// 				throw RequestException(404, "File not found");
-// 			else if (errno == EACCES)
-// 				throw RequestException(403, "Forbidden");
-// 			else
-// 				throw RequestException(405, "Method not allowed");
-// 		}
-// 		return false;
-// 	}
-
-// 	if (isFileOnly)
-// 	{
-// 		std::cout << " IS FILE ONLY " << std::endl;
-// 	    return S_ISREG(fileStat.st_mode);
-// 	}
-		
-
-// 	return true; 
-// }
 
 bool HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
 {
@@ -704,18 +661,13 @@ bool HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
     }
 
     if (isFileOnly)
-    {
         return S_ISREG(fileStat.st_mode);
-    }
-
     return true;
 }
 
 bool	HttpResponse::handleDeleteMethod(std::string &localPath)
 {
-	Logger::log(LC_RED, "ABOUT TO DELETE THE FILE " , localPath.c_str());
-
-
+	Logger::log(LC_MINOR_NOTE, "ABOUT TO DELETE THE FILE " , localPath.c_str());
 	if(!checkFileAvailibity(localPath, true))
 		throw RequestException(403, "Forbidden");	
 
@@ -730,9 +682,11 @@ bool	HttpResponse::handleDeleteMethod(std::string &localPath)
 bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , HttpRequest &httpRequest)
 {
 
-	Logger::log(LC_RED, " Inside handleUploadedFiles()");
-	httpRequest.debug();
-	route->debug();
+	Logger::log(LC_MINOR_NOTE, " Inside handleUploadedFiles()");
+	(void) httpRequest;
+
+	// httpRequest.debug();
+	// route->debug();
 	
 	std::string boundary = conn->getBoundary();
 	if (boundary.empty())
@@ -743,18 +697,11 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 
 	
 	std::vector<std::string> tokens = Util::split(content, boundary);
-
 	for(size_t i = 0; i < tokens.size(); ++i)
 	{
-		std::cout  << LC_GREEN << tokens[i] << "\n" << LC_RESET << std::endl;
-
 		std::istringstream		streamLine (tokens[i]);
 		std::string				str; 
-
-
-		//std::cout << "clien max size = " <<  route->getClientMaxBodySize() * WEBS_MB << std::endl;
-
-		std::string		fileName = "";
+		std::string				fileName = "";
 		while(std::getline(streamLine, str))
 		{
 			size_t	fileNamePos = str.find("filename=\"");
@@ -762,56 +709,46 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 			{
 				fileNamePos += 10; 
 				size_t len = str.find_last_of("\"");
-				// std::cout << " *** fileNamePos =  " << fileNamePos  << std::endl;
-				// std::cout << " *** len =  " << len  << std::endl;
 				if (len != std::string::npos)
 				{
 					len -= fileNamePos;
 					fileName = str.substr( fileNamePos ,  len); 
-//					std::cout << LC_RED << " *** fileName = " << fileName << LC_RESET << std::endl;
 				}
 			}
 		}
 		if(fileName.empty())
 		{
-			std::cout << LC_YELLOW << " ^ SKIPPING THIS ONE SINCE IT IS NOT attachment" << LC_RESET << std::endl;
+			// std::cout << LC_YELLOW << " ^ SKIPPING THIS ONE SINCE IT IS NOT attachment" << LC_RESET << std::endl;
 		}
 		else
 		{
-			std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
+			// std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
 			fileCount ++; 
-			std::string	targetFile = route->getRoot() + "/" + fileName;
+			std::string	targetFile = route->getUploadStore() + "/" + fileName;
+			std::cout << " targetFile = " << targetFile << std::endl;
 			if(Util::fileExists(targetFile))
 			{
-				Logger::log(LC_NOTE, " filename %s is already exists", targetFile.c_str());
+				Logger::log(LC_MINOR_NOTE, " filename %s is already exists", targetFile.c_str());
 				throw RequestException(403, "Forbidden");
 
 			}
-
 			std::string ext = Util::getFileExtension(fileName);
 			std::cout << " ext = " << ext  << std::endl;
-			// std::map<std::string, std::string> cgis = route->getCGIs();
 			std::map<std::string, std::string> cgis = conn->getServerConfig().getAllRouteCGIs();
-
-
-			for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
-			{
-				std::cout << " - server cgi = " << it->first << std::endl;
-			}
-
-
+			
+			// for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
+			// {
+			// 	std::cout << " - server cgi = " << it->first << std::endl;
+			// }
 			if( cgis.find(ext) !=  cgis.end())
 			{
 				// is one of the CGIs, skip 
-				Logger::log(LC_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
+				Logger::log(LC_MINOR_NOTE, " %s is one of the CGI files, skip for security reason", fileName.c_str());
 				throw RequestException(415, "Unsupported Media Type");
 			}
 			else
 			{
-				Logger::log(LC_GREEN, "SEEMS OK, proceed to create the file");
-				
-				// do create file 
-				// if success counter++
+				Logger::log(LC_MINOR_NOTE, "SEEMS OK, proceed to create the file");
 
 				size_t contentStart = tokens[i].find("\r\n\r\n");
 				if(contentStart != std::string::npos)
@@ -821,34 +758,22 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 						throw RequestException(413, "Payload Too Large");
 
 					contentStart += 4; 
-					std::string	targetFile = route->getRoot() + "/" + fileName;
-
+					std::string	targetFile = route->getUploadStore() + "/" + fileName;
 					if( Util::createFile(targetFile, tokens[i].begin() + contentStart , tokens[i].length() - contentStart - 4))
 					{
 						success ++;
 					}
 				}
-
-				
-
-
-				
 			}
-
-
 		}
 	}
 	// if success > 0 && success != token count  return HTTP 207 , multiple status
 	
 	// "Content-Disposition: form-data; name=\"file1\"; filename=\"s1.txt\""
-	(void)fileCount;
-	
-	Logger::log(LC_RED, "Total File count = %d" , fileCount);
+	Logger::log(LC_MINOR_NOTE, "Total File count = %d" , fileCount);
 	if(fileCount == 0)
 		throw RequestException(400, "Bad Request");
 	if(fileCount != success)
-		throw RequestException(207, "Multi-status");
-
-	
+		throw RequestException(201, "Created");
 	throw RequestException(201 , "Seems OK!");
 }

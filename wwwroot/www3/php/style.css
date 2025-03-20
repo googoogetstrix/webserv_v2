@@ -5,17 +5,17 @@
 }
 
 body {
-    background-color: black;
+    background-color: #787CB5;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
     font-family: 'Inter', sans-serif;
     color: white;
 }
 
-.form-container {
+.form-container,.container {
     position: relative;
     width: 100%;
     max-width: 800px;
@@ -29,18 +29,31 @@ body {
     margin-bottom: 20px;
 }
 
-h1 {
+h1, h2 {
     font-size: 2.5rem;
     font-weight: 300;
     letter-spacing: 0.2em;
     /* text-transform: uppercase; */
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
     background: linear-gradient(to right, #ffffff, #e0e0e0);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     text-align: center;
 }
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 200;
+    text-align: start;
+    background-color: #990000;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
 
 h3 {
     font-size: 1.2rem;
@@ -88,7 +101,9 @@ h3 {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="file"]
+ {
     width: 100%;
     padding: 12px;
     margin: 8px 0;
@@ -101,13 +116,15 @@ input[type="number"] {
 }
 
 input[type="text"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+input[type="text"]:focus {
     outline: none;
     border-color: rgba(255, 255, 255, 0.5);
     background-color: rgba(255, 255, 255, 0.15);
 }
 
-input[type="submit"], button[type="submit"] {
+input[type="submit"], button, input[type="button"] 
+{
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
     padding: 15px;

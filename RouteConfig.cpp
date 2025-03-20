@@ -28,12 +28,10 @@ std::string RouteConfig::getCGI(std::string ext)
 {
 
 	// debug();
-	for (std::map<std::string, std::string>::const_iterator it = CGIs.begin(); it != CGIs.end(); ++it) {
-		std::cout << "  Extension: " << it->first << " -> Interpreter: " << it->second << std::endl;
-	}
-	std::cout << " ext = " << ext << std::endl;
-
-
+	// for (std::map<std::string, std::string>::const_iterator it = CGIs.begin(); it != CGIs.end(); ++it) {
+	// 	std::cout << "  Extension: " << it->first << " -> Interpreter: " << it->second << std::endl;
+	// }
+	// std::cout << " ext = " << ext << std::endl;
 	if(CGIs.find(ext) != CGIs.end())
 		return CGIs[ext];
 	return "";

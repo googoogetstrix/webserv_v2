@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/11 16:12:50 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 16:41:03 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,10 @@
 # include	<unistd.h>
 # include	<string.h>
 # include	<cstring>
+# include 	"settings.hpp"
 # include 	"Connection.hpp"
 # include 	"ServerConfig.hpp"
-# define	CC_DEF_TIMEOUT_IN_SEC 5
+
 
 class Connection;
 
@@ -28,6 +29,9 @@ class ConnectionController
 
 		std::map<int, Connection> 	connections; 
 		std::map<int, ServerConfig> servers;
+
+
+		std::vector<ServerConfig>	rawServers;
 
 		ConnectionController(ConnectionController const &other);
 		ConnectionController &operator=(ConnectionController const &other);
@@ -58,6 +62,11 @@ class ConnectionController
 
 		size_t			purgeExpiredConnections();
 		bool 			handleRequestException(RequestException &reqException,Connection &conn);
+		void			debug();
+
+		int				addRawServer(ServerConfig server);
+		std::vector<ServerConfig>  getRawServers();
+
 };
 
 #endif

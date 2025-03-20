@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/17 10:18:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/19 18:12:50 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ Connection::Connection(int fd, ServerConfig config):fd(fd), serverConfig(config)
 	expiresOn = time(NULL) + (CON_SOC_TIMEOUT_SECS);
 	setNonBlock();
 	rawPostBody.clear();
-	Logger::log(LC_NOTE, "new connection with fd#%d created", fd);
+	Logger::log(LC_MINOR_NOTE, "new connection with fd#%d created", fd);
 
 }
 Connection::~Connection()
@@ -202,51 +202,6 @@ bool	Connection::needsToWrite()
 }
 
 
-// bool 	Connection::handleWrite( int epoll_fd, struct epoll_event &event)
-// {
-// 	Logger::log(LC_RED, "Moved to COnnectionController->handleRead");
-// 	return false;
-
-// 	(void) epoll_fd;
-// 	if(!needsToWrite())
-// 		return (false);
-
-// 	size_t sendSize = responseBuffer.length();	
-// 	while( responseBuffer.length() > 0 )
-// 	{
-// 		punchIn();
-// 		// if(sendSize < responseBuffer.length())
-// 		// 	sendSize = responseBuffer.length();
-//  		int bytesSent = send( event.data.fd , responseBuffer.c_str() ,sendSize , MSG_DONTWAIT);
-// 		if (bytesSent <= 0)
-// 		{
-// 			Logger::log(LC_RED, " bytesSent = %d" , bytesSent); 
-// 			if( bytesSent == -1 && (event.events & EAGAIN  || event.events & EWOULDBLOCK))
-// 			{	
-// 				Logger::log(LC_NOTE , " Minor Error: buffer full or would block!");
-// 				return (false);
-// 			}
-// 			if (bytesSent == 0)
-// 			{
-// 				Logger::log(LC_NOTE , "DONE SENDING #1, YAHOO!");
-// 				ConnectionController::closeConnection(event.data.fd);
-// 				return (true);
-// 			}
-			
-// 			// catch all other errors
-// 			Logger::log(LC_ERROR, "Unrecoverable socket error, abort process");
-// 			ConnectionController::closeConnection(fd);
-// 		}
-// 		size_t compareSize = static_cast<size_t>(bytesSent);
-// 		compareSize = compareSize < responseBuffer.length() ? compareSize : responseBuffer.length();
-// 		responseBuffer =  responseBuffer.substr(compareSize); 
-		
-// 	}
-// 	ConnectionController::closeConnection(event.data.fd);
-// 	return (true);
-	
-// }
-
 
 size_t	Connection::truncateResponseBuffer(size_t bytesSent)
 {
@@ -280,17 +235,15 @@ ServerConfig		&Connection::getServerConfig()
 
 bool	Connection::processRequest(HttpRequest &httpRequest)
 {
-		Logger::log(LC_RED, "0 process request");
-		Logger::log(LC_RED, "1# parse header string of %d bytes", requestBuffer.size());
-		Logger::log(LC_YELLOW, "Inside processRequest()");
+		Logger::log(LC_MINOR_NOTE, " processRequest ");
+		
 		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
 
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
 
 		HttpResponse httpResponse;
-		Logger::log(LC_YELLOW, "Inside processRequest()");
-	
 
+		
 		// try check all the error could possibly happen
 
 		// 400 Bad request
@@ -314,10 +267,26 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		
 		std::string path = httpRequest.getPath();		
 		std::string method = httpRequest.getMethod();
+		
 		// check for malicious request, contains .. which could lead to exposing
 		if (path.find("..") != std::string::npos )		
 			throw RequestException(400, "Bad Request");
-		
+
+		// check for redirection (directive return)	
+		if(route->getReturnStatus() != 0)
+		{
+			int statusCode = route->getReturnStatus();
+			// is one of the redirections
+			if(statusCode >= 300 and statusCode <= 399)
+			{
+				if(!route->getReturnValue().empty())
+					throw RequestException(statusCode , route->getReturnValue());
+			}
+			throw RequestException(statusCode , "");
+
+		}
+
+
 		// check for allowed methods
 		std::vector<std::string> allowedMethods = route->getMethods();		
 		Logger::log(LC_MINOR_NOTE, " method from header = %s" , method.c_str());
@@ -340,20 +309,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!test.empty() && Util::toSizeT(test) > maxSize)
 			throw RequestException(413, "Request too large");	
 
-		// check for redirection (directive return)	
-		if(route->getReturnStatus() != 0)
-		{
-			int statusCode = route->getReturnStatus();
-			// is one of the redirections
-			if(statusCode >= 300 and statusCode <= 399)
-			{
-				if(!route->getReturnValue().empty())
-					throw RequestException(statusCode , route->getReturnValue());
-			}
-			throw RequestException(statusCode , "");
-
-		}
-
 
 
 		std::string  localPath = "";
@@ -361,9 +316,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!serverConfig.resolveRoute(httpRequest, *route, localPath , allowDirectoryBrowsing))
 			throw RequestException(403, "Forbidden");
 
-		Logger::log(LC_NOTE, "Request seems OK so far");	
-		std::cout << " ProcessRequest() localPath is " << localPath << std::endl;
-
+		Logger::log(LC_MINOR_NOTE, "Request seems OK so far");	
 		
 		std::string requestPathContainFile = Util::extractFileName( localPath, true);
 		std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
@@ -390,13 +343,13 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		else if(!cmd.empty())
 		{
 			// is CGI
-			Logger::log(LC_RED, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
+			Logger::log(LC_MINOR_NOTE, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
 			httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
-			Logger::log(LC_RED, "DONE CGI STUFF??");
+			Logger::log(LC_MINOR_NOTE, "DONE CGI STUFF??");
 		}
 		else if(!requestPathContainFile.empty())
 		{
-			Logger::log(LC_YELLOW, "%s is static file ", localPath.c_str());				
+			Logger::log(LC_MINOR_NOTE, "%s is static file ", localPath.c_str());				
 			httpResponse.getStaticFile(localPath);
 		}
 		else if(allowDirectoryBrowsing)
@@ -410,7 +363,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 
 			
-		Logger::log(LC_DEBUG, "Response is ready!");
+		Logger::log(LC_MINOR_NOTE, "Response is ready!");
 		ready(httpResponse, true);
 		
 		return (true);
@@ -463,7 +416,7 @@ void Connection::setRequestIsComplete(bool newValue)
 }
 
 
-bool	Connection::appendRequestBuffer(char *buffer, size_t length)
+bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<ServerConfig> servers)
 {
 
 		bool		justSplit = false;
@@ -483,7 +436,8 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 					throw RequestException(400, "Bad Request");	
 				if(httpVer.find("HTTP/1.") == std::string::npos)
 					throw RequestException(400, "Bad Request");	
-				Logger::log(LC_CONN_LOG, "[%s] %s", method.c_str(), path.c_str());
+				// [REQUEST]
+				Logger::log(LC_REQ_LOG, "[%s]\t%s", method.c_str(), path.c_str());
 			}
 
 			requestBuffer += std::string(buffer, length);
@@ -527,6 +481,32 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length)
 
 					}
 				}
+
+
+				if (line.find("Host:") == 0)
+				{
+					std::istringstream   line_stream(line.substr(5));
+					std::string hostName;
+
+					if((line_stream >> hostName))
+					{	
+						Logger::log(LC_MINOR_NOTE, " HOSTNAME = %s ", hostName.c_str());
+
+						for( std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
+						{
+							// std::cout << " second getServerName() = " << it->getServerName() << std::endl; 
+							std::string serverNamePort = it->getServerName() + ":" + Util::toString( it->getPort());
+							if (serverNamePort.find(hostName) != std::string::npos)
+							{
+								Logger::log (LC_MINOR_NOTE,"OVERWRITING SERVER CONFIG WITH %s" , it->getServerName().c_str());
+								serverConfig = *it; 
+
+							}
+						}
+						
+					}
+				}
+
 			}
 			if (contentLength <= 0)
 			{
@@ -604,7 +584,7 @@ void Connection::debug()
 
 void Connection::clear()
 {
-	std::cout << " MAGIC CLEAR!" << std::endl;
+	// std::cout << " MAGIC CLEAR!" << std::endl;
 	rawPostBody.clear();
 	isReady = false;
 	headerIsCompleted = false;
@@ -618,4 +598,27 @@ void Connection::clear()
 std::string Connection::getBoundary()
 {
 	return (boundary);
+}
+
+bool	Connection::adjustServerConfig(std::string hostName)
+{
+
+	int		currentPort = serverConfig.getPort();
+	(void) hostName;
+	(void) currentPort;
+	return false;
+
+}
+bool	Connection::shouldRetry()
+{
+	int 		errorCode = 0;
+	socklen_t	len = sizeof(errorCode);
+
+	if(getsockopt( fd, SOL_SOCKET, SO_ERROR, &errorCode , &len) == 0)
+	{
+		return (errorCode == EAGAIN || errorCode == EWOULDBLOCK);
+	}
+
+
+	return (false);
 }
