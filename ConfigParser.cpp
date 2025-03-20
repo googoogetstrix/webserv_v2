@@ -165,13 +165,13 @@ bool ConfigParser::isValidRouteConfig(const std::map<std::string, RouteConfig>ro
             }
             if (returnStatus >= 300 && returnStatus < 400 && route.getReturnValue().empty())
             {
-                std::cout << "Invalid route configuration: 'return' directive with 3XX status code requires a redirect location." << std::endl;
+                std::cout << "Invalid route configuration: Either 'root' or 'upload_store' directive is required if no 'return' directive is found." << std::endl;
                 return false;
             }
         }
-        else //what about /uploads?
+        else
         {
-            if (route.getRoot().empty())
+            if (route.getRoot().empty() && route.getUploadStore().empty())
             {
                 std::cout << "Invalid route configuration: 'root' directive is required if no 'return' directive is found." << std::endl;
                 return false;
@@ -241,5 +241,23 @@ std::vector<ServerConfig> ConfigParser::parseAllConfigs(const std::string& confi
     file.close();
     if (serverConfigs.empty())
         throw std::runtime_error("No server in configuration file");
+    std::map<int, std::set<std::string> > portToServerNames;
+    for (std::vector<ServerConfig>::const_iterator it = serverConfigs.begin(); it != serverConfigs.end(); ++it)
+    {
+        int port = it->getPort();
+        const std::string& serverName = it->getServerName();
+
+        if (serverName.empty())
+        {
+            throw std::runtime_error("Invalid configuration: Servers listening on the same port (" + Util::toString(port) + ") must provide a non-empty server_name.");
+        }
+
+        if (portToServerNames[port].find(serverName) != portToServerNames[port].end())
+        {
+            throw std::runtime_error("Invalid configuration: Servers listening on the same port (" + Util::toString(port) + ") must not have the same server_name ('" + serverName + "').");
+        }
+
+        portToServerNames[port].insert(serverName);
+    }
     return serverConfigs;
 }
