@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:16:22 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 17:33:46 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,9 +230,9 @@ int Webserv::run(void)
 						if(client_socket < 0)
 							throw std::runtime_error("Unable to accept()");
 						// get whatever flag from the clinet socket, and make sure it's set to non-block
-						int flag = fcntl( events[i].data.fd, F_GETFL , 0);
-						if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
-							throw std::runtime_error("Unable to set client socket into non-blocking mode");
+						// int flag = fcntl( events[i].data.fd, F_GETFL , 0);
+						// if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
+						// 	throw std::runtime_error("Unable to set client socket into non-blocking mode");
 						cc.openConnection(client_socket, *server);
 						continue;
 					}
