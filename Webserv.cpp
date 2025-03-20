@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/20 19:30:20 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 20:00:29 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -237,7 +237,6 @@ int Webserv::run(void)
 	
 				// Start client Socket checking				
 				{
-
 					if (cc.findConnection(active_fd) == NULL)
 					{
 						Logger::log(LC_ERROR, "SERIOUS ERROR, cannot find connection# &d from the ConnectionController", active_fd); 
@@ -251,7 +250,7 @@ int Webserv::run(void)
 						// error handling
 						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 						{
-							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
+							Logger::log(LC_ERROR, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
 							connectionController.closeConnection(events[i].data.fd);
 							continue ;
 						}
@@ -264,7 +263,7 @@ int Webserv::run(void)
 						// reading from socket until finished, then process
 						if(events[i].events & EPOLLIN)
 						{
-							cc.handleRead( events[i].data.fd, events[i]);
+							cc.handleRead( events[i].data.fd );
 							continue ;							
 						}
 					}

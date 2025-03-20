@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/13 10:47:36 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 20:04:36 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,16 +30,13 @@ class HttpRequest
 {
 	private:
 
-		std::string								method; // GET / POST / DELETE one at a time
-
-		std::string 							path; // string ex, "/" , "/index.html",  "/uploads/"
-		std::string 							rawPath; // string ex, "/index.php?name=TEST"
+		std::string								method; 
+		std::string 							path; 
+		std::string 							rawPath; 
 
 		std::map<std::string, std::string> 		headers;
 
 		size_t									contentLength;
-		// GET method submission
-		// index.php?name=first&last=blah ,,  split first one from "?" , name , value by "=" , each other by "&"
 		std::map<std::string, std::string> 		queryStrings;
 		std::string								rawQueryString;
 
@@ -52,30 +49,25 @@ class HttpRequest
 		HttpRequest &operator=(HttpRequest const &other);
 		~HttpRequest();
 
-		const std::string &getMethod() const;
-		const std::string &getPath() const;
-		const std::string &getRawPath() const;
+		const std::string 						&getMethod() const;
+		const std::string 						&getPath() const;
+		const std::string 						&getRawPath() const;
 		const std::map<std::string, std::string> &getHeader() const;
-		size_t getContentLength() const;
+		size_t 									getContentLength() const;
 		const std::map<std::string, std::string> &getqueryStrings() const;
-		const std::string &getBody() const;
+		const std::string 						&getBody() const;
+		std::string 							getRawQueryString() const; 
 
-		bool setMethod(std::string methodStr);
-		bool setPath(std::string pathStr);
-		bool setRawPath(std::string rawPathStr);
-		bool setHeader(std::string name, std::string value , bool overwriteExisting=false);
-		bool setContentLength(size_t contentLengthVal);
-		bool setQueryString(std::string key, std::string value);
-		bool setBody(std::string bodyStr);
-
-		std::string getRawQueryString() const; 
+		bool 									setMethod(std::string methodStr);
+		bool 									setPath(std::string pathStr);
+		bool 									setRawPath(std::string rawPathStr);
+		bool 									setHeader(std::string name, std::string value, bool overwriteExisting=false);
+		bool 									setContentLength(size_t contentLengthVal);
+		bool 									setQueryString(std::string key, std::string value);
+		bool 									setBody(std::string bodyStr);
 
 
-		// &response ==> for setting value in case on error
-		// ServerConfig
-		// requestString = "HTTP1.1 GET /index.php \n\nn\"
-		// bool 		parseRequestHeaders(HttpResponse &response, ServerConfig &server, std::string requestString);
-		bool 		parseRequestHeaders(ServerConfig server, std::string requestString);
+		bool 									parseRequestHeaders(ServerConfig server, std::string requestString);
 		static size_t preprocessContentLength(std::string requestString, std::string &method);
 
 		std::string getHeader(std::string const str) const;

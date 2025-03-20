@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/20 19:41:07 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 19:44:12 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -428,7 +428,7 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 					std::istringstream   line_stream(line.substr(15));
 					if(!(line_stream >> reqContentLength))
 					{
-						Logger::log(LC_RED, "Invalid request content length");
+						// Logger::log(LC_RED, "Invalid request content length");
 						throw RequestException(400, "Bad Reqeust");
 					}
 					contentLength = reqContentLength;
