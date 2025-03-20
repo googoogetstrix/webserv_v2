@@ -6,13 +6,13 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:17:25 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 16:40:38 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 19:42:37 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef 	CONNECTION_HPP
 # define	CONNECTION_HPP
-# define 	CONN_FD_FLAG_NONBLOCK 	1
+
 # include	<ctime>
 # include 	<cstdio>
 # include	<fcntl.h>
@@ -30,8 +30,6 @@
 # include	"ConnectionController.hpp"
 # include	"Logger.hpp"
 
-
-
 class Connection 
 {
 	private:
@@ -42,21 +40,15 @@ class Connection
 		bool				isReady;
 		int					bodyLength;
 		std::string			boundary;
-
 		std::string			requestBuffer;
-		std::string 		responseBuffer;
 		std::vector<char>	rawPostBody;
+		std::string 		responseBuffer;		
 		bool				headerIsCompleted;
 		bool				requestIsCompleted;
 		int					epollSocket;
-		void 				setNonBlock();
 		size_t 				contentLength;
+		void 				setNonBlock();
 
-		
-
-
-
-	
 	public:
 		Connection();
 		Connection(int fd, ServerConfig config);
@@ -70,59 +62,41 @@ class Connection
 		std::string 		getResponseBuffer() const;
 		bool 				getHeaderIsComplete() const;
 		bool 				getRequestIsComplete() const;
-		void 				setRequestIsComplete(bool newValue);
-
+		ServerConfig		&getServerConfig();
 		std::vector<char>	&getRawPostBody();
+		bool				getIsReady() const;
+		size_t				getContentLength();
+		std::string			getBoundary();
 
+		void 				setRequestIsComplete(bool newValue);
 		bool 				setExpiresOn(time_t);
-		bool 				setFd(int fd);
-
-		void				punchIn(void);
-
+		bool 				setSocket(int fd);
 		void				setHeaderIsComplete(bool newValue);
+		void				setIsReady(bool newValue) ;
+		void 				setContentLength(int i);
+
+		void				punchIn(void);		
 		bool				isHeaderComplete(); 
 
 		bool				appendRawPostBody(char *, size_t bytesRead);
 		bool				appendRequestBuffer(char *buffer, size_t length, std::vector<ServerConfig> servers);
-
 		bool				processRequest(HttpRequest &httpRequest);
-
 		bool				ready(HttpResponse &httpResponse, bool sendAsWell=false);
-		bool				getIsReady() const;
-		void				setIsReady(bool newValue) ;
 		bool				needsToWrite();
-//		bool				handleWrite(int epoll_fd, struct epoll_event &event);
-
 		size_t				truncateResponseBuffer(size_t bytes);
-
 		bool				isExpired(time_t comp) const;
-
-
-
-		ServerConfig		&getServerConfig();
-
-		void 	setContentLength(int i);
-		size_t				getContentLength();
-		std::string			getBoundary();
 
 		void				debugPostBody();
 		void 				debug();
 		void 				clear();
-
-
-		bool				adjustServerConfig(std::string hostName);
-
-		std::string			debugText;
-
 		bool				shouldRetry();
+		std::string			debugText;
 
 		class ParseRequestException: public std::exception
 		{
 			public:
 				virtual const char *what() const throw();
 		};
-		
-		
 }; 
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:10:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 19:31:19 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ ConnectionController::~ConnectionController()
 	Logger::log(LC_NOTE, "ConnectionController destructor has been called");
 	for(std::map<int, Connection>::iterator it = connections.begin(); it!= connections.end(); ++it )
 	{
-		Logger::log(LC_NOTE, " closing (if opened) socket#%d", it->first);
+		Logger::log(LC_MINOR_NOTE, " closing (if opened) socket#%d", it->first);
 		close(it->first);
 	}
 }

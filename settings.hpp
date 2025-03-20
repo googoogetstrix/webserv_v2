@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   settings.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/14 13:46:55 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/20 18:32:27 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/20 18:58:07 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@
 # define	CGI_SLEEP_MICROSEC		100000
 
 # define	WEBS_DEBUG_RESPONSE		false
-# define 	WEBS_DEBUG_RUN_10_SECS	false	
+# define 	WEBS_DEBUG_RUN_10_SECS	true	
 
 
 # define  	LC_DEFAULT 				"\033[36m"
