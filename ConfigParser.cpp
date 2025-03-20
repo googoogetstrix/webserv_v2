@@ -19,7 +19,7 @@ std::vector<std::string> ConfigParser::split(const std::string& str, char delimi
     return result;
 }
 
-int stringToInt(const std::string& str)
+static int stringToInt(const std::string& str)
 {
     std::stringstream ss(str);
     int result;
@@ -130,19 +130,83 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
     return currentServerConfig;
 }
 
-bool ConfigParser::isValidServerConfig(const ServerConfig& config)
+bool ConfigParser::isValidRouteConfig(const std::map<std::string, RouteConfig>routes)
 {
-    if (config.getPort() < 1024 || config.getPort() > 65535)
+    if (routes.find("/") == routes.end())
     {
-        std::cout << "Invalid configuration: Port number must be within the range 1024 - 65535" << std::endl;
+        std::cout << "Invalid route configuration: Each server must have at least one '/' location block." << std::endl;
         return false;
     }
-    else if (config.getHost().empty())
+    for (std::map<std::string, RouteConfig>::const_iterator it = routes.begin(); it != routes.end(); ++it)
+    {
+        // const std::string& routePath = it->first;
+        const RouteConfig& route = it->second;
+        const std::vector<std::string>& methods = route.getMethods();
+        for (std::vector<std::string>::const_iterator mit = methods.begin(); mit != methods.end(); ++mit)
+        {
+            if (*mit != "GET" && *mit != "POST" && *mit != "DELETE")
+            {
+                std::cout << "Invalid route configuration: Allowed methods must be GET, POST, or DELETE only." << std::endl;
+                return false;
+            }
+        }
+        if (route.getReturnStatus() == 0 && methods.empty())
+        {
+            std::cout << "Invalid route configuration: Allowed methods are required if no 'return' directive is found." << std::endl;
+            return false;
+        }
+        int returnStatus = route.getReturnStatus();
+        if (returnStatus != 0)
+        {
+            if (returnStatus < 100 || returnStatus > 599)
+            {
+                std::cout << "Invalid route configuration: 'return' directive must have a valid HTTP status code (100-599)." << std::endl;
+                return false;
+            }
+            if (returnStatus >= 300 && returnStatus < 400 && route.getReturnValue().empty())
+            {
+                std::cout << "Invalid route configuration: 'return' directive with 3XX status code requires a redirect location." << std::endl;
+                return false;
+            }
+        }
+        else //what about /uploads?
+        {
+            if (route.getRoot().empty())
+            {
+                std::cout << "Invalid route configuration: 'root' directive is required if no 'return' directive is found." << std::endl;
+                return false;
+            }
+        }
+        const std::map<std::string, std::string>& cgis = route.getCGIs();
+        for (std::map<std::string, std::string>::const_iterator cgiIt = cgis.begin(); cgiIt != cgis.end(); ++cgiIt)
+        {
+            const std::string& extension = cgiIt->first;
+            if (extension != ".php" && extension != ".py")
+            {
+                std::cout << "Invalid route configuration: Only '.php' and '.py' are allowed for cgi_pass." << std::endl;
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool ConfigParser::isValidServerConfig(const ServerConfig& config)
+{
+    if ((config.getPort() < 1024 || config.getPort() > 65535) && config.getPort() != 80)
+    {
+        std::cout << "Invalid configuration: Port number must be within the range 1024 - 65535 or equal 80" << std::endl;
+        return false;
+    }
+    if (config.getHost().empty())
     {
         std::cout << "Invalid configuration: Hostname cannot be empty. Please provide a valid hostname." << std::endl;
         return false;
     }
-    // return config.getPort() > 0 && !config.getHost().empty() && !config.getRoot().empty();
+    if (!isValidRouteConfig(config.getRoutes()))
+    {
+        return false;
+    }
     return true;
 }
 
@@ -175,5 +239,7 @@ std::vector<ServerConfig> ConfigParser::parseAllConfigs(const std::string& confi
         }
     }
     file.close();
+    if (serverConfigs.empty())
+        throw std::runtime_error("No server in configuration file");
     return serverConfigs;
 }
