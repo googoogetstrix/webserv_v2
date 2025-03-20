@@ -5,6 +5,7 @@ import os
 import http.cookies
 import uuid
 import cgitb
+from datetime import datetime, timedelta, timezone
 
 cgitb.enable()
 
@@ -19,8 +20,12 @@ def get_or_create_session():
     session_id = cookies.get("session_id")
     if session_id is None:
         session_id = str(uuid.uuid4())
+        expire_time = (datetime.now(timezone.utc) + timedelta(minutes=5)).strftime("%a, %d %b %Y %H:%M:%S GMT")
         cookies["session_id"] = session_id
         cookies["session_id"]["path"] = "/"
+        cookies["session_id"]["secure"] = True
+        cookies["session_id"]["httponly"] = True
+        cookies["session_id"]["expires"] = expire_time
         print(cookies.output())
     else:
         session_id = session_id.value
