@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   settings.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/14 13:46:55 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:15:22 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 18:32:27 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,9 @@
 # define	CC_DEF_TIMEOUT_IN_SEC   5
 
 
-# define	READ_BUFFER_SIZE        1024
-# define	CGI_TIMEOUT             10
+# define	CGI_READ_BUFFER_SIZE    1024
+# define	CGI_TIMEOUT_SEC         5
+# define	CGI_SLEEP_MICROSEC		100000
 
 # define	WEBS_DEBUG_RESPONSE		false
 # define 	WEBS_DEBUG_RUN_10_SECS	false	

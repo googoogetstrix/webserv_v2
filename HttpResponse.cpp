@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:45:18 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 18:44:09 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -486,6 +486,11 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
 			exit(errno) ;
 		}
+		if (dup2(pipe_stdout[1], STDERR_FILENO) == -1)
+		{
+			std::cerr << "Error redirecting stderr: " << strerror(errno) << std::endl;
+			exit(errno) ;
+		}
 		close(pipe_stdout[0]);
 		close(pipe_stdout[1]);
 		if (execve(argv[0], argv, envp) == -1)
@@ -500,7 +505,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[0]);
 		close(pipe_stdout[1]);
 	
-		fcntl(pipe_stdout[0], F_SETFL, O_NONBLOCK);
+		// fcntl(pipe_stdout[0], F_SETFL, O_NONBLOCK);
 		int  bytesWritten = write(pipe_stdin[1], rawBytes.data() , rawBytes.size());
 		if(bytesWritten < 0)
 		{
@@ -511,7 +516,7 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 		close(pipe_stdin[1]);
 
 		// Read from the child's stdout
-		char buffer[READ_BUFFER_SIZE];
+		char buffer[CGI_READ_BUFFER_SIZE];
 		std::string  output = "";
 		bool timed_out = false;
 		int elapsed_time = 0;
@@ -531,9 +536,9 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 			pid_t result = waitpid(pid, &status, WNOHANG);
 			if (result == 0)
 			{
-				usleep(100000);
+				usleep(CGI_SLEEP_MICROSEC);
 				elapsed_time += 100;
-				if (elapsed_time >= CGI_TIMEOUT * 1000)
+				if (elapsed_time >= CGI_TIMEOUT_SEC  * 1000)
 				{
 					// std::cerr << "Error: CGI script timed out" << std::endl;
 					kill(pid, SIGKILL);
@@ -557,7 +562,6 @@ void HttpResponse::processPythonCGI(std::string command, std::string scriptFile,
 				{
 					std::cerr << "Child process exited with error status: " << WEXITSTATUS(status) << std::endl;
 					setStatus(500);
-					setHeader("Content-Type", "text/html");
 				}
 				break ;
 			}
@@ -684,9 +688,6 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 
 	Logger::log(LC_MINOR_NOTE, " Inside handleUploadedFiles()");
 	(void) httpRequest;
-
-	// httpRequest.debug();
-	// route->debug();
 	
 	std::string boundary = conn->getBoundary();
 	if (boundary.empty())
