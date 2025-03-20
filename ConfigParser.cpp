@@ -121,7 +121,6 @@ ServerConfig ConfigParser::parseConfig(std::ifstream& file)
                 currentLocation = trim(locationLine);
 
             RouteConfig routeConfig = parseRouteConfig(file, currentLocation);
-           // routeConfig.debug();
             currentServerConfig.addRoute(routeConfig);
         }
         else if (line.find("server") == 0)
@@ -150,11 +149,6 @@ bool ConfigParser::isValidRouteConfig(const std::map<std::string, RouteConfig>ro
                 return false;
             }
         }
-        if (route.getReturnStatus() == 0 && methods.empty())
-        {
-            std::cout << "Invalid route configuration: Allowed methods are required if no 'return' directive is found." << std::endl;
-            return false;
-        }
         int returnStatus = route.getReturnStatus();
         if (returnStatus != 0)
         {
@@ -165,15 +159,21 @@ bool ConfigParser::isValidRouteConfig(const std::map<std::string, RouteConfig>ro
             }
             if (returnStatus >= 300 && returnStatus < 400 && route.getReturnValue().empty())
             {
-                std::cout << "Invalid route configuration: Either 'root' or 'upload_store' directive is required if no 'return' directive is found." << std::endl;
+                std::cout << "Invalid route configuration: required location to redirect" << std::endl;
                 return false;
             }
         }
         else
         {
+            if (methods.empty())
+            {
+                std::cout << "Invalid route configuration: Allowed methods are required if no 'return' directive is found." << std::endl;
+                return false;
+            }
+        
             if (route.getRoot().empty() && route.getUploadStore().empty())
             {
-                std::cout << "Invalid route configuration: 'root' directive is required if no 'return' directive is found." << std::endl;
+                std::cout << "Invalid route configuration: Either 'root' or 'upload_store' directive is required if no 'return' directive is found." << std::endl;
                 return false;
             }
         }
@@ -231,10 +231,8 @@ std::vector<ServerConfig> ConfigParser::parseAllConfigs(const std::string& confi
             ServerConfig serverConfig = parseConfig(file);
             if (!isValidServerConfig(serverConfig))
             {
-                // throw std::runtime_error("Invalid server configuration");
                 continue ;
             }
-            serverConfig.debug();
             serverConfigs.push_back(serverConfig);
         }
     }
