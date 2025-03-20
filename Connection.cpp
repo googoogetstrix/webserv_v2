@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:12:50 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 19:44:12 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,7 @@ bool 	Connection::setExpiresOn(time_t t)
 	return true; 
 }
 
-bool 	Connection::setFd(int newFd)
+bool 	Connection::setSocket(int newFd)
 {
 	fd = newFd;
 	return true;
@@ -235,14 +235,10 @@ ServerConfig		&Connection::getServerConfig()
 
 bool	Connection::processRequest(HttpRequest &httpRequest)
 {
-		Logger::log(LC_MINOR_NOTE, " processRequest ");
-		
+		Logger::log(LC_MINOR_NOTE, " processRequest ");		
 		httpRequest.parseRequestHeaders(serverConfig , requestBuffer);
-
 		RouteConfig *route = serverConfig.findRoute(httpRequest.getPath());
-
 		HttpResponse httpResponse;
-
 		
 		// try check all the error could possibly happen
 
@@ -255,15 +251,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		// 413 Content Too Large
 		// 414 URI Too Long
 		// 500 Internal Server Error
-
-
-		// TODO 
-		if(false) 
-		{
-			serverConfig.debug();
-			httpRequest.debug();
-			route->debug();
-		}
 		
 		std::string path = httpRequest.getPath();		
 		std::string method = httpRequest.getMethod();
@@ -283,9 +270,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 					throw RequestException(statusCode , route->getReturnValue());
 			}
 			throw RequestException(statusCode , "");
-
 		}
-
 
 		// check for allowed methods
 		std::vector<std::string> allowedMethods = route->getMethods();		
@@ -293,14 +278,12 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		if(!Util::strInContainer(method,  allowedMethods))
 			throw RequestException(405, "Method not allowed.");
 
-		// check if is POST , content length is required , this should be handle by handleRead already ?
-		
+		// check if is POST , content length is required , this should be handle by handleRead already ?	
 		std::string test = httpRequest.getHeader("Content-Length");		
 		if(httpRequest.getMethod() == "POST" && test.empty())
 			throw RequestException(411, "Content-Length is required");
 	
 		// also check for body too large
-		// route->debug();
 		size_t maxSize = route->getClientMaxBodySize();
 		if(maxSize == 0)
 			maxSize = WEBS_DEF_MAX_BOD_SIZE;
@@ -308,8 +291,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 
 		if(!test.empty() && Util::toSizeT(test) > maxSize)
 			throw RequestException(413, "Request too large");	
-
-
 
 		std::string  localPath = "";
 		bool		 allowDirectoryBrowsing = false;
@@ -321,25 +302,18 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		std::string requestPathContainFile = Util::extractFileName( localPath, true);
 		std::string cmd = route->getCGI(Util::getFileExtension(requestPathContainFile));
 
-
 		bool		isUploadRequest = false;
 		if(!route->getUploadStore().empty())
 		{
 			// the request URL must be exactly match to the route path
 			if(httpRequest.getPath() == route->getPath() && httpRequest.getMethod() == "POST")
-			{
 				isUploadRequest = true; 
-			}
 		}
 
 		if(httpRequest.getMethod() == "DELETE")
-		{			
 			httpResponse.handleDeleteMethod(localPath);
-		}
 		else if(isUploadRequest) 
-		{
 			httpResponse.handleUploadedFiles( this , route, httpRequest);
-		} 
 		else if(!cmd.empty())
 		{
 			// is CGI
@@ -360,8 +334,6 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		{
 			throw RequestException(403, "Forbidden");
 		}
-
-
 			
 		Logger::log(LC_MINOR_NOTE, "Response is ready!");
 		ready(httpResponse, true);
@@ -373,6 +345,7 @@ void 	Connection::setContentLength(int i)
 {
 		contentLength = i;
 }
+
 size_t		Connection::getContentLength()
 {
 		return contentLength; 
@@ -383,6 +356,7 @@ std::vector<char>	&Connection::getRawPostBody()
 {
 	return rawPostBody;
 }
+
 bool				Connection::isExpired(time_t comp) const
 {
 	return expiresOn < comp;
@@ -398,32 +372,29 @@ void Connection::debugPostBody()
 	}
 	std::cout << "\n size=" << daSize << std::endl;
 }
+
 bool Connection::getHeaderIsComplete(void) const
 {
 	return headerIsCompleted;
 }
-
 
 bool Connection::getRequestIsComplete(void) const
 {
 	return requestIsCompleted;
 }
 
-
 void Connection::setRequestIsComplete(bool newValue)
 {
 	requestIsCompleted = newValue;
 }
 
-
 bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<ServerConfig> servers)
 {
 
 		bool		justSplit = false;
-		if(!headerIsCompleted)
-		{
-			
-			if(requestBuffer.length() == 0)
+		if (!headerIsCompleted)
+		{			
+			if (requestBuffer.length() == 0)
 			{
 				std::istringstream iss( std::string(buffer, length));
 				std::string			line;
@@ -432,9 +403,9 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 				std::istringstream lineStream(line);
 				std::string  method , path , httpVer;				
 
-				if(!(lineStream >> method >> path >> httpVer))
+				if (!(lineStream >> method >> path >> httpVer))
 					throw RequestException(400, "Bad Request");	
-				if(httpVer.find("HTTP/1.") == std::string::npos)
+				if (httpVer.find("HTTP/1.") == std::string::npos)
 					throw RequestException(400, "Bad Request");	
 				// [REQUEST]
 				Logger::log(LC_REQ_LOG, "[%s]\t%s", method.c_str(), path.c_str());
@@ -443,13 +414,9 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 			requestBuffer += std::string(buffer, length);
 			size_t	crlfPos = requestBuffer.find("\r\n\r\n");
 			if(crlfPos == std::string::npos)
-			{
 				return false; 
-			}
 			else
-			{
 				headerIsCompleted = true;
-			}
 
 			std::istringstream  iss(requestBuffer);
 			std::string         line;
@@ -461,10 +428,9 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 					std::istringstream   line_stream(line.substr(15));
 					if(!(line_stream >> reqContentLength))
 					{
-						Logger::log(LC_RED, "Invalid request content length");
+						// Logger::log(LC_RED, "Invalid request content length");
 						throw RequestException(400, "Bad Reqeust");
 					}
-					// std::cout << " *** setting content-length " << reqContentLength << std::endl;
 					contentLength = reqContentLength;
 				}
 				if (line.find("Content-Type:") == 0)
@@ -476,12 +442,9 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 						if (boundaryPos != std::string::npos)
 						{
 							boundary = line.substr(boundaryPos + 9);
-							// std::cout << " *** setting boundary = " << boundary << std::endl;
 						}
-
 					}
 				}
-
 
 				if (line.find("Host:") == 0)
 				{
@@ -491,45 +454,30 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 					if((line_stream >> hostName))
 					{	
 						Logger::log(LC_MINOR_NOTE, " HOSTNAME = %s ", hostName.c_str());
-
 						for( std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
 						{
-							// std::cout << " second getServerName() = " << it->getServerName() << std::endl; 
 							std::string serverNamePort = it->getServerName() + ":" + Util::toString( it->getPort());
 							if (serverNamePort.find(hostName) != std::string::npos)
 							{
 								Logger::log (LC_MINOR_NOTE,"OVERWRITING SERVER CONFIG WITH %s" , it->getServerName().c_str());
 								serverConfig = *it; 
-
 							}
-						}
-						
+						}						
 					}
 				}
 
 			}
 			if (contentLength <= 0)
-			{
 				contentLength = 0;
-			}
-			// std::cout << " ******** REACHING HERE ??? " << contentLength << std::endl;
-			// std::cout << " ******** rawPostBody.size() ??? " << rawPostBody.size() << std::endl;
 
 			if(contentLength <= rawPostBody.size())
-			{
 				return (requestIsCompleted = true);
-			}	
 			
 			std::string temp = requestBuffer.substr(crlfPos + 4, requestBuffer.length());
-			// rawPostBody.clear();
 			for(size_t j=0;j<temp.length();j++)
-			{
 				rawPostBody.push_back(temp[j]);
-			}
 			justSplit = true;
-			//std::cout << " ***** temp = _" << temp << "_ " <<  std::endl;
 			requestBuffer = requestBuffer.substr(0, crlfPos);
-
 		}
 		
  		if(headerIsCompleted && !justSplit)
@@ -540,21 +488,12 @@ bool	Connection::appendRequestBuffer(char *buffer, size_t length, std::vector<Se
 				char c = buffer[i];
 				rawPostBody.push_back(c);
 			}
-				
 		}
 
 		if(contentLength == 0)
-		{
-			return (requestIsCompleted = true);
-		}
-			
+			return (requestIsCompleted = true);			
 		else if(contentLength <= rawPostBody.size())
-		{
 			return (requestIsCompleted = true);
-		}
-			
-
-		// std::cout << " IN THIS LOOP, contentLength = " << contentLength << " , rawPostBody = " <<  rawPostBody.size() << std::endl;
 
 		return (false);
 
@@ -584,7 +523,6 @@ void Connection::debug()
 
 void Connection::clear()
 {
-	// std::cout << " MAGIC CLEAR!" << std::endl;
 	rawPostBody.clear();
 	isReady = false;
 	headerIsCompleted = false;
@@ -600,25 +538,12 @@ std::string Connection::getBoundary()
 	return (boundary);
 }
 
-bool	Connection::adjustServerConfig(std::string hostName)
-{
-
-	int		currentPort = serverConfig.getPort();
-	(void) hostName;
-	(void) currentPort;
-	return false;
-
-}
 bool	Connection::shouldRetry()
 {
 	int 		errorCode = 0;
 	socklen_t	len = sizeof(errorCode);
 
 	if(getsockopt( fd, SOL_SOCKET, SO_ERROR, &errorCode , &len) == 0)
-	{
 		return (errorCode == EAGAIN || errorCode == EWOULDBLOCK);
-	}
-
-
 	return (false);
 }

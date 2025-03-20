@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:14:32 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 16:41:03 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 20:00:05 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,6 @@ class ConnectionController
 
 		std::map<int, Connection> 	connections; 
 		std::map<int, ServerConfig> servers;
-
-
 		std::vector<ServerConfig>	rawServers;
 
 		ConnectionController(ConnectionController const &other);
@@ -40,34 +38,29 @@ class ConnectionController
 		ConnectionController();		
 		~ConnectionController();
 
-		static int		epollSocket; 
+		static int					epollSocket; 
 
-		Connection 		*findConnection(int fd);
-		bool			closeConnection(int fd);
-		int				openConnection(int fd, ServerConfig config);
+		Connection 					*findConnection(int fd);
+		bool						closeConnection(int fd);
+		int							openConnection(int fd, ServerConfig config);
 
-		// bool			handleRead(Connection& conn, struct epoll_event& event, HttpRequest &httpRequest, HttpResponse &httpResponse);
-		// bool			handleWrite(Connection& conn, struct epoll_event& event, HttpRequest &httpRequest, HttpResponse &httpResponse);
-		bool			handleRead(int clientSocket, struct epoll_event& event);
-		bool			handleWrite(int clientSocket);
+		bool						handleRead(int clientSocket);
+		bool						handleWrite(int clientSocket);
 
-		int				addServer(int fd, ServerConfig server);
-		ServerConfig	*getServer(int fd);
+		int							addServer(int fd, ServerConfig server);
+		ServerConfig				*getServer(int fd);
 		std::map<int, ServerConfig> getServers(); 
 
+		static void					setEpollSocket(int epollFd);
+		static  int					getEpollSocket();
 
-		static void		setEpollSocket(int epollFd);
-		static  int		getEpollSocket();
+		size_t						purgeExpiredConnections();
+		bool 						handleRequestException(RequestException &reqException,Connection &conn);
+		void						debug();
 
-
-		size_t			purgeExpiredConnections();
-		bool 			handleRequestException(RequestException &reqException,Connection &conn);
-		void			debug();
-
-		int				addRawServer(ServerConfig server);
-		std::vector<ServerConfig>  getRawServers();
+		int							addRawServer(ServerConfig server);
+		std::vector<ServerConfig>   getRawServers();
 
 };
 
 #endif
-

@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:15:43 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:03:34 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 19:53:20 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 # include	<netinet/in.h>
 # include	<sys/epoll.h>
 # include 	<fcntl.h>
-# include 	<unistd.h>
+
 # include 	<cstring>
 # include 	<cerrno>
 # include	"settings.hpp"
@@ -31,8 +31,6 @@
 # include 	"RequestException.hpp"
 # include 	"ConnectionController.hpp"
 # include 	"ConfigParser.hpp"
-
-
 
 class ServerConfig; 
 class ConnectionController;
@@ -45,8 +43,7 @@ class Webserv
 		std::string					configFile;
 		std::vector<int>			serverSockets;
 		ConnectionController		connectionController; 
-		
-		
+				
 		Webserv();
 		Webserv(Webserv const &other);
 		Webserv &operator=(Webserv const &other);
@@ -62,9 +59,9 @@ class Webserv
 		Webserv(std::string configFile);
 		std::set<int> 				getListeningPorts();
 		ConnectionController 		&getConnectionController();
-
-		int 						run(void);
 		std::vector<ServerConfig> 	getServerConfigs();
+		
+		int 						run(void);
 		
 };
 

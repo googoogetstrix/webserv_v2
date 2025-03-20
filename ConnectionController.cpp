@@ -6,13 +6,12 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 18:23:14 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 18:10:17 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/20 20:02:15 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ConnectionController.hpp"
 #include "Logger.hpp"
-
 
 int ConnectionController::epollSocket = 0; 
 
@@ -33,17 +32,12 @@ ConnectionController::ConnectionController()
 	
 }
 
-// ConnectionController::ConnectionController(int timeout):timeoutInSecs(timeout)
-// {
-	
-// }
-
 ConnectionController::~ConnectionController()
 {
 	Logger::log(LC_NOTE, "ConnectionController destructor has been called");
 	for(std::map<int, Connection>::iterator it = connections.begin(); it!= connections.end(); ++it )
 	{
-		Logger::log(LC_NOTE, " closing (if opened) socket#%d", it->first);
+		Logger::log(LC_MINOR_NOTE, " closing (if opened) socket#%d", it->first);
 		close(it->first);
 	}
 }
@@ -93,20 +87,15 @@ int		ConnectionController::openConnection(int clientSocket, ServerConfig serverC
 }
 
 
-bool	ConnectionController::handleRead(int clientSocket, struct epoll_event &event)
+bool	ConnectionController::handleRead(int clientSocket)
 {
 	Connection *conn = findConnection(clientSocket);
 	size_t	bufferSize = CON_RECV_BUFFER_SIZE - 1;
 	char	buffer[CON_RECV_BUFFER_SIZE];
-
 	
 	if(conn->getHeaderIsComplete() && conn->getRequestIsComplete())
 		return (true);
 	
-	(void)event;
-	
-	
-
 	try {
 
 		while(true)
@@ -306,5 +295,4 @@ std::vector<ServerConfig>  ConnectionController::getRawServers()
 {
 	return rawServers;
 }
-
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/20 17:33:46 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/20 20:00:29 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,12 +178,14 @@ int Webserv::run(void)
 	Logger::log(LC_INFO, "Pending for incoming request...");
 
 
-	HttpResponse 	httpResponse; 
+	// HttpResponse 	httpResponse; 
 	HttpRequest 	httpRequest;
 
 	time_t serviceExpires = time(0) + 10;
 	while (true) 
 	{
+			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
+				break; 
 
 		
 			int nfds = epoll_wait(epoll_fd, events , WEBS_MAX_EVENTS ,WEBS_SCK_TIMEOUT );
@@ -219,20 +221,13 @@ int Webserv::run(void)
 					if(events[i].events & EPOLLIN)
 					{						
 						if(!server)
-							throw std::runtime_error("ERROR Unable to load server configuration for fd....");
-						// std::cout << " *** SERVER IS " << server->getNick() << std::endl ;
-
+							throw std::runtime_error("ERROR Unable to load server configuration for fd....");				
 						struct sockaddr_in client_address;	
 						socklen_t len = sizeof(client_address);
-						// Logger::log(LC_NOTE, "trying to accept new socket ");
-
+						
 						int	client_socket = accept(events[i].data.fd, (struct sockaddr *)&client_address , &len);						
 						if(client_socket < 0)
 							throw std::runtime_error("Unable to accept()");
-						// get whatever flag from the clinet socket, and make sure it's set to non-block
-						// int flag = fcntl( events[i].data.fd, F_GETFL , 0);
-						// if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) == -1)
-						// 	throw std::runtime_error("Unable to set client socket into non-blocking mode");
 						cc.openConnection(client_socket, *server);
 						continue;
 					}
@@ -242,7 +237,6 @@ int Webserv::run(void)
 	
 				// Start client Socket checking				
 				{
-
 					if (cc.findConnection(active_fd) == NULL)
 					{
 						Logger::log(LC_ERROR, "SERIOUS ERROR, cannot find connection# &d from the ConnectionController", active_fd); 
@@ -256,7 +250,7 @@ int Webserv::run(void)
 						// error handling
 						if ((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLHUP) || (events[i].events & EPOLLERR))
 						{
-							Logger::log(LC_CLOSE, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
+							Logger::log(LC_ERROR, "RDHUP Cl/ HUP / POLLERR on Client Socket %d , closing socket ", events[i].data.fd);
 							connectionController.closeConnection(events[i].data.fd);
 							continue ;
 						}
@@ -266,12 +260,10 @@ int Webserv::run(void)
 							cc.handleWrite(events[i].data.fd);
 							continue;
 						}
-
-
 						// reading from socket until finished, then process
 						if(events[i].events & EPOLLIN)
 						{
-							cc.handleRead( events[i].data.fd, events[i]);
+							cc.handleRead( events[i].data.fd );
 							continue ;							
 						}
 					}
@@ -279,13 +271,10 @@ int Webserv::run(void)
 				}
 			}
 			connectionController.purgeExpiredConnections();
-			if(WEBS_DEBUG_RUN_10_SECS && time(0) > serviceExpires)
-				break; 
 
 	}
 	// this won't be reached anyway 
 	close(epoll_fd);
-	// handling
 	return (0);
 }
 
