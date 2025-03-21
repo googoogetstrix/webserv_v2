@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:10:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/21 09:58:01 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/21 10:07:54 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ class Connection;
 class HttpResponse
 {
 	private:
-		int								status;
+		int									status;
 		std::map<std::string,std::string>	headers;
 		std::string							body;
 
@@ -78,8 +78,7 @@ class HttpResponse
 		
 		bool								generateDirectoryListing(const HttpRequest& request, const std::string& path);
 
-		// void								processPythonCGI(const HttpRequest request, ServerConfig server, RouteConfig route);
-		void								processPythonCGI(std::string command, std::string scriptfile, HttpRequest request, ServerConfig server, RouteConfig route , std::vector<char> &vec);
+		void								processCGI(std::string command, std::string scriptfile, HttpRequest request, ServerConfig server, RouteConfig route , std::vector<char> &vec);
 		size_t								setCGIResponse(std::string &output, size_t length);
 		bool								isRepeatableHeader(std::string const &str);
 

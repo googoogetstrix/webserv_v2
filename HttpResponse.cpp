@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/21 10:02:02 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/21 10:09:51 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -227,23 +227,6 @@ std::string HttpResponse::serialize()
 	
 }
 
-bool HttpResponse::response(int socket_id)
-{
-	std::string 			wholeResponse = serialize();
-	size_t					bytesSent = 0;
-
-	while( bytesSent < wholeResponse.length())
-	{
- 		int sent = write(socket_id , wholeResponse.c_str() + bytesSent, wholeResponse.length() - bytesSent);
-		if(sent <= 0)
-			return false;
-		bytesSent += sent;
-	}
-	
-	// std::string testErrorPage = getDefaultErrorPage(status);
-	return (true);
-}
-
 std::string HttpResponse::getMimeType(const std::string & extension)
 {
 	std::map<std::string, std::string> mimeTypes;
@@ -402,7 +385,7 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	return true;
 }
 
-void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
+void HttpResponse::processCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
 {
 
 	(void)server;

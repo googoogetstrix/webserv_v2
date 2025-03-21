@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/04 17:24:12 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/20 19:44:12 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/21 10:07:39 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -318,7 +318,7 @@ bool	Connection::processRequest(HttpRequest &httpRequest)
 		{
 			// is CGI
 			Logger::log(LC_MINOR_NOTE, "%s is CGI , with command %s ", localPath.c_str(), cmd.c_str());
-			httpResponse.processPythonCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
+			httpResponse.processCGI( cmd , localPath, httpRequest, serverConfig , *route , rawPostBody);
 			Logger::log(LC_MINOR_NOTE, "DONE CGI STUFF??");
 		}
 		else if(!requestPathContainFile.empty())
