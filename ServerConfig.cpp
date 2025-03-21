@@ -101,13 +101,10 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 			return &(it->second);
 
 		std::string loc = it->first;
-		// if ( loc[loc.size() - 1] != '/')
-		// 	loc += "/";
 		
 		if (path.find(loc) == 0)
 		{
 			size_t matchedLength = Util::charactersMatched(path, loc);
-			// std::cout <<  "for path " << path << ", loc " << loc << "  matchedLength  " << matchedLength << std::endl;
 			
 			if(matchedLength > max)
 			{
@@ -116,11 +113,6 @@ RouteConfig     *ServerConfig::findRoute(std::string path)
 			}
 		}
 	}
-	// std::cout << "returning << _" << returnRoute << "_" << std::endl;
-	// Logger::log(LC_RED, " SOMEWHAT MATCH, returning %s" , path.c_str());
-	// Logger::log(LC_YELLOW, " INSIDE ME");
-	// returnRoute->debug();
-	// Logger::log(LC_YELLOW, " INSIDE ME");
 
 	return returnRoute;
 }
@@ -139,26 +131,11 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 		allowDirectoryListing = false;
 		allowDirectoryListing = route.getAutoindex();
 
-		// original = (!Util::hasTrailingSlash(original) && original != "/")? "" : "***";
-		// original = (!Util::hasTrailingSlash(original) && filename == "")? "***" : "";
-		
-		// std::cout << "original = " << original << std::endl;
-		// ORIGINAL localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + original);	
 		std::string lastClose = "/";
-		// std::cout << " filename _" << filename << "_" << std::endl;
-		// std::cout << " hasTrailingSlash() _" <<  (Util::hasTrailingSlash(original) ? "TRUE":"FALSE") << "_" << std::endl;
-		
-		
-		// if (original != "/" && Util::hasTrailingSlash(original) && filename.empty())
-		// 	lastClose = "";
 
-
-		// std::cout << " lastClose _" << lastClose << "_" << std::endl;
 		localPath.replace( 0, route.getPath().length(), "./" + route.getRoot() + lastClose);	
-		// std::cout << " AFTER REPLACE = " << localPath << std::endl;
 
 
-		// std::cout << " BEFORE APPENDING INDEX IS " << localPath << std::endl;
 		if(filename.empty() && !route.getIndex().empty() && !route.getAutoindex())
 		{
 			if( !Util::hasTrailingSlash(original))
@@ -166,10 +143,7 @@ bool	ServerConfig::resolveRoute(HttpRequest &httpRequest, RouteConfig &route, st
 			localPath += route.getIndex();
 		}
 
-		// 
 		localPath = Util::replaceAll(localPath, "//", "/");
-
-		// std::cout << "localPath finally is << _" << localPath << "_" << std::endl;
 		return (true);
 }
 

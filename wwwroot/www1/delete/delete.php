@@ -23,6 +23,8 @@ ul li a { text-decoration: none; color: #4dabf7; font-weight: bold; transition: 
 ul li a:hover { color: #82caff; }
 ul li:hover { background-color: #2a2a2a; }
 span.red { color:#DD0000; }
+.ital
+{ text-align:right; font-size:0.8rem ; color: #999999; font-style:italic;}
 </style>
 </head><body>
 <div class="container">
@@ -41,6 +43,9 @@ while (($entry = readdir($dirHandler)) !== false)
 ?>
 
 </ul>
+</div>
+<div class="container ital">
+	list generated on <?php echo date("Y-m-d H:i:s") ?> by PHP
 </div>
 <div id="divOutput"></div>
 <script type="text/javascript">

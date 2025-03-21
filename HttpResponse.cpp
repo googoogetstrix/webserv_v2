@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/20 18:44:09 by nusamank         ###   ########.fr       */
+/*   Updated: 2025/03/21 10:09:51 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,7 +205,13 @@ std::string HttpResponse::serialize()
 	// single set of \r\n since the header already sent the first set
 	oss << "\r\n" << body ;
 
-	std::string color = (status >= 400) ? LC_RES_NOK_LOG : LC_RES_OK_LOG;
+	std::string color = LC_RES_OK_LOG;
+	if(status >= 300)
+		color = LC_RES_FND_LOG;
+	if(status >= 400)
+		color = LC_RES_NOK_LOG;
+	if(status >= 500)
+		color = LC_RES_INT_LOG;
 	Logger::log(color, "[RESPOND]\t%d - %s " , status, getStatusText(status).c_str() );
 
 	if (WEBS_DEBUG_RESPONSE)
@@ -219,23 +225,6 @@ std::string HttpResponse::serialize()
 
 	return oss.str();
 	
-}
-
-bool HttpResponse::response(int socket_id)
-{
-	std::string 			wholeResponse = serialize();
-	size_t					bytesSent = 0;
-
-	while( bytesSent < wholeResponse.length())
-	{
- 		int sent = write(socket_id , wholeResponse.c_str() + bytesSent, wholeResponse.length() - bytesSent);
-		if(sent <= 0)
-			return false;
-		bytesSent += sent;
-	}
-	
-	// std::string testErrorPage = getDefaultErrorPage(status);
-	return (true);
 }
 
 std::string HttpResponse::getMimeType(const std::string & extension)
@@ -396,7 +385,7 @@ bool HttpResponse::generateDirectoryListing(const HttpRequest& request, const st
 	return true;
 }
 
-void HttpResponse::processPythonCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
+void HttpResponse::processCGI(std::string command, std::string scriptFile, HttpRequest request, ServerConfig server, RouteConfig route, std::vector<char> &rawBytes)
 {
 
 	(void)server;
@@ -577,7 +566,7 @@ bool	HttpResponse::isRepeatableHeader(std::string const &str)
 {
 	if(str.find("Set-Cookie") != std::string::npos)
 		return true;
-	if(str == "Cookie" || str == ("User-Agent"))
+	if(str == "Cookie" || str == "User-Agent")
 		return (true);
 	return (false);
 }
@@ -628,28 +617,6 @@ size_t	HttpResponse::setCGIResponse(std::string &output, size_t length)
 	setBody( output.substr(splitPos + sepLength, length - (splitPos + sepLength)));
 	return 200; 	
 }
-
-
-int 	HttpResponse::autoResponseHeader(HttpRequest &httpRequest)
-{
-		int	effected = 0;
-		Logger::log(LC_MINOR_NOTE, " Inside autoResponseHeader ... ");
-		for(std::map<std::string,std::string>::const_iterator it = httpRequest.getHeader().begin(); it != httpRequest.getHeader().end(); ++it)
-		{
-			if(Util::trim(it->first) == "Cookie")
-			{
-				setHeader("Set-Cookie" , it->second, false);
-				Logger::log(LC_MINOR_NOTE, "\t - setting %s ", it->second.c_str());
-				effected++;
-			}
-		}
-		Logger::log(LC_MINOR_NOTE, "%d headers added", effected);
-		return effected;
-
-	
-}
-
-
 
 bool HttpResponse::checkFileAvailibity(std::string &filePath, bool isFileOnly)
 {
@@ -737,10 +704,6 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 			std::cout << " ext = " << ext  << std::endl;
 			std::map<std::string, std::string> cgis = conn->getServerConfig().getAllRouteCGIs();
 			
-			// for(std::map<std::string,std::string>::const_iterator it = cgis.begin(); it!=cgis.end(); ++it)
-			// {
-			// 	std::cout << " - server cgi = " << it->first << std::endl;
-			// }
 			if( cgis.find(ext) !=  cgis.end())
 			{
 				// is one of the CGIs, skip 
@@ -768,12 +731,11 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 			}
 		}
 	}
-	// if success > 0 && success != token count  return HTTP 207 , multiple status
-	
-	// "Content-Disposition: form-data; name=\"file1\"; filename=\"s1.txt\""
+		
 	Logger::log(LC_MINOR_NOTE, "Total File count = %d" , fileCount);
 	if(fileCount == 0)
 		throw RequestException(400, "Bad Request");
+	// multiple statuses, but at least one success anyway!
 	if(fileCount != success)
 		throw RequestException(201, "Created");
 	throw RequestException(201 , "Seems OK!");
