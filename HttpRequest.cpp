@@ -6,7 +6,7 @@
 /*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/19 17:44:14 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/21 09:59:11 by bworrawa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,7 +211,7 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		size_t contentLengthVal = Util::toInt(headers["Content-Length"].c_str());
 		if (contentLengthVal > server.getClientMaxBodySize())
 		{
-			Logger::log(LC_DEBUG, "contents too large 400");
+			Logger::log(LC_DEBUG, "contents too large 413");
 			throw RequestException(413, "Content too large");
 		}
 		setContentLength(contentLengthVal);
@@ -250,8 +250,6 @@ std::string HttpRequest::getHeader(std::string const str) const
 {
 	if(headers.find(str) == headers.end())
 		return "";
-
 	return headers.at(str);
-
 }
 
