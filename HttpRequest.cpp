@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 10:25:45 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/21 09:59:11 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/22 14:30:14 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,6 +174,10 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 				throw RequestException(400, "Bad Request");
 			}
 		}
+		if (httpVersion != "HTTP/1.0" && httpVersion != "HTTP/1.1")
+		{
+			throw RequestException(400, "Bad Request");
+		}
 		setMethod(methodStr);
 		setRawPath(rawPathStr);
 		size_t pos = rawPathStr.find('?');
@@ -211,7 +215,7 @@ bool HttpRequest::parseRequestHeaders(ServerConfig server, std::string requestSt
 		size_t contentLengthVal = Util::toInt(headers["Content-Length"].c_str());
 		if (contentLengthVal > server.getClientMaxBodySize())
 		{
-			Logger::log(LC_DEBUG, "contents too large 413");
+			Logger::log(LC_MINOR_NOTE, "contents too large 413");
 			throw RequestException(413, "Content too large");
 		}
 		setContentLength(contentLengthVal);
