@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bworrawa <bworrawa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nusamank <nusamank@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:56:59 by bworrawa          #+#    #+#             */
-/*   Updated: 2025/03/21 10:09:51 by bworrawa         ###   ########.fr       */
+/*   Updated: 2025/03/22 14:32:32 by nusamank         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -693,7 +693,6 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 			// std::cout << LC_YELLOW << " fileName = " << fileName  << LC_RESET << std::endl;
 			fileCount ++; 
 			std::string	targetFile = route->getUploadStore() + "/" + fileName;
-			std::cout << " targetFile = " << targetFile << std::endl;
 			if(Util::fileExists(targetFile))
 			{
 				Logger::log(LC_MINOR_NOTE, " filename %s is already exists", targetFile.c_str());
@@ -701,7 +700,6 @@ bool	HttpResponse::handleUploadedFiles(Connection *conn, RouteConfig *route , Ht
 
 			}
 			std::string ext = Util::getFileExtension(fileName);
-			std::cout << " ext = " << ext  << std::endl;
 			std::map<std::string, std::string> cgis = conn->getServerConfig().getAllRouteCGIs();
 			
 			if( cgis.find(ext) !=  cgis.end())
